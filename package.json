@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "scripts": {
+    "start": "cd example && yarn start",
+    "build:ui": "cd packages/ui-services && yarn build --watch",
+    "build:tailwind": "cd packages/tailwind && yarn build --watch"
+  },
+  "workspaces": [
+    "packages/*",
+    "example"
+  ],
+  "devDependencies": {
+    "expo-yarn-workspaces": "^1.7.0"
+  }
+}
