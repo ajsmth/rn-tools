@@ -1,32 +1,26 @@
 import * as React from "react";
-import { View, Button, Text } from "react-native";
+import { View, Button, Text, Pressable } from "react-native";
+import tw from "./styles";
 
 import {
-  UIServicesProvider,
+  Provider,
   BottomSheet,
   Modal,
   Stack,
   Toast,
-  StackItem,
 } from "@rn-toolkit/ui-services";
 
 export default function App() {
   return (
-    <UIServicesProvider>
+    <Provider>
       <MyApp />
-    </UIServicesProvider>
+    </Provider>
   );
 }
 
 function MyApp() {
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
+    <View style={tw("bg-white flex-1 items-center justify-center")}>
       <Menu />
     </View>
   );
@@ -35,7 +29,6 @@ function MyApp() {
 function Menu() {
   return (
     <View>
-      <Text>Hi</Text>
       <Button
         title="Push screen"
         onPress={() => {
@@ -69,28 +62,39 @@ function Menu() {
   );
 }
 
-function MyScreen(props: StackItem) {
+function MyScreen(props: any) {
   return (
-    <View style={{ flex: 1, backgroundColor: "white", paddingTop: 100 }}>
-      <Text>Hi</Text>
+    <View style={tw("bg-white flex-1 items-center pt-48")}>
       <Button title="Pop" onPress={() => props.pop()} />
       <Menu />
     </View>
   );
 }
 
+function MyButton({ onPress, title }: any) {
+  return (
+    <Pressable onPress={onPress} style={tw("py-2 px-4 items-center")}>
+      <Text style={tw("text-lg font-medium")}>{title}</Text>
+    </Pressable>
+  );
+}
+
 function MyBottomSheet() {
   return (
-    <View>
-      <Menu />
+    <View style={tw("flex-1")}>
+      <MyButton
+        title="Push screen"
+        onPress={() => {
+          Stack.push(MyScreen, { headerProps: { title: "Heyo" } });
+        }}
+      />
     </View>
   );
 }
 
 function MyModal() {
   return (
-    <View style={{ backgroundColor: "white" }}>
-      <Text>Hi</Text>
+    <View style={tw("bg-white rounded-lg mx-4 p-4 shadow-medium")}>
       <Menu />
     </View>
   );
@@ -98,9 +102,8 @@ function MyModal() {
 
 function MyToast() {
   return (
-    <View style={{ backgroundColor: "white" }}>
-      <Text>Hi</Text>
-      <Menu />
+    <View style={tw("bg-green-500 mx-4 py-4 border-1 rounded-md")}>
+      <Text style={tw("text-center text-lg font-semibold text-white")}>Hi</Text>
     </View>
   );
 }

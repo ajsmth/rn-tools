@@ -1,44 +1,69 @@
 import * as React from "react";
-import { Animated, Pressable, useWindowDimensions } from "react-native";
-import { TouchableOpacity } from "react-native-gesture-handler";
+import {
+  Animated,
+  LayoutRectangle,
+  Pressable,
+  useWindowDimensions,
+  StyleSheet,
+} from "react-native";
 
-import { StackItem } from "./create-async-stack";
-
-export type ToastProps = {
-  type: "toast";
-  component: React.JSXElementConstructor<StackItem>;
-  toastProps?: {
-    duration?: number;
-    distanceFromBottom?: number;
-  };
-};
-
-type ToastItemProps = StackItem<ToastProps>;
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+import { createAsyncStack } from "./create-async-stack";
+import { StackItemComponent, ToastOptions, ToastProps } from "./types";
+import { useStackItems } from "./use-stack-items";
 
 const defaultDistanceFromBottom = 64;
 
-export function ToastItem(props: ToastItemProps) {
-  const { status, data, onPopEnd, onPushEnd, pop } = props;
+export function createToastStack() {
+  const Stack = createAsyncStack<ToastOptions>();
+
+  const Toast = {
+    push: (component: StackItemComponent, options?: ToastOptions) => {
+      return Stack.push({ ...options, component });
+    },
+    pop: Stack.pop,
+  };
+
+  function ToastStack() {
+    const toasts = useStackItems(Stack);
+
+    return (
+      <Animated.View
+        pointerEvents={"box-none"}
+        style={[StyleSheet.absoluteFill]}
+      >
+        {toasts.map((toast) => (
+          <ToastItem {...toast} />
+        ))}
+      </Animated.View>
+    );
+  }
+
+  return {
+    Toast,
+    ToastStack,
+  };
+}
+
+export function ToastItem(props: ToastProps) {
+  const { status, data, onPopEnd, onPushEnd, pop, animatedValue } = props;
   const { toastProps } = data;
 
-  const animatedValue = React.useRef(new Animated.Value(0));
   const { height } = useWindowDimensions();
 
+  const [layout, setLayout] = React.useState<LayoutRectangle | null>(null);
   const timerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
     if (status === "pushing") {
-      Animated.spring(animatedValue.current, {
+      Animated.spring(animatedValue, {
         toValue: 1,
         useNativeDriver: true,
       }).start(onPushEnd);
     }
 
     if (status === "popping") {
-      Animated.spring(animatedValue.current, {
-        toValue: 0,
+      Animated.spring(animatedValue, {
+        toValue: 2,
         useNativeDriver: true,
       }).start(() => {
         onPopEnd();
@@ -64,12 +89,25 @@ export function ToastItem(props: ToastItemProps) {
     };
   }, [status, pop, toastProps?.duration]);
 
-  const distanceFromBottom =
+  let distanceFromBottom =
     data.toastProps?.distanceFromBottom || defaultDistanceFromBottom;
 
-  const translateY = animatedValue.current.interpolate({
-    inputRange: [0, 1],
-    outputRange: [height, height - distanceFromBottom],
+  if (layout != null) {
+    distanceFromBottom = distanceFromBottom + layout.height;
+  }
+
+  const translateY = animatedValue.interpolate({
+    inputRange: [0, 1, 2],
+    outputRange: [
+      height,
+      height - distanceFromBottom,
+      height - distanceFromBottom,
+    ],
+  });
+
+  const opacity = animatedValue.interpolate({
+    inputRange: [0, 1, 2],
+    outputRange: [1, 1, 0],
   });
 
   const isPopping = status === "popping" || status === "popped";
@@ -77,12 +115,14 @@ export function ToastItem(props: ToastItemProps) {
 
   return (
     <Animated.View
+      onLayout={({ nativeEvent: { layout } }) => setLayout(layout)}
       pointerEvents={isPopping ? "none" : "box-none"}
       style={[
         {
           position: "absolute",
           left: 0,
           right: 0,
+          opacity,
           transform: [{ translateY }],
         },
       ]}

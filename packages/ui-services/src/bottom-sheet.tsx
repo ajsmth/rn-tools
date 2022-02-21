@@ -1,20 +1,9 @@
 import * as React from "react";
-import { Animated, Pressable } from "react-native";
-import BottomSheet, { BottomSheetProps as BSP } from "@gorhom/bottom-sheet";
+import BottomSheet from "@gorhom/bottom-sheet";
 
-import { StackItem } from "./create-async-stack";
+import { BottomSheetProps } from "./types";
 
-export type BottomSheetProps = {
-  type: "bottom-sheet";
-  component: React.JSXElementConstructor<StackItem>;
-  bottomSheetProps: Omit<BSP, "children">;
-};
-
-type BottomSheetItemProps = StackItem<BottomSheetProps>;
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-export function BottomSheetItem(props: BottomSheetItemProps) {
+export function BottomSheetItem(props: BottomSheetProps) {
   const { data, status, pop, onPushEnd, onPopEnd } = props;
   const { bottomSheetProps } = data;
 
@@ -52,9 +41,7 @@ export function BottomSheetItem(props: BottomSheetItemProps) {
       ref={bottomSheetRef}
       onChange={onChange}
     >
-      <AnimatedPressable style={{ flex: 1 }}>
-        <Component {...props} />
-      </AnimatedPressable>
+      <Component {...props} />
     </BottomSheet>
   );
 }

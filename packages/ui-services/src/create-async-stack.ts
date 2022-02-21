@@ -1,5 +1,8 @@
+import { Animated } from "react-native";
+
 export type StackAction = "pushstart" | "pushend" | "popstart" | "popend";
 export type Status = "pushing" | "popping" | "settled" | "popped";
+
 
 export type StackEvent<T = any> = {
   state: StackState<T>;
@@ -9,6 +12,9 @@ export type StackEvent<T = any> = {
   };
 };
 
+const AValue = new Animated.Value(0)
+typeof AValue
+
 export type StackItem<T = any> = {
   key: string;
   status: Status;
@@ -17,6 +23,7 @@ export type StackItem<T = any> = {
   onPushEnd: () => void;
   onPopEnd: () => void;
   data: T;
+  animatedValue: typeof AValue;
 };
 
 export type StackState<T = any> = {
@@ -52,14 +59,15 @@ function createAsyncStack<T = any>() {
       pushResolvers[key] = resolve;
     });
 
-    // @ts-ignore
     const item: StackItem<T> = {
       key,
       promise,
+      data,
       status: "pushing" as Status,
       pop: () => pop(`${key}`),
       onPushEnd: () => onPushEnd(key),
       onPopEnd: () => onPopEnd(key),
+      animatedValue: new Animated.Value(0),
     };
 
     if (data) {

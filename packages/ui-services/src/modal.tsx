@@ -3,39 +3,31 @@ import { Animated, Pressable, useWindowDimensions } from "react-native";
 
 import { StackItem } from "./create-async-stack";
 
-export type ModalProps = {
-  type: "modal";
-  modalProps: any;
-  component: React.JSXElementConstructor<StackItem>;
-};
-
-type ModalItemProps = StackItem<ModalProps>;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function ModalItem(props: ModalItemProps) {
-  const { status, data, onPopEnd, onPushEnd } = props;
+export function ModalItem(props: StackItem) {
+  const { status, data, onPopEnd, onPushEnd, animatedValue } = props;
 
-  const animatedValue = React.useRef(new Animated.Value(0));
   const { height } = useWindowDimensions();
 
   React.useEffect(() => {
     if (status === "pushing") {
-      Animated.spring(animatedValue.current, {
+      Animated.spring(animatedValue, {
         toValue: 1,
         useNativeDriver: true,
       }).start(onPushEnd);
     }
 
     if (status === "popping") {
-      Animated.spring(animatedValue.current, {
+      Animated.spring(animatedValue, {
         toValue: 0,
         useNativeDriver: true,
       }).start(onPopEnd);
     }
   }, [status]);
 
-  const translateY = animatedValue.current.interpolate({
+  const translateY = animatedValue.interpolate({
     inputRange: [0, 1],
     outputRange: [height, 0],
   });
