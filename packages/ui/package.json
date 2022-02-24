@@ -1,9 +1,12 @@
 {
-  "name": "@rn-toolkit/ui-services",
+  "name": "@rn-toolkit/ui",
   "version": "1.0.0",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "license": "MIT",
+  "files": [
+    "build/*"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest ."

@@ -2,7 +2,9 @@ import * as React from "react";
 import { Stack, StackItem } from "./create-async-stack";
 
 function useStackItems<T>(stack: Stack<T>) {
-  const [items, setItems] = React.useState<StackItem<T>[]>([]);
+  const [items, setItems] = React.useState<StackItem<T>[]>(
+    stack.getState().items
+  );
 
   React.useEffect(() => {
     const unsubscribe = stack.subscribe(({ state }) => {

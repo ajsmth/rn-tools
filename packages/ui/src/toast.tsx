@@ -7,21 +7,25 @@ import {
   StyleSheet,
 } from "react-native";
 
-import { createAsyncStack } from "./create-async-stack";
-import { StackItemComponent, ToastOptions, ToastProps } from "./types";
+import { createAsyncStack, Stack, StackItem } from "./create-async-stack";
+import {
+  StackItemComponent,
+  ToastOptions,
+  ToastProps,
+  ToastStackItem,
+} from "./types";
 import { useStackItems } from "./use-stack-items";
 
 const defaultDistanceFromBottom = 64;
 
 export function createToastStack() {
-  const Stack = createAsyncStack<ToastOptions>();
+  const Stack = createAsyncStack<ToastStackItem>();
 
-  const Toast = {
-    push: (component: StackItemComponent, options?: ToastOptions) => {
-      return Stack.push({ ...options, component });
-    },
-    pop: Stack.pop,
-  };
+  const ToastProvider = ({ children }: { children: React.ReactNode }) => (
+    <ToastStackProvider stack={Stack}>{children}</ToastStackProvider>
+  );
+
+  const Toast = createService(Stack);
 
   function ToastStack() {
     const toasts = useStackItems(Stack);
@@ -41,10 +45,11 @@ export function createToastStack() {
   return {
     Toast,
     ToastStack,
+    ToastProvider,
   };
 }
 
-export function ToastItem(props: ToastProps) {
+function ToastItem(props: StackItem<ToastStackItem>) {
   const { status, data, onPopEnd, onPushEnd, pop, animatedValue } = props;
   const { toastProps } = data;
 
@@ -133,3 +138,39 @@ export function ToastItem(props: ToastProps) {
     </Animated.View>
   );
 }
+
+type ContextProps = {
+  push: (
+    component: StackItemComponent,
+    options: ToastOptions
+  ) => StackItem<ToastStackItem>;
+  pop: (amount?: number) => StackItem<ToastStackItem>[];
+};
+
+function createService(stack: Stack<ToastStackItem>): ContextProps {
+  return {
+    push: (
+      component: React.JSXElementConstructor<ToastProps>,
+      options?: ToastOptions
+    ) => {
+      return stack.push({ toastProps: options, component });
+    },
+    pop: stack.pop,
+  };
+}
+
+const Context = React.createContext<ContextProps | null>(null);
+
+function ToastStackProvider({
+  stack,
+  children,
+}: {
+  stack: Stack<ToastStackItem>;
+  children: React.ReactNode;
+}) {
+  return (
+    <Context.Provider value={createService(stack)}>{children}</Context.Provider>
+  );
+}
+
+export const useToast = () => React.useContext(Context);

@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "start": "cd example && yarn start",
-    "build:ui": "cd packages/ui-services && yarn build --watch",
+    "build:ui": "cd packages/ui && yarn build --watch",
     "build:tailwind": "cd packages/tailwind && yarn build --watch"
   },
   "workspaces": [

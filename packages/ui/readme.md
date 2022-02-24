@@ -1,9 +1,9 @@
-# @rn-toolkit/ui-services
+# @rn-toolkit/ui
 
 ## Installation
 
 ```bash
-yarn add @rn-tookit/ui-services
+yarn add @rn-tookit/ui
 ```
 
 Install the required dependencies if you dont have them already
@@ -14,19 +14,19 @@ yarn add react-native-screens react-native-gesture-handler react-native-reanimat
 
 ## Usage
 
-Wrap your app in the `<UIServicesProvider />` component
+Wrap your app in the `<Container />` component
 
 ```tsx
 // App.tsx
 import * as React from "react";
 
-import { UIServicesProvider } from "@rn-toolkit/ui-services";
+import { Container } from "@rn-toolkit/ui";
 
 function App() {
   return (
-    <UIServicesProvider>
+    <Container>
       <MyApp />
-    </UIServicesProvider>
+    </Container>
   );
 }
 ```
@@ -37,7 +37,7 @@ Now you can push a new screen:
 import * as React from "react";
 import { View, Text } from "react-native";
 
-import { Stack } from "@rn-toolkit/ui-services";
+import { Stack } from "@rn-toolkit/ui";
 
 function MyScreen() {
   return (
@@ -56,7 +56,7 @@ Stack.push(MyScreen, { headerProps: { title: "Hi" } });
 import * as React from "react";
 import { View, Text } from "react-native";
 
-import { BottomSheet } from "@rn-toolkit/ui-services";
+import { BottomSheet } from "@rn-toolkit/ui";
 
 function MyBottomSheet() {
   return (
@@ -78,7 +78,7 @@ BottomSheet.push(MyBottomSheet, {
 import * as React from "react";
 import { Button, View, Text } from "react-native";
 
-import { Modal } from "@rn-toolkit/ui-services";
+import { Modal } from "@rn-toolkit/ui";
 
 function MyModal() {
   return (
@@ -98,7 +98,7 @@ Modal.push(MyModal);
 import * as React from "react";
 import { Button, View, Text } from "react-native";
 
-import { Toast } from "@rn-toolkit/ui-services";
+import { Toast } from "@rn-toolkit/ui";
 
 function MyToast() {
   return (
@@ -111,4 +111,27 @@ function MyToast() {
 Toast.push(MyToast, {
   duration: 1500,
 });
+```
+
+### Create a new stack
+
+Sometimes you'll want to have separate stacks for different parts of your app:
+
+```tsx
+import { createStack } from "@rn-toolkit/ui";
+
+const MyStack = createStack();
+
+// MyStack can be used anywhere like so:
+
+// MyStack.push(MyScreen, { headerProps: { title: 'Hi' }})
+// MyStack.pop()
+
+function App() {
+  return (
+    <MyStack.Container>
+      <MyApp />
+    </MyStack.Container>
+  );
+}
 ```

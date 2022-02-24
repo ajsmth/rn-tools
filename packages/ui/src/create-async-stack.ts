@@ -62,6 +62,7 @@ function createAsyncStack<T = any>() {
     const item: StackItem<T> = {
       key,
       promise,
+      // @ts-ignore
       data,
       status: "pushing" as Status,
       pop: () => pop(`${key}`),
