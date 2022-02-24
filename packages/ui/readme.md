@@ -120,12 +120,7 @@ Sometimes you'll want to have separate stacks for different parts of your app:
 ```tsx
 import { createStack } from "@rn-toolkit/ui";
 
-const MyStack = createStack();
-
-// MyStack can be used anywhere like so:
-
-// MyStack.push(MyScreen, { headerProps: { title: 'Hi' }})
-// MyStack.pop()
+export const MyStack = createStack();
 
 function App() {
   return (
@@ -133,5 +128,15 @@ function App() {
       <MyApp />
     </MyStack.Container>
   );
+}
+```
+
+...now you can use that stack anywhere you'd like
+
+```tsx
+import { MyStack } from "./app";
+
+function navigateToHome() {
+  MyStack.push(Home, { headerProps: { title: "Hi" } });
 }
 ```
