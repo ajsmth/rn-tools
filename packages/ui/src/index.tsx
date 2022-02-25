@@ -60,27 +60,29 @@ function createServices() {
     const backgroundColor = useBackgroundColor(fullScreenStack);
 
     return (
-      <BottomSheetStackProvider
-        stack={fullScreenStack as Stack<BottomSheetStackItem>}
-      >
-        <ModalStackProvider stack={fullScreenStack as Stack<ModalStackItem>}>
-          <ToastProvider>
-            <View style={StyleSheet.absoluteFill}>
-              <Stack.Container>{children}</Stack.Container>
-              <AnimatedPressable
-                style={[StyleSheet.absoluteFill, { backgroundColor }]}
-                onPress={onDismissed}
-                pointerEvents={activeItems.length > 0 ? "auto" : "none"}
-              >
-                {fullScreenItems.map((item) =>
-                  renderFullscreenItem(item, fullScreenStack)
-                )}
-              </AnimatedPressable>
-              <ToastStack />
-            </View>
-          </ToastProvider>
-        </ModalStackProvider>
-      </BottomSheetStackProvider>
+      <Stack.Provider>
+        <BottomSheetStackProvider
+          stack={fullScreenStack as Stack<BottomSheetStackItem>}
+        >
+          <ModalStackProvider stack={fullScreenStack as Stack<ModalStackItem>}>
+            <ToastProvider>
+              <View style={StyleSheet.absoluteFill}>
+                <Stack.Container>{children}</Stack.Container>
+                <AnimatedPressable
+                  style={[StyleSheet.absoluteFill, { backgroundColor }]}
+                  onPress={onDismissed}
+                  pointerEvents={activeItems.length > 0 ? "auto" : "none"}
+                >
+                  {fullScreenItems.map((item) =>
+                    renderFullscreenItem(item, fullScreenStack)
+                  )}
+                </AnimatedPressable>
+                <ToastStack />
+              </View>
+            </ToastProvider>
+          </ModalStackProvider>
+        </BottomSheetStackProvider>
+      </Stack.Provider>
     );
   }
 

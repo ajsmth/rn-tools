@@ -1,0 +1,26 @@
+{
+  "name": "@rn-toolkit/primitives",
+  "version": "1.0.0",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "license": "MIT",
+  "files": [
+    "build/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest ."
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.3",
+    "@types/react": "~16.9.35",
+    "@types/react-native": "~0.63.2",
+    "babel-preset-expo": "^9.0.2",
+    "jest": "^27.4.5",
+    "typescript": "^4.3.5"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  }
+}

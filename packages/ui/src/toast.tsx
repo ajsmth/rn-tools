@@ -94,8 +94,7 @@ function ToastItem(props: StackItem<ToastStackItem>) {
     };
   }, [status, pop, toastProps?.duration]);
 
-  let distanceFromBottom =
-    data.toastProps?.distanceFromBottom || defaultDistanceFromBottom;
+  let distanceFromBottom = defaultDistanceFromBottom;
 
   if (layout != null) {
     distanceFromBottom = distanceFromBottom + layout.height;

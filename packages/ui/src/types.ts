@@ -43,7 +43,6 @@ export type ModalStackItem = {
 
 export type ToastOptions = {
   duration?: number;
-  distanceFromBottom?: number;
 };
 
 export type ToastStackItem = {

@@ -1,13 +1,4 @@
 import * as React from "react";
-import {
-  View,
-  Button,
-  Text,
-  Pressable,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
-import tw from "./styles";
 
 import {
   Container,
@@ -25,27 +16,24 @@ import {
   createStack,
 } from "@rn-toolkit/ui";
 
+import { ThemeProvider } from "@rn-toolkit/primitives";
+
+import { View, Text, Pressable } from "./styles";
 
 function Tabs({ children }: any) {
   const [activeIndex, setActiveIndex] = React.useState(0);
 
   return (
-    <View style={StyleSheet.absoluteFill}>
-      <View style={tw("flex-1")}>{children[activeIndex] || null}</View>
+    <View styles="absolute inset-0">
+      <View styles="flex-1">{children[activeIndex]}</View>
 
-      <View style={tw("flex-row pb-12")}>
-        <TouchableOpacity
-          style={tw("flex-1")}
-          onPress={() => setActiveIndex(0)}
-        >
-          <Text style={tw("text-center py-2")}>Tab 1</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={tw("flex-1 border")}
-          onPress={() => setActiveIndex(1)}
-        >
-          <Text style={tw("text-center")}>Tab 2</Text>
-        </TouchableOpacity>
+      <View styles="flex-1 pb-12">
+        <Pressable styles="flex-1" onPress={() => setActiveIndex(0)}>
+          <Text styles="text-center py-2">Tab 1</Text>
+        </Pressable>
+        <Pressable styles="flex-1 border" onPress={() => setActiveIndex(1)}>
+          <Text styles="text-center">Tab 2</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -56,22 +44,19 @@ const Stack2 = createStack();
 
 export default function App() {
   return (
-    <Container>
-      <Tabs>
-        <Stack1.Container>
-          <MyApp />
-        </Stack1.Container>
-        <Stack2.Container>
-          <MyApp />
-        </Stack2.Container>
-      </Tabs>
-    </Container>
+    <ThemeProvider>
+      <Container>
+        <View styles="flex-1 items-center justify-center">
+          <Menu />
+        </View>
+      </Container>
+    </ThemeProvider>
   );
 }
 
 function MyApp() {
   return (
-    <View style={tw("bg-white flex-1 items-center justify-center")}>
+    <View styles="bg-red-500 flex-1 items-center justify-center">
       <Menu />
     </View>
   );
@@ -82,14 +67,14 @@ function Menu() {
 
   return (
     <View>
-      <Button
+      <MyButton
         title="Push screen"
         onPress={() => {
           stack.push(MyScreen, { headerProps: { title: "Heyo" } });
         }}
       />
 
-      <Button
+      <MyButton
         title="Push bottom sheet"
         onPress={() => {
           BottomSheet.push(MyBottomSheet, {
@@ -98,17 +83,17 @@ function Menu() {
         }}
       />
 
-      <Button
+      <MyButton
         title="Push modal"
         onPress={() => {
           Modal.push(MyModal);
         }}
       />
 
-      <Button
+      <MyButton
         title="Push toast"
         onPress={() => {
-          Toast.push(MyToast, { duration: 1000, distanceFromBottom: 250 });
+          Toast.push(MyToast, { duration: 1000 });
         }}
       />
     </View>
@@ -117,8 +102,8 @@ function Menu() {
 
 function MyScreen(props: ScreenProps) {
   return (
-    <View style={tw("bg-white flex-1 items-center pt-48")}>
-      <Button title="Pop" onPress={() => props.pop()} />
+    <View styles="bg-white flex-1 items-center pt-48">
+      <MyButton title="Pop" onPress={() => props.pop()} />
       <Menu />
     </View>
   );
@@ -126,15 +111,15 @@ function MyScreen(props: ScreenProps) {
 
 function MyButton({ onPress, title }: any) {
   return (
-    <Pressable onPress={onPress} style={tw("py-2 px-4 items-center")}>
-      <Text style={tw("text-lg font-medium")}>{title}</Text>
+    <Pressable onPress={onPress} styles="py-2 px-4 items-center">
+      <Text styles="text-lg font-medium">{title}</Text>
     </Pressable>
   );
 }
 
 function MyBottomSheet(props: BottomSheetProps) {
   return (
-    <View style={tw("flex-1")}>
+    <View styles="flex-1">
       <MyButton
         title="Push screen"
         onPress={() => {
@@ -147,7 +132,7 @@ function MyBottomSheet(props: BottomSheetProps) {
 
 function MyModal() {
   return (
-    <View style={tw("bg-white rounded-lg mx-4 p-4 shadow-medium")}>
+    <View styles="bg-white rounded-lg mx-4 p-4 shadow-medium">
       <Menu />
     </View>
   );
@@ -155,8 +140,8 @@ function MyModal() {
 
 function MyToast() {
   return (
-    <View style={tw("bg-green-500 mx-4 py-4 border-1 rounded-md")}>
-      <Text style={tw("text-center text-lg font-semibold text-white")}>Hi</Text>
+    <View styles="bg-green-500 mx-4 py-4 border-1 rounded-md">
+      <Text styles="text-center text-lg font-semibold text-white">Hi</Text>
     </View>
   );
 }

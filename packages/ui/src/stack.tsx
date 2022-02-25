@@ -2,7 +2,6 @@ import * as React from "react";
 import {
   ScreenStack,
   ScreenStackProps,
-  ScreenStackHeaderConfigProps,
   ScreenProps as RNScreenProps,
   Screen,
   ScreenStackHeaderConfig,
@@ -13,17 +12,23 @@ import { createAsyncStack, Stack, StackItem } from "./create-async-stack";
 import { useStackItems } from "./use-stack-items";
 import { ScreenOptions, ScreenProps, ScreenStackItem } from "./types";
 
-export type ScreenContainerProps = ScreenStackProps;
+export type ScreenContainerProps = ScreenStackProps & {};
 
 export function createStack() {
   const screenStack = createAsyncStack<ScreenStackItem>();
   const screenService = createService(screenStack);
 
+  function Provider({ children }: any) {
+    return (
+      <Context.Provider value={screenService}>{children}</Context.Provider>
+    );
+  }
+
   function Container({ children, ...props }: ScreenContainerProps) {
     const stackItems = useStackItems(screenStack);
 
     return (
-      <Context.Provider value={screenService}>
+      <Provider>
         <ScreenStack {...props} style={{ flex: 1 }}>
           <Screen style={StyleSheet.absoluteFill}>{children}</Screen>
           {stackItems
@@ -55,13 +60,14 @@ export function createStack() {
               );
             })}
         </ScreenStack>
-      </Context.Provider>
+      </Provider>
     );
   }
 
   return {
     ...screenService,
     Container,
+    Provider,
   };
 }
 
