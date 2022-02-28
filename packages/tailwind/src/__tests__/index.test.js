@@ -1,4 +1,4 @@
-import createStyleFn from "../../build";
+import createStyleFn from "../index";
 
 const testStyles = {
   test: {
