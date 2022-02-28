@@ -16,7 +16,7 @@ import { View, Text, Heading, Pressable } from "./styles";
 
 export default function App() {
   return (
-    <ThemeProvider themePreference="light">
+    <ThemeProvider themePreference="dark">
       <Provider>
         <View
           styles="flex-1 justify-center"
