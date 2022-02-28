@@ -7,7 +7,6 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "strict": true,
-    "outDir": "build",
     "declaration": true
   },
   "include": ["src/**/*"],

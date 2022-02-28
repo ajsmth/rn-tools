@@ -1,16 +1,19 @@
 import json from "@rollup/plugin-json";
 import commonjs from "@rollup/plugin-commonjs";
+import typescript from "@rollup/plugin-typescript";
+import jsx from "acorn-jsx";
 import { terser } from "rollup-plugin-terser";
 
 export default [
   {
-    input: "src/index.js",
+    input: "src/index.ts",
     output: {
       file: "build/index.js",
       format: "cjs",
-      exports: "default",
+      exports: "named",
     },
-    plugins: [json()],
+    plugins: [json(), typescript({ tsconfig: "./tsconfig.json", declarationDir: "./" })],
+    acornInjectPlugins: [jsx()],
     external: ["react", "react-native"],
   },
   {

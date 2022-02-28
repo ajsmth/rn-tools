@@ -1,64 +1,31 @@
 import * as React from "react";
 
 import {
-  Container,
+  Provider,
   BottomSheet,
   Modal,
   Stack,
   Toast,
   useStack,
-  useModal,
-  useBottomSheet,
-  useToast,
-  BottomSheetOptions,
   BottomSheetProps,
   ScreenProps,
-  createStack,
 } from "@rn-toolkit/ui";
 
-import { ThemeProvider } from "@rn-toolkit/primitives";
-
-import { View, Text, Pressable } from "./styles";
-
-function Tabs({ children }: any) {
-  const [activeIndex, setActiveIndex] = React.useState(0);
-
-  return (
-    <View styles="absolute inset-0">
-      <View styles="flex-1">{children[activeIndex]}</View>
-
-      <View styles="flex-1 pb-12">
-        <Pressable styles="flex-1" onPress={() => setActiveIndex(0)}>
-          <Text styles="text-center py-2">Tab 1</Text>
-        </Pressable>
-        <Pressable styles="flex-1 border" onPress={() => setActiveIndex(1)}>
-          <Text styles="text-center">Tab 2</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
-const Stack1 = createStack();
-const Stack2 = createStack();
+import { ThemeProvider } from "@rn-toolkit/tailwind";
+import { View, Text, Heading, Pressable } from "./styles";
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <Container>
-        <View styles="flex-1 items-center justify-center">
+    <ThemeProvider themePreference="light">
+      <Provider>
+        <View
+          styles="flex-1 justify-center"
+          selectors={{ light: "bg-red-500", dark: "bg-blue-500" }}
+        >
           <Menu />
         </View>
-      </Container>
+      </Provider>
     </ThemeProvider>
-  );
-}
-
-function MyApp() {
-  return (
-    <View styles="bg-red-500 flex-1 items-center justify-center">
-      <Menu />
-    </View>
   );
 }
 

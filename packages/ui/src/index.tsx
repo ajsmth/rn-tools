@@ -49,7 +49,7 @@ function createServices() {
     fullScreenStack.pop();
   }
 
-  function Container({ children }: any) {
+  function Provider({ children }: any) {
     const fullScreenItems = useStackItems(fullScreenStack);
 
     const activeItems = fullScreenItems.filter(
@@ -93,7 +93,7 @@ function createServices() {
   );
 
   return {
-    Container,
+    Provider,
     Stack,
     Modal,
     BottomSheet,
@@ -123,12 +123,12 @@ function renderFullscreenItem(
   return null;
 }
 
-const { Stack, Modal, BottomSheet, Container, Toast } = createServices();
+const { Stack, Modal, BottomSheet, Provider, Toast } = createServices();
 
 export {
   Stack,
   Modal,
-  Container,
+  Provider,
   BottomSheet,
   Toast,
   useModal,

@@ -40,32 +40,20 @@ export function createPrimitive<T, F>(
 
 type ThemePreference = "light" | "dark" | "no-preference";
 type Theme = "light" | "dark";
-type SetThemePreference = (themePreference: ThemePreference) => void;
 
 const ThemeContext = React.createContext<Theme>("light");
 const useTheme = () => React.useContext(ThemeContext);
 
-const ThemePreferenceContext = React.createContext<SetThemePreference>(
-  () => {}
-);
-
-export const useSetThemePreference = () =>
-  React.useContext(ThemePreferenceContext);
-
 type ThemeProviderProps = {
   children: React.ReactNode;
-  initialThemePreference?: ThemePreference;
+  themePreference?: ThemePreference;
 };
 
 export function ThemeProvider({
   children,
-  initialThemePreference = "no-preference",
+  themePreference = "no-preference",
 }: ThemeProviderProps) {
   const systemTheme = useColorScheme();
-
-  const [themePreference, setThemePreference] = React.useState<ThemePreference>(
-    initialThemePreference
-  );
 
   const theme = React.useMemo(() => {
     if (themePreference !== "no-preference") {
@@ -73,13 +61,9 @@ export function ThemeProvider({
     }
 
     return systemTheme ?? "light";
-  }, []);
+  }, [themePreference]);
 
   return (
-    <ThemeContext.Provider value={theme}>
-      <ThemePreferenceContext.Provider value={setThemePreference}>
-        {children}
-      </ThemePreferenceContext.Provider>
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
   );
 }

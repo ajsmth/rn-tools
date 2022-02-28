@@ -3,7 +3,8 @@
   "scripts": {
     "start": "cd example && yarn start",
     "build:ui": "cd packages/ui && yarn build --watch",
-    "build:tailwind": "cd packages/tailwind && yarn build --watch"
+    "build:tailwind": "cd packages/tailwind && yarn build --watch",
+    "build:primitives": "cd packages/primitives && yarn build --watch"
   },
   "workspaces": [
     "packages/*",

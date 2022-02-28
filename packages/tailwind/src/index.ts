@@ -1,9 +1,10 @@
 import { Platform } from "react-native";
+export * from "./primitives";
 
 const transformProps = ["translate", "rotate", "scale", "skew"];
 
-function createStyleFn(styleMap) {
-  const memo = {};
+function createStyleFn(styleMap: {[key: string]: any}) {
+  const memo: {[key: string]: any} = {};
 
   function getStylesForClassnames(classNames = "") {
     if (!classNames) {
@@ -54,12 +55,12 @@ function createStyleFn(styleMap) {
     return assembledStyles;
   }
 
-  return function (...classNames) {
+  return function (...classNames: string[]) {
     let styles = {};
 
     for (let i = 0; i < classNames.length; i++) {
       const className = classNames[i];
-      
+
       if (className) {
         const style = getStylesForClassnames(className);
         styles = {
