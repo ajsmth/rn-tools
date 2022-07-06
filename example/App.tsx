@@ -1,77 +1,106 @@
 import * as React from "react";
-
+import { LogBox } from "react-native";
+import { ExpoPreviewProvider } from "expo-component-preview";
 import {
-  Provider,
-  BottomSheet,
-  Modal,
-  Stack,
-  Toast,
-  useStack,
-  BottomSheetProps,
+  createStackNavigator,
   ScreenProps,
-} from "@rn-toolkit/ui";
-
+  navigate,
+  goBack,
+  Router,
+  Routes,
+} from "@rn-toolkit/navigation";
 import { ThemeProvider } from "@rn-toolkit/tailwind";
-import { View, Text, Heading, Pressable } from "./styles";
+import { View, Text, Pressable } from "./styles";
+
+LogBox.ignoreLogs(["Constants.platform"]);
+
+const Stack = createStackNavigator();
 
 export default function App() {
+  console.log("\n");
+
   return (
-    <ThemeProvider themePreference="dark">
-      <Provider>
-        <View
-          styles="flex-1 justify-center"
-          selectors={{ light: "bg-red-500", dark: "bg-blue-500" }}
+    <ExpoPreviewProvider>
+      <ThemeProvider themePreference="dark">
+        <Router
+          routes={{
+            "/hey": ({ next, url }) => {
+              Stack.push(MyScreen);
+              console.log("HIT");
+              
+            },
+          }}
         >
-          <Menu />
-        </View>
-      </Provider>
-    </ThemeProvider>
+          <Stack.Navigator>
+            <MenuContainer />
+          </Stack.Navigator>
+        </Router>
+      </ThemeProvider>
+    </ExpoPreviewProvider>
+  );
+}
+
+function MenuContainer() {
+  return (
+    <View
+      styles="flex-1 justify-center"
+      // TODO: babel plugin for tailwind
+      selectors={{ light: "bg-red-500", dark: "bg-blue-500" }}
+    >
+      <Menu />
+    </View>
   );
 }
 
 function Menu() {
-  const stack = useStack();
-
   return (
     <View>
       <MyButton
         title="Push screen"
         onPress={() => {
-          stack.push(MyScreen, { headerProps: { title: "Heyo" } });
+          navigate("/hey");
         }}
       />
 
-      <MyButton
-        title="Push bottom sheet"
-        onPress={() => {
-          BottomSheet.push(MyBottomSheet, {
-            snapPoints: [500, 900],
-          });
-        }}
-      />
+      <MyButton title="Push bottom sheet" onPress={() => {}} />
 
-      <MyButton
-        title="Push modal"
-        onPress={() => {
-          Modal.push(MyModal);
-        }}
-      />
+      <MyButton title="Push modal" onPress={() => {}} />
 
-      <MyButton
-        title="Push toast"
-        onPress={() => {
-          Toast.push(MyToast, { duration: 1000 });
-        }}
-      />
+      <MyButton title="Push toast" onPress={() => {}} />
     </View>
   );
 }
 
-function MyScreen(props: ScreenProps) {
+function MyScreen(props: ScreenProps<{ title: string }>) {
   return (
-    <View styles="bg-white flex-1 items-center pt-48">
-      <MyButton title="Pop" onPress={() => props.pop()} />
-      <Menu />
+    <View styles="flex-1 items-center pt-48">
+      <MyButton
+        title="Pop"
+        onPress={async () => {
+          const item = await Stack.pop();
+        }}
+      />
+      <MyButton
+        title="Update header"
+        onPress={() => props.setHeaderProps({ title: "!@3" })}
+      />
+      <MyButton
+        title="Update screen"
+        onPress={() => {
+          console.log("Update Screen");
+          props.setScreenProps({ style: { backgroundColor: "red" } });
+        }}
+      />
+
+      <MyButton
+        title="Go back"
+        onPress={() => {
+          goBack();
+        }}
+      />
+
+      <MyButton title="Navigate" onPress={() => navigate("/hey")} />
+      {/* <Menu /> */}
     </View>
   );
 }
@@ -90,7 +119,7 @@ function MyBottomSheet(props: BottomSheetProps) {
       <MyButton
         title="Push screen"
         onPress={() => {
-          Stack.push(MyScreen, { headerProps: { title: "Heyo" } });
+          // Stack.push(MyScreen, { headerProps: { title: "Heyo" } });
         }}
       />
     </View>

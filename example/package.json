@@ -13,9 +13,11 @@
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.16.7",
+    "@rn-toolkit/navigation": "*",
     "@rn-toolkit/tailwind": "*",
     "@rn-toolkit/ui": "*",
     "expo": "~44.0.0",
+    "expo-component-preview": "^0.1.1",
     "expo-status-bar": "~1.2.0",
     "react": "17.0.1",
     "react-dom": "17.0.1",
