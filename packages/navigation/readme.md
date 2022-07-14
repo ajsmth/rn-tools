@@ -1,6 +1,6 @@
 # @rn-toolkit/navigation
 
-An alternative approach to navigation - this library focuses on enabling granular control with special attention to routing
+An alternative approach to navigation with special attention to routing
 
 ## Install
 
@@ -75,7 +75,7 @@ function MyScreen(props: ScreenProps<MyProps>) {
 
 ## Routing
 
-The `Router` component registers route handlers. When your app receives a deep link it will check these routes and evoke any handler that matches:
+The `Router` component registers route handlers. When your app receives a deep link it will check these routes and invoke any handler that matches:
 
 ```tsx
 import { Router } from "@rn-toolkit/navigation";
