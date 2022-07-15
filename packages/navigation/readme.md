@@ -5,11 +5,19 @@ An alternative approach to navigation with special attention to routing
 ## Install
 
 ```bash
-yarn add @rn-toolkit/navigation
+expo install @rn-toolkit/navigation react-native-screens
 ```
 
+or
+
 ```bash
-npm install @rntoolkit/navigation
+yarn add @rn-toolkit/navigation react-native-screens
+```
+
+or
+
+```bash
+npm install @rntoolkit/navigation react-native-screens
 ```
 
 ## API

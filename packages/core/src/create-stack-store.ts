@@ -17,10 +17,24 @@ export type StackItem<T> = {
   };
 };
 
-export const stackStores: any[] = [];
+type StackEvent = "pushstart" | "pushend" | "popstart" | "popend"
 
-export function createStackStore<T>() {
-  let store = createStore();
+type StackState<T> = {
+  stack: StackItem<T>[]
+}
+
+export type StackStore<T> = {
+  store: Store<StackState<T>, StackEvent>,
+  actions: {
+    push: (data: T) => StackItem<T>;
+    pop: () => StackItem<T> | undefined;
+    snapshot: (key: number) => void;
+    restore: (key: number) => void;
+  }
+}
+
+export function createStackStore<T>(): StackStore<T> {
+  let store = createStore<StackState<T>, StackEvent>();
 
   let id = 0;
   let ids: any[] = [];
@@ -44,6 +58,7 @@ export function createStackStore<T>() {
         promises.push.resolve(item);
         let stack = ids.map((id) => byId[id]).filter(Boolean);
         store.setState({ stack });
+        store.emit("pushend")
       },
 
       popEnd: (id: number) => {
@@ -55,6 +70,7 @@ export function createStackStore<T>() {
         ids = ids.filter((i) => i !== id);
         let stack = ids.map((id) => byId[id]).filter(Boolean);
         store.setState({ stack });
+        store.emit("popend")
       },
 
       update: (id: number, updates: any) => {
@@ -69,7 +85,6 @@ export function createStackStore<T>() {
         byId[id] = item;
         let stack = ids.map((id) => byId[id]).filter(Boolean);
         store.setState({ stack });
-        // emit update event
       },
     };
 
@@ -88,6 +103,7 @@ export function createStackStore<T>() {
     byId[id] = item;
     let stack = ids.map((id) => byId[id]).filter(Boolean);
     store.setState({ stack });
+    store.emit("pushstart")
     return item;
   }
 
@@ -96,9 +112,9 @@ export function createStackStore<T>() {
     let item = byId[id];
     item.status === "popping";
     byId[id] = item;
-    // emit pop event
     let stack = ids.map((id) => byId[id]).filter(Boolean);
     store.setState({ stack });
+    store.emit("popstart")
     return item;
   }
 
@@ -123,14 +139,15 @@ export function createStackStore<T>() {
   }
 
   let stackStore = {
-    ...store,
-    push,
-    pop,
-    snapshot,
-    restore,
+    store,
+    actions: {
+      push,
+      pop,
+      snapshot,
+      restore,
+    }
   };
 
-  stackStores.push(stackStore);
   return stackStore;
 }
 

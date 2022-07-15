@@ -8,20 +8,20 @@ import {
   ScreenStackHeaderConfig,
   ScreenStackHeaderConfigProps,
 } from "react-native-screens";
-import { createStackStore, StackItem } from "./create-stack-store";
+import { createStackStore, StackItem, StackStore } from "@rn-toolkit/core";
 
 export type ScreenProps<T = any> = {
   setHeaderProps: (updates: ScreenStackHeaderConfigProps) => void;
   setScreenProps: (updates: RNScreenProps) => void;
   push: (
     component: (props: ScreenProps) => React.ReactElement<any>,
-    options: Omit<ScreenOptions, "component">
+    options: Omit<ScreenStackItem, "component">
   ) => Promise<void>;
   pop: () => Promise<void>;
   focused: boolean;
 } & T;
 
-type ScreenOptions = {
+export type ScreenStackItem = {
   key?: string;
   component: (props: ScreenProps) => React.ReactElement<any>;
   headerProps?: ScreenStackHeaderConfigProps;
@@ -29,17 +29,19 @@ type ScreenOptions = {
   props: any;
 };
 
-type NavigatorProps = {};
+export type StackNavigator = StackStore<ScreenStackItem>
 
 export function createStackNavigator() {
-  const store = createStackStore();
+  const stack = createStackStore<ScreenStackItem>();
 
-  function Navigator(props: ScreenStackProps & NavigatorProps) {
+  function Navigator(props: ScreenStackProps) {
     const { children, ...rest } = props;
-    let [screens, setScreens] = React.useState<any[]>([]);
+    let [screens, setScreens] = React.useState<StackItem<ScreenStackItem>[]>(
+      []
+    );
 
     React.useEffect(() => {
-      const unsub = store.subscribe(({ stack }: any) => {
+      const unsub = stack.store.subscribe(({ stack }) => {
         setScreens(
           stack.filter(
             (s: any) => s.status !== "popped" && s.status !== "popping"
@@ -68,7 +70,7 @@ export function createStackNavigator() {
   }
 
   function ScreenComponent(props: {
-    screen: StackItem<ScreenProps>;
+    screen: StackItem<ScreenStackItem>;
     focused?: boolean;
   }) {
     const { screen, focused } = props;
@@ -88,12 +90,20 @@ export function createStackNavigator() {
 
     const Component = screen.data.component;
 
+    const popEnd = React.useCallback(() => {
+      return screen.actions.popEnd(screen.id);
+    }, [screen.id]);
+
+    const pushEnd = React.useCallback(() => {
+      return screen.actions.pushEnd(screen.id);
+    }, [screen.id]);
+
     return (
       <Screen
         key={screen.id}
         style={StyleSheet.absoluteFill}
-        onDismissed={() => screen.actions.popEnd(screen.id)}
-        onAppear={() => screen.actions.pushEnd(screen.id)}
+        onDismissed={popEnd}
+        onAppear={pushEnd}
         {...screen.data.screenProps}
       >
         <ScreenStackHeaderConfig {...screen.data.headerProps} />
@@ -111,9 +121,9 @@ export function createStackNavigator() {
 
   async function push(
     component: (props: ScreenProps) => React.ReactElement<any>,
-    options?: Omit<ScreenOptions, "component">
+    options?: Omit<ScreenStackItem, "component">
   ) {
-    const item = store.push({
+    const item = stack.actions.push({
       component,
       headerProps: options?.headerProps ?? {},
       screenProps: options?.screenProps ?? {},
@@ -124,18 +134,15 @@ export function createStackNavigator() {
   }
 
   async function pop() {
-    const item = store.pop();
+    const item = stack.actions.pop();
     return item?.promises.pop;
   }
 
   const Stack = {
     push,
     pop,
-    getState: store.getState,
-    setState: store.setState,
-    subscribe: store.subscribe,
     Navigator,
   };
 
-  return Stack;
+  return { Stack, stack };
 }

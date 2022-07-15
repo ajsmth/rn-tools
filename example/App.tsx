@@ -9,8 +9,17 @@ import {
   Router,
   Routes,
 } from "@rn-toolkit/navigation";
+import {
+  createBottomSheetProvider,
+  createModalProvider,
+  createToastProvider,
+} from "@rn-toolkit/ui";
 import { ThemeProvider } from "@rn-toolkit/tailwind";
 import { View, Text, Pressable } from "./styles";
+
+const Modal = createModalProvider();
+const Toast = createToastProvider();
+const BottomSheet = createBottomSheetProvider();
 
 LogBox.ignoreLogs(["Constants.platform"]);
 
@@ -22,19 +31,24 @@ export default function App() {
   return (
     <ExpoPreviewProvider>
       <ThemeProvider themePreference="dark">
-        <Router
-          routes={{
-            "/hey": ({ next, url }) => {
-              Stack.push(MyScreen);
-              console.log("HIT");
-              
-            },
-          }}
-        >
-          <Stack.Navigator>
-            <MenuContainer />
-          </Stack.Navigator>
-        </Router>
+        <BottomSheet.Provider>
+          <Modal.Provider>
+            <Toast.Provider>
+              <Router
+                routes={{
+                  "/hey": ({ next, url }) => {
+                    Stack.push(MyScreen);
+                    console.log("HIT");
+                  },
+                }}
+              >
+                <Stack.Navigator>
+                  <MenuContainer />
+                </Stack.Navigator>
+              </Router>
+            </Toast.Provider>
+          </Modal.Provider>
+        </BottomSheet.Provider>
       </ThemeProvider>
     </ExpoPreviewProvider>
   );

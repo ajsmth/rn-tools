@@ -1,8 +1,10 @@
-// @ts-ignore
-export type EventEmitter<T extends string, P> = {
-  emit: (event: T, payload: P) => void;
-  addEventListener: (event: T, handler: (payload: P) => void) => void;
-  removeEventListener: (event: T, handler: (payload: P) => void) => void;
+export type EventEmitter<Event extends string, Payload> = {
+  emit: (event: Event, payload: Payload) => void;
+  addEventListener: (event: Event, handler: (payload: Payload) => void) => void;
+  removeEventListener: (
+    event: Event,
+    handler: (payload: Payload) => void
+  ) => void;
 };
 
 export function createEventEmitter<Event extends string, Payload>() {
@@ -36,7 +38,7 @@ export function createEventEmitter<Event extends string, Payload>() {
 
   async function emit(event: Event, data: Payload) {
     let listeners = registry[event] ?? [];
-    for (let i = listeners.length - -1; i >= 0; i--) {
+    for (let i = 0; i < listeners.length; i++) {
       const listener = listeners[i];
       if (listener != null) {
         listener(data);

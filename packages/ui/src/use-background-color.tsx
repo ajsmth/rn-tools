@@ -1,76 +1,78 @@
-import * as React from "react";
-import { Animated } from "react-native";
+// TODO!
 
-import { Stack } from "./create-async-stack";
+// import * as React from "react";
+// import { Animated } from "react-native";
 
-export function useBackgroundColor(stack: Stack<{ backgroundColor?: string }>) {
-  const animatedValue = React.useRef(new Animated.Value(0));
-  const bgColorHistory = React.useRef<string[]>([]);
+// import { Stack } from "./create-async-stack";
 
-  const [colorStack, setColorStack] = React.useState(["rgba(0,0,0,0.0)"]);
+// export function useBackgroundColor(stack: Stack<{ backgroundColor?: string }>) {
+//   const animatedValue = React.useRef(new Animated.Value(0));
+//   const bgColorHistory = React.useRef<string[]>([]);
 
-  React.useEffect(() => {
-    const unsub = stack.subscribe(({ state, event }) => {
-      if (event.action === "pushstart") {
-        const item = state.getItemByKey(event.key);
+//   const [colorStack, setColorStack] = React.useState(["rgba(0,0,0,0.0)"]);
 
-        if (item?.data.backgroundColor != null) {
-          const currentColor =
-            bgColorHistory.current[bgColorHistory.current.length - 1] ||
-            "rgba(0,0,0,0.0)";
+//   React.useEffect(() => {
+//     const unsub = stack.subscribe(({ state, event }) => {
+//       if (event.action === "pushstart") {
+//         const item = state.getItemByKey(event.key);
 
-          bgColorHistory.current.push(item.data.backgroundColor);
+//         if (item?.data.backgroundColor != null) {
+//           const currentColor =
+//             bgColorHistory.current[bgColorHistory.current.length - 1] ||
+//             "rgba(0,0,0,0.0)";
 
-          const nextColor =
-            bgColorHistory.current[bgColorHistory.current.length - 1];
+//           bgColorHistory.current.push(item.data.backgroundColor);
 
-          setColorStack([currentColor, nextColor]);
+//           const nextColor =
+//             bgColorHistory.current[bgColorHistory.current.length - 1];
 
-          animatedValue.current.stopAnimation();
-          animatedValue.current.setValue(0);
+//           setColorStack([currentColor, nextColor]);
 
-          Animated.spring(animatedValue.current, {
-            toValue: 1,
-            useNativeDriver: false,
-          }).start();
-        }
-      }
+//           animatedValue.current.stopAnimation();
+//           animatedValue.current.setValue(0);
 
-      if (event.action === "popstart") {
-        const item = state.getItemByKey(event.key);
+//           Animated.spring(animatedValue.current, {
+//             toValue: 1,
+//             useNativeDriver: false,
+//           }).start();
+//         }
+//       }
 
-        if (item?.data.backgroundColor != null) {
-          const currentColor =
-            bgColorHistory.current.pop() || "rgba(0,0,0,0.0)";
-          const previousColor =
-            bgColorHistory.current[bgColorHistory.current.length - 1] ||
-            "rgba(0,0,0,0.0)";
+//       if (event.action === "popstart") {
+//         const item = state.getItemByKey(event.key);
 
-          animatedValue.current.stopAnimation();
-          animatedValue.current.setValue(0);
+//         if (item?.data.backgroundColor != null) {
+//           const currentColor =
+//             bgColorHistory.current.pop() || "rgba(0,0,0,0.0)";
+//           const previousColor =
+//             bgColorHistory.current[bgColorHistory.current.length - 1] ||
+//             "rgba(0,0,0,0.0)";
 
-          setColorStack([currentColor, previousColor]);
+//           animatedValue.current.stopAnimation();
+//           animatedValue.current.setValue(0);
 
-          Animated.spring(animatedValue.current, {
-            toValue: 1,
-            useNativeDriver: false,
-          }).start();
-        }
-      }
-    });
+//           setColorStack([currentColor, previousColor]);
 
-    return () => {
-      unsub();
-    };
-  }, []);
+//           Animated.spring(animatedValue.current, {
+//             toValue: 1,
+//             useNativeDriver: false,
+//           }).start();
+//         }
+//       }
+//     });
 
-  const backgroundColor =
-    colorStack.length <= 1
-      ? "rgba(0,0,0,0.0)"
-      : animatedValue.current.interpolate({
-          inputRange: [0, 1],
-          outputRange: [colorStack[0], colorStack[1]],
-        });
+//     return () => {
+//       unsub();
+//     };
+//   }, []);
 
-  return backgroundColor;
-}
+//   const backgroundColor =
+//     colorStack.length <= 1
+//       ? "rgba(0,0,0,0.0)"
+//       : animatedValue.current.interpolate({
+//           inputRange: [0, 1],
+//           outputRange: [colorStack[0], colorStack[1]],
+//         });
+
+//   return backgroundColor;
+// }
