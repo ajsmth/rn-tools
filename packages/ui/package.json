@@ -1,6 +1,6 @@
 {
   "name": "@rn-toolkit/ui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "license": "MIT",
@@ -25,7 +25,7 @@
     "react-native-screens": "~3.4.0"
   },
   "dependencies": {
-    "@rn-toolkit/core": "^1.0.0",
-    "@gorhom/bottom-sheet": "^4"
+    "@gorhom/bottom-sheet": "^4",
+    "@rn-toolkit/core": "^1.0.0"
   }
 }
