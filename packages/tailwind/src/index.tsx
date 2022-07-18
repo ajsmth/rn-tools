@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Platform } from "react-native";
 type TailwindWrapperProps = any & {
   component: any;
   styleSheet: any;
@@ -35,17 +34,22 @@ function getStyles(styles: string, styleSheet: any) {
   return tailwindStyle;
 }
 
-export default function TailwindWrapper(props: TailwindWrapperProps) {
-  let {
-    component: Component,
-    styles = "",
-    styleSheet = {},
-    style = {},
-    ...rest
-  } = props;
-  let tailwindStyle = getStyles(styles, styleSheet);
-  return React.createElement(Component, {
-    style: [tailwindStyle, style],
-    ...rest,
-  });
-}
+const TailwindWrapper = React.forwardRef(
+  (props: TailwindWrapperProps, ref: any) => {
+    let {
+      component: Component,
+      styles = "",
+      styleSheet = {},
+      style = {},
+      ...rest
+    } = props;
+    let tailwindStyle = getStyles(styles, styleSheet);
+    return React.createElement(Component, {
+      style: [tailwindStyle, style],
+      ref,
+      ...rest,
+    });
+  }
+);
+
+export default TailwindWrapper;

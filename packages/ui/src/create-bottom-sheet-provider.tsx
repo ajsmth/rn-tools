@@ -1,22 +1,26 @@
 import * as React from "react";
 import { createStackStore, StackItem } from "@rn-toolkit/core";
-import BottomSheet, { BottomSheetProps } from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetProps as BSP } from "@gorhom/bottom-sheet";
+import { Animated, Pressable, StyleSheet } from "react-native";
 
-export type SheetProps = {
+type BSProps = Omit<BSP, "children">;
+
+export type BottomSheetProps<T = any> = T & {
   push: (
-    component: (props: SheetProps) => React.ReactElement<any>,
-    options: BottomSheetProps
+    component: (props: BottomSheetProps<T>) => React.ReactElement<any>,
+    options: Omit<BottomSheetItem<T>, "component">
   ) => Promise<void>;
   pop: () => Promise<void>;
-  updateProps: (updates: BottomSheetProps) => void;
+  updateProps: (updates: BSProps) => void;
   focused: boolean;
 };
 
-type BottomSheetItem = BottomSheetProps & {
-  component: (props: SheetProps) => React.ReactElement<any>;
+type BottomSheetItem<T = any> = BSProps & {
+  props?: T;
+  component: (props: BottomSheetProps) => React.ReactElement<any>;
 };
 
-type BottomSheetStackItem = StackItem<BottomSheetItem>;
+type BottomSheetStackItem<T = any> = StackItem<BottomSheetItem<T>>;
 
 export function createBottomSheetProvider() {
   const stack = createStackStore<BottomSheetItem>();
@@ -33,14 +37,17 @@ export function createBottomSheetProvider() {
     }, []);
 
     return (
-      <>
-        {sheets.map((sheet, index, arr) => {
-          const focused = index === arr.length - 1;
-          return (
-            <BottomSheetItem key={sheet.id} sheet={sheet} focused={focused} />
-          );
-        })}
-      </>
+      <Animated.View pointerEvents={"box-none"} style={StyleSheet.absoluteFill}>
+        <Pressable onPress={pop} style={StyleSheet.absoluteFill}>
+          {children}
+          {sheets.map((sheet, index, arr) => {
+            const focused = index === arr.length - 1;
+            return (
+              <BottomSheetItem key={sheet.id} sheet={sheet} focused={focused} />
+            );
+          })}
+        </Pressable>
+      </Animated.View>
     );
   }
 
@@ -52,7 +59,7 @@ export function createBottomSheetProvider() {
     focused: boolean;
   }) {
     const {
-      data: { component, ...bottomSheetProps },
+      data: { component, props = {}, ...bottomSheetProps },
       actions,
       id,
       status,
@@ -65,7 +72,7 @@ export function createBottomSheetProvider() {
     }, [id]);
 
     const onPushEnd = React.useCallback(() => {
-      return actions.popEnd(id);
+      return actions.pushEnd(id);
     }, [id]);
 
     React.useEffect(() => {
@@ -92,7 +99,7 @@ export function createBottomSheetProvider() {
     );
 
     const updateProps = React.useCallback(
-      (updates: BottomSheetProps) => {
+      (updates: BSProps) => {
         return actions.update(id, updates);
       },
       [id]
@@ -112,14 +119,15 @@ export function createBottomSheetProvider() {
           pop={pop}
           focused={focused}
           updateProps={updateProps}
+          {...props}
         />
       </BottomSheet>
     );
   }
 
-  async function push(
-    component: (props: SheetProps) => React.ReactElement<any>,
-    options: BottomSheetProps
+  async function push<T = any>(
+    component: (props: BottomSheetProps<T>) => React.ReactElement<any>,
+    options: Omit<BottomSheetItem<T>, "component">
   ) {
     const item = stack.actions.push({
       component,

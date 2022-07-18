@@ -17,21 +17,21 @@ export type StackItem<T> = {
   };
 };
 
-type StackEvent = "pushstart" | "pushend" | "popstart" | "popend"
+type StackEvent = "pushstart" | "pushend" | "popstart" | "popend";
 
 type StackState<T> = {
-  stack: StackItem<T>[]
-}
+  stack: StackItem<T>[];
+};
 
 export type StackStore<T> = {
-  store: Store<StackState<T>, StackEvent>,
+  store: Store<StackState<T>, StackEvent>;
   actions: {
     push: (data: T) => StackItem<T>;
     pop: () => StackItem<T> | undefined;
     snapshot: (key: number) => void;
     restore: (key: number) => void;
-  }
-}
+  };
+};
 
 export function createStackStore<T>(): StackStore<T> {
   let store = createStore<StackState<T>, StackEvent>();
@@ -58,19 +58,21 @@ export function createStackStore<T>(): StackStore<T> {
         promises.push.resolve(item);
         let stack = ids.map((id) => byId[id]).filter(Boolean);
         store.setState({ stack });
-        store.emit("pushend")
+        store.emit("pushend");
       },
 
       popEnd: (id: number) => {
         let item = byId[id];
-        item.status = "popped";
-        byId[id] = item;
-        promises.pop.resolve(item);
-        delete byId[id];
-        ids = ids.filter((i) => i !== id);
-        let stack = ids.map((id) => byId[id]).filter(Boolean);
-        store.setState({ stack });
-        store.emit("popend")
+        if (item != null) {
+          item.status = "popped";
+          byId[id] = item;
+          promises.pop.resolve(item);
+          delete byId[id];
+          ids = ids.filter((i) => i !== id);
+          let stack = ids.map((id) => byId[id]).filter(Boolean);
+          store.setState({ stack });
+          store.emit("popend");
+        }
       },
 
       update: (id: number, updates: any) => {
@@ -103,19 +105,21 @@ export function createStackStore<T>(): StackStore<T> {
     byId[id] = item;
     let stack = ids.map((id) => byId[id]).filter(Boolean);
     store.setState({ stack });
-    store.emit("pushstart")
+    store.emit("pushstart");
     return item;
   }
 
   function pop() {
-    let id = ids.pop();
+    let id = ids[ids.length - 1];
     let item = byId[id];
-    item.status === "popping";
-    byId[id] = item;
-    let stack = ids.map((id) => byId[id]).filter(Boolean);
-    store.setState({ stack });
-    store.emit("popstart")
-    return item;
+    if (item) {
+      item.status = "popping";
+      byId[id] = item;
+      let stack = ids.map((id) => byId[id]).filter(Boolean);
+      store.setState({ stack });
+      store.emit("popstart");
+      return item;
+    }
   }
 
   let snapshots: any = {};
@@ -145,7 +149,7 @@ export function createStackStore<T>(): StackStore<T> {
       pop,
       snapshot,
       restore,
-    }
+    },
   };
 
   return stackStore;

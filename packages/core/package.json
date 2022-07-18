@@ -1,8 +1,8 @@
 {
   "name": "@rn-toolkit/core",
   "version": "1.0.0",
-  "main": "./build/index.js",
-  "types": "./build/index.d.ts",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "license": "MIT",
   "files": [
     "build/*"
@@ -22,5 +22,6 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*"
-  }
+  },
+  "private": false
 }

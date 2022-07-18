@@ -180,40 +180,41 @@ const convertToComponentWrapper: Visitor = {
     }
   },
   JSXSpreadAttribute(path, state: any) {
-    state.hasStylesProp = true;
-    // @ts-ignore
-    let element: JSXElement = path.findParent((p) => isJSXElement(p));
+    // TODO - figure out why this is throwing - potentially multiple imports?
+    // state.includesTailwindComponent = true;
+    // // @ts-ignore
+    // let element: JSXElement = path.findParent((p) => isJSXElement(p));
 
-    if (element != null) {
-      // @ts-ignore
-      let openingElement = element.node.openingElement;
-      // @ts-ignore
-      let elementName = openingElement.name.name;
+    // if (element != null) {
+    //   // @ts-ignore
+    //   let openingElement = element.node.openingElement;
+    //   // @ts-ignore
+    //   let elementName = openingElement.name.name;
 
-      // @ts-ignore
-      openingElement.name = jsxIdentifier("TailwindWrapper");
+    //   // @ts-ignore
+    //   openingElement.name = jsxIdentifier("TailwindWrapper");
 
-      // @ts-ignore
-      if (element.node.closingElement != null) {
-        // @ts-ignore
-        element.node.closingElement.name = jsxIdentifier("TailwindWrapper");
-      }
+    //   // @ts-ignore
+    //   if (element.node.closingElement != null) {
+    //     // @ts-ignore
+    //     element.node.closingElement.name = jsxIdentifier("TailwindWrapper");
+    //   }
 
-      openingElement.attributes.push(
-        // @ts-ignore
-        jsxAttribute(
-          jsxIdentifier("component"),
-          jSXExpressionContainer(identifier(elementName))
-        )
-      );
+    //   openingElement.attributes.push(
+    //     // @ts-ignore
+    //     jsxAttribute(
+    //       jsxIdentifier("component"),
+    //       jSXExpressionContainer(identifier(elementName))
+    //     )
+    //   );
 
-      openingElement.attributes.push(
-        // @ts-ignore
-        jsxAttribute(
-          jsxIdentifier("styleSheet"),
-          jSXExpressionContainer(identifier("styleSheet"))
-        )
-      );
-    }
+    //   openingElement.attributes.push(
+    //     // @ts-ignore
+    //     jsxAttribute(
+    //       jsxIdentifier("styleSheet"),
+    //       jSXExpressionContainer(identifier("styleSheet"))
+    //     )
+    //   );
+    // }
   },
 };

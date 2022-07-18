@@ -1,4 +1,4 @@
-import type { ViewProps, TextProps, ImageProps } from "react-native";
+import type { ViewProps, TextProps, ImageProps, PressableProps } from "react-native";
 
 declare module "react-native" {
   interface ViewProps {
@@ -14,6 +14,10 @@ declare module "react-native" {
   }
 
   interface TouchableWithoutFeedbackProps {
+    styles?: string;
+  }
+
+  interface PressableProps {
     styles?: string;
   }
 }

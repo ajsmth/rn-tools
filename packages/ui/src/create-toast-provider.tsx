@@ -8,25 +8,30 @@ import {
 } from "react-native";
 import { createStackStore, StackItem } from "@rn-toolkit/core";
 
+// TODO - animation config, gesture handling
+
 export type ToastOptions = {
   duration?: number;
+  distanceFromBottom?: number;
+  distanceFromTop?: number;
 };
 
-export type ToastProps = {
+export type ToastProps<T = any> = T & {
   push: (
-    component: (props: ToastProps) => React.ReactElement<any>,
-    options: Omit<ToastStackItem, "component">
+    component: (props: ToastProps<T>) => React.ReactElement<any>,
+    options: Omit<ToastItem<T>, "component">
   ) => Promise<void>;
   pop: () => Promise<void>;
   updateProps: (updates: ToastOptions) => void;
   focused: boolean;
 };
 
-type ToastItem = ToastOptions & {
+type ToastItem<T = any> = ToastOptions & {
+  props?: T;
   component: (props: ToastProps) => React.ReactElement<any>;
 };
 
-type ToastStackItem = StackItem<ToastItem>;
+type ToastStackItem<T = any> = StackItem<ToastItem<T>>;
 
 const defaultDistanceFromBottom = 64;
 
@@ -49,6 +54,7 @@ export function createToastProvider() {
         pointerEvents={"box-none"}
         style={[StyleSheet.absoluteFill]}
       >
+        {children}
         {toasts.map((toast, index, arr) => {
           const focused = index === arr.length - 1;
           return <ToastItem key={toast.id} toast={toast} focused={focused} />;
@@ -65,7 +71,7 @@ export function createToastProvider() {
     focused: boolean;
   }) {
     const {
-      data: { component, ...toastProps },
+      data: { component, props = {}, ...toastProps },
       actions,
       id,
       status,
@@ -130,18 +136,31 @@ export function createToastProvider() {
 
     let distanceFromBottom = defaultDistanceFromBottom;
 
+    if (toastProps.distanceFromBottom != null) {
+      distanceFromBottom = toastProps.distanceFromBottom;
+    }
+
     if (layout != null) {
       distanceFromBottom = distanceFromBottom + layout.height;
     }
 
-    const translateY = animatedValueRef.current.interpolate({
+    let translateY = animatedValueRef.current.interpolate({
       inputRange: [0, 1, 2],
-      outputRange: [
-        height,
-        height - distanceFromBottom,
-        height - distanceFromBottom,
-      ],
+      outputRange: [height, height - distanceFromBottom, height],
     });
+
+    if (toastProps.distanceFromTop != null) {
+      if (layout != null) {
+        translateY = animatedValueRef.current.interpolate({
+          inputRange: [0, 1, 2],
+          outputRange: [
+            0 - layout.height,
+            toastProps.distanceFromTop,
+            0 - layout.height,
+          ],
+        });
+      }
+    }
 
     const opacity = animatedValueRef.current.interpolate({
       inputRange: [0, 1, 2],
@@ -171,15 +190,16 @@ export function createToastProvider() {
             pop={pop}
             updateProps={updateProps}
             focused={focused}
+            {...props}
           />
         </Pressable>
       </Animated.View>
     );
   }
 
-  async function push(
-    component: (props: ToastProps) => React.ReactElement<any>,
-    options: Omit<ToastStackItem, "component">
+  async function push<T>(
+    component: (props: ToastProps<T>) => React.ReactElement<any>,
+    options: Omit<ToastStackItem<T>["data"], "component"> = {}
   ) {
     const item = stack.actions.push({
       component,

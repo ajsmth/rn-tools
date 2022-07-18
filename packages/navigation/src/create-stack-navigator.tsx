@@ -10,26 +10,26 @@ import {
 } from "react-native-screens";
 import { createStackStore, StackItem, StackStore } from "@rn-toolkit/core";
 
-export type ScreenProps<T = any> = {
+export type ScreenProps<T = any> = T & {
   setHeaderProps: (updates: ScreenStackHeaderConfigProps) => void;
   setScreenProps: (updates: RNScreenProps) => void;
   push: (
     component: (props: ScreenProps) => React.ReactElement<any>,
-    options: Omit<ScreenStackItem, "component">
+    options: Omit<ScreenStackItem<T>, "component">
   ) => Promise<void>;
   pop: () => Promise<void>;
   focused: boolean;
-} & T;
+} 
 
-export type ScreenStackItem = {
+export type ScreenStackItem<T = any> = {
   key?: string;
-  component: (props: ScreenProps) => React.ReactElement<any>;
+  component: (props: ScreenProps<T>) => React.ReactElement<any>;
   headerProps?: ScreenStackHeaderConfigProps;
   screenProps?: RNScreenProps;
-  props: any;
+  props?: T;
 };
 
-export type StackNavigator = StackStore<ScreenStackItem>
+export type StackNavigator = StackStore<ScreenStackItem>;
 
 export function createStackNavigator() {
   const stack = createStackStore<ScreenStackItem>();
@@ -119,9 +119,9 @@ export function createStackNavigator() {
     );
   }
 
-  async function push(
-    component: (props: ScreenProps) => React.ReactElement<any>,
-    options?: Omit<ScreenStackItem, "component">
+  async function push<T = any>(
+    component: (props: ScreenProps<T>) => React.ReactElement<any>,
+    options?: Omit<ScreenStackItem<T>, "component">
   ) {
     const item = stack.actions.push({
       component,

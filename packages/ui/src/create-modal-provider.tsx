@@ -11,21 +11,22 @@ export type ModalOptions = {
   duration?: number;
 };
 
-export type ModalProps = {
+export type ModalProps<T = any> = T & {
   push: (
-    component: (props: ModalProps) => React.ReactElement<any>,
-    options: Omit<ModalStackItem, "component">
+    component: (props: ModalProps<T>) => React.ReactElement<any>,
+    options: Omit<ModalItem, "component">
   ) => Promise<void>;
   pop: () => Promise<void>;
   updateProps: (updates: ModalOptions) => void;
   focused: boolean;
 };
 
-type ModalItem = ModalOptions & {
+type ModalItem<T = any> = ModalOptions & {
+  props?: T;
   component: (props: ModalProps) => React.ReactElement<any>;
 };
 
-type ModalStackItem = StackItem<ModalItem>;
+type ModalStackItem<T = any> = StackItem<ModalItem<T>>;
 
 export function createModalProvider() {
   const stack = createStackStore<ModalItem>();
@@ -46,6 +47,7 @@ export function createModalProvider() {
         pointerEvents={"box-none"}
         style={[StyleSheet.absoluteFill]}
       >
+        {children}
         {modals.map((modal, index, arr) => {
           const focused = index === arr.length - 1;
           return <ModalItem key={modal.id} modal={modal} focused={focused} />;
@@ -62,7 +64,7 @@ export function createModalProvider() {
     focused: boolean;
   }) {
     const {
-      data: { component, ...ModalProps },
+      data: { component, props = {}, ...modalProps },
       actions,
       id,
       status,
@@ -111,35 +113,42 @@ export function createModalProvider() {
     const Component = component;
 
     return (
-      <Animated.View
-        pointerEvents={isPopping ? "none" : "box-none"}
-        style={[
-          {
-            position: "absolute",
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            transform: [{ translateY }],
-            justifyContent: "center",
-          },
-        ]}
+      <Pressable
+        pointerEvents="box-none"
+        onPress={pop}
+        style={StyleSheet.absoluteFill}
       >
-        <Pressable>
-          <Component
-            push={push}
-            pop={pop}
-            updateProps={updateProps}
-            focused={focused}
-          />
-        </Pressable>
-      </Animated.View>
+        <Animated.View
+          style={[
+            {
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: 0,
+              bottom: 0,
+              transform: [{ translateY }],
+              justifyContent: "center",
+            },
+          ]}
+        >
+          <Pressable>
+            <Component
+              push={push}
+              pop={pop}
+              updateProps={updateProps}
+              focused={focused}
+              {...props}
+              {...modalProps}
+            />
+          </Pressable>
+        </Animated.View>
+      </Pressable>
     );
   }
 
-  async function push(
-    component: (props: ModalProps) => React.ReactElement<any>,
-    options: Omit<ModalStackItem, "component">
+  async function push<T = any>(
+    component: (props: ModalProps<T>) => React.ReactElement<any>,
+    options: Omit<ModalItem<T>, "component">
   ) {
     const item = stack.actions.push({
       component,
