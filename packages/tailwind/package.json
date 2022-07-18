@@ -1,6 +1,6 @@
 {
   "name": "@rn-toolkit/tailwind",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "main": "build/index.js",
   "files": [
     "build/*",
