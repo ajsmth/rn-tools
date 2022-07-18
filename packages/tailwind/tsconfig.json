@@ -7,8 +7,15 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "strict": true,
+    "noImplicitAny": false,
+    "outDir": "build",
     "declaration": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "build", "src/__tests__/**/*"]
+  "exclude": [
+    "node_modules",
+    "build",
+    "src/__tests__/**/*",
+    "src/**/__fixtures__/**/*"
+  ]
 }

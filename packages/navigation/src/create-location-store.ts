@@ -49,7 +49,6 @@ export function createLocationStore(): LocationStore {
       state: config.initialState,
     };
     history = [current];
-    console.log({ current });
     store.setState({ current });
     store.emit("init");
   }

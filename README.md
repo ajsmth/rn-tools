@@ -1,3 +1,3 @@
 # rn-toolkit
 
-A collection of packages for getting up and running quickly w/ React Native + Expo
+Somewhat opinionated packages for developing React Native and Expo apps
