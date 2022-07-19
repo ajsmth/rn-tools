@@ -1,27 +1,27 @@
 import TailwindWrapper from "@rn-toolkit/tailwind";
 import * as React from "react";
-import { View, Text, BottomSheet } from "react-native";
 
 function MyComponent() {
-  const bottomSheetProps = {
-    styles: "bg-white",
-  };
-
-  const onChange = () => {};
-
   return (
     <TailwindWrapper
       enablePanDownToClose
       {...bottomSheetProps}
+      ref={bottomSheetRef}
       onChange={onChange}
       component={BottomSheet}
       styleSheet={styleSheet}
-    />
+    >
+      <TailwindWrapper
+        push={push}
+        pop={pop}
+        focused={focused}
+        updateProps={updateProps}
+        {...props}
+        component={Component}
+        styleSheet={styleSheet}
+      />
+    </TailwindWrapper>
   );
 }
 
-const styleSheet = {
-  "bg-white": {
-    backgroundColor: "#fff",
-  },
-};
+const styleSheet = {};

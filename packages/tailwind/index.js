@@ -1,19 +1,13 @@
 import * as React from "react";
-type TailwindWrapperProps = any & {
-  component: any;
-  styleSheet: any;
-  styles: string;
-  children: React.ReactNode;
-};
 
 let transformProps = ["translate", "rotate", "scale", "skew"];
 let memo = {};
-function getStyles(styles: string, styleSheet: any) {
+function getStyles(styles, styleSheet) {
   if (memo[styles]) {
     return memo[styles];
   }
-  let tailwindStyle: any = {};
-  let transform: any[] = [];
+  let tailwindStyle = {};
+  let transform = [];
   for (let className of styles.split(" ")) {
     if (className != null && styleSheet[className] != null) {
       let styleValue = styleSheet[className];
@@ -34,22 +28,23 @@ function getStyles(styles: string, styleSheet: any) {
   return tailwindStyle;
 }
 
-const TailwindWrapper = React.forwardRef(
-  (props: TailwindWrapperProps, ref: any) => {
-    let {
-      component: Component,
-      styles = "",
-      styleSheet = {},
-      style = {},
-      ...rest
-    } = props;
-    let tailwindStyle = getStyles(styles, styleSheet);
-    return React.createElement(Component, {
-      style: [tailwindStyle, style],
+const TailwindWrapper = React.forwardRef((props, ref) => {
+  let {
+    component: Component,
+    styles = "",
+    styleSheet = {},
+    style = {},
+    ...rest
+  } = props;
+
+  let tailwindStyle = getStyles(styles, styleSheet);
+  return React.createElement(
+    Component,
+    Object.assign(rest, {
       ref,
-      ...rest,
-    });
-  }
-);
+      style: [tailwindStyle, style],
+    })
+  );
+});
 
 export default TailwindWrapper;

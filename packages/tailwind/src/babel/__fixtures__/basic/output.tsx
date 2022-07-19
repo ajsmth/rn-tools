@@ -8,9 +8,7 @@ function MyComponent() {
   };
   return (
     <TailwindWrapper styles="flex-1" component={View} styleSheet={styleSheet}>
-      <TailwindWrapper {...textProps} component={Text} styleSheet={styleSheet}>
-        Hi.
-      </TailwindWrapper>
+      <Text>Hi.</Text>
     </TailwindWrapper>
   );
 }

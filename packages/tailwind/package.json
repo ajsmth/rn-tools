@@ -1,7 +1,7 @@
 {
   "name": "@rn-toolkit/tailwind",
-  "version": "1.0.5",
-  "main": "build/index.js",
+  "version": "1.0.6",
+  "main": "index.js",
   "files": [
     "build/*",
     "babel.js",
@@ -14,13 +14,17 @@
   },
   "devDependencies": {
     "@babel/plugin-syntax-jsx": "^7.18.6",
+    "@babel/preset-typescript": "^7.18.6",
     "@types/jest": "^27.0.3",
     "babel-plugin-tester": "^10.1.0",
     "babel-preset-expo": "^9.0.2",
     "jest": "^27.4.5",
+    "metro-react-native-babel-preset": "^0.71.3",
     "typescript": "^4.3.5"
   },
   "dependencies": {
-    "@babel/types": "^7.18.8"
+    "@babel/types": "^7.18.8",
+    "fast-glob": "^3.2.11",
+    "minimatch": "^5.1.0"
   }
 }

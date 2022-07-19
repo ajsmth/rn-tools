@@ -1,14 +1,20 @@
-import * as React from "react";
-import { View, Text, BottomSheet } from "react-native";
+import * as React from 'react'
 
 function MyComponent() {
-  const bottomSheetProps = { styles: "bg-white" };
-  const onChange = () => {};
   return (
     <BottomSheet
       enablePanDownToClose
       {...bottomSheetProps}
+      ref={bottomSheetRef}
       onChange={onChange}
-    />
+    >
+      <Component
+        push={push}
+        pop={pop}
+        focused={focused}
+        updateProps={updateProps}
+        {...props}
+      />
+    </BottomSheet>
   );
 }

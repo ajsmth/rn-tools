@@ -63,13 +63,13 @@ export function createModalProvider() {
     modal: ModalStackItem;
     focused: boolean;
   }) {
-    const {
+    let {
       data: { component, props = {}, ...modalProps },
       actions,
       id,
       status,
     } = modal;
-
+    modalProps = modalProps ?? {};
     const { height } = useWindowDimensions();
     const animatedValueRef = React.useRef(new Animated.Value(0));
 

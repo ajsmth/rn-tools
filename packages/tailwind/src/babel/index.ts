@@ -10,10 +10,16 @@ import {
   isJSXAttribute,
   isJSXElement,
   isJSXIdentifier,
+  isJSXNamespacedName,
+  isJSXSpreadAttribute,
   jsxAttribute,
   JSXElement,
   jSXExpressionContainer,
+  JSXIdentifier,
   jsxIdentifier,
+  JSXMemberExpression,
+  JSXNamespacedName,
+  JSXOpeningElement,
   nullLiteral,
   numericLiteral,
   objectExpression,
@@ -27,14 +33,30 @@ import * as fs from "fs";
 import { resolve } from "path";
 import { defaultExtractor } from "../extractor/defaultExtractor";
 import build from "../compiler/build";
+import * as fg from "fast-glob";
 
 export default function tailwindBabelPlugin(): PluginObj {
   let configPath = resolve(process.cwd(), "tailwind.config.js");
-  let tailwindConfig = {};
+  let tailwindConfig: { content: string[] } = {
+    content: ["**/**.{tsx,js}"],
+  };
   if (fs.existsSync(configPath)) {
-    tailwindConfig = require(configPath);
+    const config = require(configPath);
+    tailwindConfig = {
+      ...tailwindConfig,
+      ...config,
+    };
   }
   let theme = build(tailwindConfig);
+  let filenames = fg
+    .sync(
+      tailwindConfig.content.map((str) => resolve(process.cwd(), str)),
+      {
+        cwd: process.cwd(),
+        ignore: ["node_modules/*"],
+      }
+    )
+    .filter((path) => !path.includes("node_modules"));
 
   return {
     pre(state) {
@@ -50,31 +72,47 @@ export default function tailwindBabelPlugin(): PluginObj {
             return;
           }
 
-          const extractor = defaultExtractor(tailwindConfig);
-          const classes = extractor(state.file.code);
-          const styleSheet: any = {};
+          if (state.filename == null) {
+            return;
+          }
 
-          classes.forEach((className: string) => {
-            if (
-              theme[className] != null &&
-              typeof theme[className] === "object"
-            ) {
-              styleSheet[className] = theme[className];
-            }
-          });
+          let matchesContentGlob = false;
 
-          const stylesExpression = variableDeclaration("const", [
-            variableDeclarator(
-              identifier("styleSheet"),
-              babelSerializeLiteral(styleSheet)
-            ),
-          ]);
+          if (filenames.includes(state.filename)) {
+            matchesContentGlob = true;
+          }
 
-          path.node.body.push(stylesExpression as any);
+          if (!matchesContentGlob) {
+            return;
+          }
+
           let s = { includesTailwindComponent: false };
+
           path.traverse(convertToComponentWrapper, s);
 
           if (s.includesTailwindComponent) {
+            const extractor = defaultExtractor(tailwindConfig);
+            const classes = extractor(state.file.code);
+            const styleSheet: any = {};
+
+            classes.forEach((className: string) => {
+              if (
+                theme[className] != null &&
+                typeof theme[className] === "object"
+              ) {
+                styleSheet[className] = theme[className];
+              }
+            });
+
+            const stylesExpression = variableDeclaration("const", [
+              variableDeclarator(
+                identifier("styleSheet"),
+                babelSerializeLiteral(styleSheet)
+              ),
+            ]);
+
+            path.node.body.push(stylesExpression as any);
+
             let importStatement = importDeclaration(
               [importDefaultSpecifier(identifier("TailwindWrapper"))],
               stringLiteral("@rn-toolkit/tailwind")
@@ -86,7 +124,8 @@ export default function tailwindBabelPlugin(): PluginObj {
         },
       },
     },
-    post(state) {},
+    // @ts-ignore
+    post(state, other) {},
   };
 }
 
@@ -148,12 +187,16 @@ const convertToComponentWrapper: Visitor = {
         state.includesTailwindComponent = true;
         break;
       }
+
+      if (isJSXSpreadAttribute(attribute)) {
+        hasStylesProp = true;
+        state.includesTailwindComponent = true;
+      }
     }
+    // @ts-ignore
+    let elementName = getJSXElementName(openingElement);
 
     if (hasStylesProp) {
-      // @ts-ignore
-      let elementName = openingElement.name.name;
-
       // @ts-ignore
       openingElement.name = jsxIdentifier("TailwindWrapper");
 
@@ -179,42 +222,23 @@ const convertToComponentWrapper: Visitor = {
       );
     }
   },
-  JSXSpreadAttribute(path, state: any) {
-    // TODO - figure out why this is throwing - potentially multiple imports?
-    // state.includesTailwindComponent = true;
-    // // @ts-ignore
-    // let element: JSXElement = path.findParent((p) => isJSXElement(p));
-
-    // if (element != null) {
-    //   // @ts-ignore
-    //   let openingElement = element.node.openingElement;
-    //   // @ts-ignore
-    //   let elementName = openingElement.name.name;
-
-    //   // @ts-ignore
-    //   openingElement.name = jsxIdentifier("TailwindWrapper");
-
-    //   // @ts-ignore
-    //   if (element.node.closingElement != null) {
-    //     // @ts-ignore
-    //     element.node.closingElement.name = jsxIdentifier("TailwindWrapper");
-    //   }
-
-    //   openingElement.attributes.push(
-    //     // @ts-ignore
-    //     jsxAttribute(
-    //       jsxIdentifier("component"),
-    //       jSXExpressionContainer(identifier(elementName))
-    //     )
-    //   );
-
-    //   openingElement.attributes.push(
-    //     // @ts-ignore
-    //     jsxAttribute(
-    //       jsxIdentifier("styleSheet"),
-    //       jSXExpressionContainer(identifier("styleSheet"))
-    //     )
-    //   );
-    // }
-  },
 };
+
+export function getJSXElementName(node: JSXOpeningElement) {
+  return getElementName(node.name);
+}
+
+/**
+ * Recursive helper function for getJSXElementName
+ */
+function getElementName(
+  node: JSXIdentifier | JSXNamespacedName | JSXMemberExpression
+): string {
+  if (isJSXIdentifier(node)) {
+    return node.name;
+  } else if (isJSXNamespacedName(node)) {
+    return node.name.name;
+  } else {
+    return getElementName(node.object);
+  }
+}

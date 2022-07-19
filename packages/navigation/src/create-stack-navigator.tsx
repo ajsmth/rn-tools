@@ -19,7 +19,7 @@ export type ScreenProps<T = any> = T & {
   ) => Promise<void>;
   pop: () => Promise<void>;
   focused: boolean;
-} 
+};
 
 export type ScreenStackItem<T = any> = {
   key?: string;
@@ -142,6 +142,9 @@ export function createStackNavigator() {
     push,
     pop,
     Navigator,
+    getState: stack.store.getState,
+    setState: stack.store.setState,
+    subscribe: stack.store.subscribe,
   };
 
   return { Stack, stack };
