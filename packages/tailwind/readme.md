@@ -31,6 +31,8 @@ module.exports = {
 };
 ```
 
+**Note**: Clear the cache and restart metro after making changes to `tailwind.config.js`
+
 (Optional) Add a `tailwind.d.ts` somewhere in your project:
 
 ```ts
