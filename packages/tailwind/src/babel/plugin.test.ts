@@ -1,6 +1,6 @@
 import * as path from "path";
 import pluginTester from "babel-plugin-tester";
-import plugin from "./index";
+import plugin from "./plugin";
 
 const fixtures = path.join(__dirname, "__fixtures__");
 

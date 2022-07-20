@@ -1,4 +1,4 @@
-// TODO: REF
+// ref: https://github.com/tailwindlabs/tailwindcss/blob/master/src/lib/regex.js
 const REGEX_SPECIAL = /[\\^$.*+?()[\]{}|]/g;
 const REGEX_HAS_SPECIAL = RegExp(REGEX_SPECIAL.source);
 

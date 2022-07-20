@@ -1,4 +1,4 @@
-// TODO: REF
+// ref: https://github.com/tailwindlabs/tailwindcss/blob/master/src/lib/defaultExtractor.js
 import * as regex from "./regex";
 
 export function defaultExtractor(context: any): any {

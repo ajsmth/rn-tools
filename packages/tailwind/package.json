@@ -1,6 +1,6 @@
 {
   "name": "@rn-toolkit/tailwind",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "index.js",
   "files": [
     "build/*",
@@ -24,7 +24,6 @@
   },
   "dependencies": {
     "@babel/types": "^7.18.8",
-    "fast-glob": "^3.2.11",
-    "minimatch": "^5.1.0"
+    "fast-glob": "^3.2.11"
   }
 }

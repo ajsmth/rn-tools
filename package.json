@@ -5,7 +5,11 @@
     "build:ui": "cd packages/ui && yarn build --watch",
     "build:tailwind": "cd packages/tailwind && yarn build --watch",
     "build:navigation": "cd packages/navigation && yarn build --watch",
-    "build:core": "cd packages/core && yarn build --watch"
+    "build:core": "cd packages/core && yarn build --watch",
+    "publish:ui": "cd packages/ui && yarn build && yarn publish --no-git-tag-version",
+    "publish:navigation": "cd packages/navigation && yarn build && yarn publish --no-git-tag-version",
+    "publish:tailwind": "cd packages/tailwind && yarn build && yarn publish --no-git-tag-version",
+    "publish:core": "cd packages/core && yarn build && yarn publish --no-git-tag-version"
   },
   "workspaces": [
     "packages/*",

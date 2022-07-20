@@ -8,12 +8,10 @@ import {
   importDefaultSpecifier,
   isExpression,
   isJSXAttribute,
-  isJSXElement,
   isJSXIdentifier,
   isJSXNamespacedName,
   isJSXSpreadAttribute,
   jsxAttribute,
-  JSXElement,
   jSXExpressionContainer,
   JSXIdentifier,
   jsxIdentifier,
@@ -36,101 +34,94 @@ import build from "../compiler/build";
 import * as fg from "fast-glob";
 
 export default function tailwindBabelPlugin(): PluginObj {
+  let tailwindConfig = getTailwindConfig();
+  let filenames = getFileNames(tailwindConfig.content);
+  let theme = build(tailwindConfig);
+  let extractor = defaultExtractor(tailwindConfig);
+
+  return {
+    visitor: {
+      Program: {
+        enter(path, { filename, file: { code } }) {
+          if (filename != null && filenames.includes(filename)) {
+            let state = { includesTailwindComponent: false };
+            path.traverse(convertToComponentWrapper, state);
+
+            if (state.includesTailwindComponent) {
+              let styleSheetExpression = getStylesheetExpression(
+                extractor,
+                code,
+                theme
+              );
+
+              path.node.body.push(styleSheetExpression as any);
+
+              let importStatement = importDeclaration(
+                [importDefaultSpecifier(identifier("TailwindWrapper"))],
+                stringLiteral("@rn-toolkit/tailwind")
+              );
+
+              path.node.body.unshift(importStatement as any);
+            }
+          }
+        },
+      },
+    },
+  };
+}
+
+function getTailwindConfig() {
   let configPath = resolve(process.cwd(), "tailwind.config.js");
   let tailwindConfig: { content: string[] } = {
     content: ["**/**.{tsx,js}"],
   };
+
   if (fs.existsSync(configPath)) {
-    const config = require(configPath);
+    let config = require(configPath);
     tailwindConfig = {
       ...tailwindConfig,
       ...config,
     };
   }
-  let theme = build(tailwindConfig);
+
+  return tailwindConfig;
+}
+
+function getFileNames(globs: string[]) {
   let filenames = fg
     .sync(
-      tailwindConfig.content.map((str) => resolve(process.cwd(), str)),
+      globs.map((str) => resolve(process.cwd(), str)),
       {
         cwd: process.cwd(),
         ignore: ["node_modules/*"],
       }
     )
     .filter((path) => !path.includes("node_modules"));
+  return filenames;
+}
 
-  return {
-    pre(state) {
-      this.cache = new Map();
-      // @ts-ignore
-      this.cache.set("styles", []);
-    },
-    visitor: {
-      Program: {
-        enter(path, state) {
-          // @ts-ignore
-          if (state?.filename?.includes("/node_modules/")) {
-            return;
-          }
+function getStylesheetExpression(extractor: any, code: string, theme: any) {
+  const classes = extractor(code);
+  const styleSheet: any = {};
 
-          if (state.filename == null) {
-            return;
-          }
+  classes.forEach((className: string) => {
+    if (theme[className] != null && typeof theme[className] === "object") {
+      styleSheet[className] = theme[className];
+    }
+  });
 
-          let matchesContentGlob = false;
+  const stylesheetExpression = variableDeclaration("const", [
+    variableDeclarator(
+      identifier("styleSheet"),
+      babelSerializeLiteral(styleSheet)
+    ),
+  ]);
 
-          if (filenames.includes(state.filename)) {
-            matchesContentGlob = true;
-          }
-
-          if (!matchesContentGlob) {
-            return;
-          }
-
-          let s = { includesTailwindComponent: false };
-
-          path.traverse(convertToComponentWrapper, s);
-
-          if (s.includesTailwindComponent) {
-            const extractor = defaultExtractor(tailwindConfig);
-            const classes = extractor(state.file.code);
-            const styleSheet: any = {};
-
-            classes.forEach((className: string) => {
-              if (
-                theme[className] != null &&
-                typeof theme[className] === "object"
-              ) {
-                styleSheet[className] = theme[className];
-              }
-            });
-
-            const stylesExpression = variableDeclaration("const", [
-              variableDeclarator(
-                identifier("styleSheet"),
-                babelSerializeLiteral(styleSheet)
-              ),
-            ]);
-
-            path.node.body.push(stylesExpression as any);
-
-            let importStatement = importDeclaration(
-              [importDefaultSpecifier(identifier("TailwindWrapper"))],
-              stringLiteral("@rn-toolkit/tailwind")
-            );
-
-            // @ts-ignore
-            path.node.body.unshift(importStatement);
-          }
-        },
-      },
-    },
-    // @ts-ignore
-    post(state, other) {},
-  };
+  return stylesheetExpression;
 }
 
 // @ts-ignore
-// TODO: REF
+// ref: https://github.com/marklawlor/nativewind/blob/next/packages/nativewind/src/postcss/serialize.ts
 function babelSerializeLiteral(literal: any): Expression {
   if (isExpression(literal)) {
     return literal;
@@ -191,6 +182,7 @@ const convertToComponentWrapper: Visitor = {
       if (isJSXSpreadAttribute(attribute)) {
         hasStylesProp = true;
         state.includesTailwindComponent = true;
+        break;
       }
     }
     // @ts-ignore
@@ -224,6 +216,7 @@ const convertToComponentWrapper: Visitor = {
   },
 };
 
+// ref: https://github.com/marklawlor/nativewind/blob/next/packages/nativewind/src/babel/utils/get-jsx-element-name.ts
 export function getJSXElementName(node: JSXOpeningElement) {
   return getElementName(node.name);
 }
