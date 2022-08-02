@@ -1,8 +1,11 @@
 import * as React from "react";
 
-import { createStackNavigator, Router } from "@rn-toolkit/navigation";
 import {
-  createBackgroundProvider,
+  createStackNavigator,
+  Router,
+  createTabNavigator,
+} from "@rn-toolkit/navigation";
+import {
   createBottomSheetProvider,
   createModalProvider,
   createToastProvider,
@@ -12,6 +15,7 @@ export const Toasts = createToastProvider();
 export const Modals = createModalProvider();
 export const BottomSheets = createBottomSheetProvider();
 export const Stack = createStackNavigator();
+export const Tabs = createTabNavigator();
 
 export function AppProviders({ children }: any) {
   return (

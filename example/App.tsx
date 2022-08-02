@@ -8,54 +8,94 @@ import {
   Toasts,
   BottomSheets,
   Modals,
+  Tabs,
 } from "./AppProviders";
 
 export default function App() {
   return (
     <AppProviders>
-      <View styles="flex-1 bg-rose-500 items-center justify-center">
-        <Pressable
-          onPress={() =>
-            Toasts.push(Toast, {
-              duration: 2000,
-              distanceFromTop: 64,
-              props: { message: "Hello." },
-            })
-          }
-        >
-          <Text styles="text-xl font-bold">Hi.</Text>
-        </Pressable>
-        <Pressable
-          styles="mt-8"
-          onPress={() => {
-            BottomSheets.push(BottomSheet, {
-              snapPoints: [200, 500],
-              props: { message: "Hey." },
-            });
-          }}
-        >
-          <Text styles="text-xl font-bold">Hello.</Text>
-        </Pressable>
-        <Pressable
-          styles="mt-8"
-          onPress={() =>
-            Modals.push(Modal, {
-              props: { message: "Hi." },
-            })
-          }
-        >
-          <Text styles="text-xl font-bold">Hey.</Text>
-        </Pressable>
-        <Pressable
-          styles="mt-8"
-          onPress={() => {
-            Stack.push(Screen, { props: { message: "Howdy." } });
-          }}
-        >
-          <Text styles="text-xl font-bold">Ola.</Text>
-        </Pressable>
-      </View>
+      <Tabs.Navigator>
+        <Tabs.Screen>
+          <HomeScreen title="Home" />
+        </Tabs.Screen>
+        <Tabs.Screen>
+          <HomeScreen title="Away" />
+        </Tabs.Screen>
+      </Tabs.Navigator>
+      <Tabs.Tabbar>
+        <View styles="flex-row justify-around">
+          <Tabs.Tab>
+            {({ onPress, isActive }) => (
+              <Pressable
+                onPress={onPress}
+                styles={`h-12 w-12 ${isActive ? "border" : ""}`}
+              >
+                <Text>Home</Text>
+              </Pressable>
+            )}
+          </Tabs.Tab>
+          <Tabs.Tab>
+            {({ onPress, isActive }) => (
+              <Pressable
+                onPress={onPress}
+                styles={`h-12 w-12 ${isActive ? "border" : ""}`}
+              >
+                <Text>Away</Text>
+              </Pressable>
+            )}
+          </Tabs.Tab>
+        </View>
+      </Tabs.Tabbar>
     </AppProviders>
+  );
+}
+
+function HomeScreen({ title = "" }) {
+  return (
+    <View styles="flex-1 bg-rose-500 items-center justify-center">
+      <Text styles="text-xl my-6 font-bold">{title}</Text>
+
+      <Pressable
+        onPress={() =>
+          Toasts.push(Toast, {
+            duration: 2000,
+            distanceFromTop: 64,
+            props: { message: "Hello." },
+          })
+        }
+      >
+        <Text styles="text-xl font-bold">Hi.</Text>
+      </Pressable>
+      <Pressable
+        styles="mt-8"
+        onPress={() => {
+          BottomSheets.push(BottomSheet, {
+            snapPoints: [200, 500],
+            props: { message: "Hey." },
+          });
+        }}
+      >
+        <Text styles="text-xl font-bold">Hello.</Text>
+      </Pressable>
+      <Pressable
+        styles="mt-8"
+        onPress={() =>
+          Modals.push(Modal, {
+            props: { message: "Hi." },
+          })
+        }
+      >
+        <Text styles="text-xl font-bold">Hey.</Text>
+      </Pressable>
+      <Pressable
+        styles="mt-8"
+        onPress={() => {
+          Stack.push(Screen, { props: { message: "Howdy." } });
+        }}
+      >
+        <Text styles="text-xl font-bold">Ola.</Text>
+      </Pressable>
+    </View>
   );
 }
 

@@ -24,3 +24,5 @@ export function createStackNavigator() {
 export { ScreenProps };
 export const Router = createRouter(router);
 export { Routes, RouteHandler };
+
+export * from "./create-tab-navigator";

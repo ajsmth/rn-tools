@@ -8,18 +8,6 @@ An alternative approach to navigation with special attention to routing
 expo install @rn-toolkit/navigation react-native-screens
 ```
 
-or
-
-```bash
-yarn add @rn-toolkit/navigation react-native-screens
-```
-
-or
-
-```bash
-npm install @rntoolkit/navigation react-native-screens
-```
-
 ## API
 
 Every stack in your application is created with the `createStackNavigator` function:
@@ -79,6 +67,56 @@ function MyScreen(props: ScreenProps<MyProps>) {
 
   return <Text>{text}</Text>;
 }
+```
+
+Tab navigators are created with `createTabNavigator()`:
+
+```tsx
+import { createTabNavigator } from "@rn-toolkit/navigation";
+
+const Tabs = createTabNavigator();
+
+function MyTabs() {
+  return (
+    <Tabs.Navigator>
+      <Tabs.Screen>
+        <HomeScreen title="Home" />
+      </Tabs.Screen>
+      <Tabs.Screen>
+        <HomeScreen title="Settings" />
+      </Tabs.Screen>
+    </Tabs.Navigator>
+  );
+}
+```
+
+Tabbar items are declared like this:
+
+```tsx
+function MyTabbar() {
+  return (
+    <Tabs.Tabbar>
+      <View>
+        <Tabs.Tab>
+          {({ onPress, isActive }) => (
+            <Pressable onPress={onPress}>
+              <Text>Home</Text>
+            </Pressable>
+          )}
+        </Tabs.Tab>
+        <Tabs.Tab>
+          {({ onPress, isActive }) => <Pressable onPress={onPress}></Pressable>}
+        </Tabs.Tab>
+      </View>
+    </Tabs.Tabbar>
+  );
+}
+```
+
+You can also jump to specific tab imperatively:
+
+```tsx
+Tabs.jumpTo(1);
 ```
 
 ## Routing
