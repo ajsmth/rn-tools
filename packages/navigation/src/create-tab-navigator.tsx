@@ -58,7 +58,6 @@ export function createTabNavigator() {
     let index = useDescendant(null);
     let activeIndex = React.useContext(ActiveIndexContext);
     let isActive = index === activeIndex;
-    // console.log({ activeIndex })
 
     if (isActive) {
       return <>{children}</>;
@@ -92,8 +91,6 @@ export function createTabNavigator() {
 
     let isActive = index === activeIndex;
     let onPress = () => jumpTo(index);
-
-    console.log({ index, isActive, activeIndex });
 
     return children({ isActive, onPress });
   }
