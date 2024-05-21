@@ -1,138 +1,130 @@
-import { ScreenProps } from "@rn-toolkit/navigation";
-import { BottomSheetProps, ToastProps, ModalProps } from "@rn-toolkit/ui";
 import * as React from "react";
-import { View, Text, Pressable } from "react-native";
+import { Text, View, TouchableOpacity } from "react-native";
 import {
-  AppProviders,
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+
+import {
+  navigation,
   Stack,
-  Toasts,
-  BottomSheets,
-  Modals,
-  Tabs,
-} from "./AppProviders";
+  StackNavigator,
+  TabNavigator,
+  defaultTabbarStyle,
+  setDebugModeEnabled
+} from "@rn-toolkit/navigation";
+
 
 export default function App() {
   return (
-    <AppProviders>
-      <Tabs.Navigator>
-        <Tabs.Screen>
-          <HomeScreen title="Home" />
-        </Tabs.Screen>
-        <Tabs.Screen>
-          <HomeScreen title="Away" />
-        </Tabs.Screen>
-      </Tabs.Navigator>
-      <Tabs.Tabbar>
-        <View styles="flex-row justify-around">
-          <Tabs.Tab>
-            {({ onPress, isActive }) => (
-              <Pressable
-                onPress={onPress}
-                styles={`h-12 w-12 ${isActive ? "border" : ""}`}
-              >
-                <Text>Home</Text>
-              </Pressable>
-            )}
-          </Tabs.Tab>
-          <Tabs.Tab>
-            {({ onPress, isActive }) => (
-              <Pressable
-                onPress={onPress}
-                styles={`h-12 w-12 ${isActive ? "border" : ""}`}
-              >
-                <Text>Away</Text>
-              </Pressable>
-            )}
-          </Tabs.Tab>
+    <SafeAreaProvider>
+      <MyTabs />
+    </SafeAreaProvider>
+  );
+}
+
+function MyTabs() {
+  const { bottom } = useSafeAreaInsets();
+
+  const tabbarStyle = React.useMemo(() => {
+    return {
+      ...defaultTabbarStyle,
+      bottom,
+    };
+  }, []);
+
+  return (
+    <TabNavigator
+      tabbarPosition="bottom"
+      tabbarStyle={tabbarStyle}
+      screens={[
+        {
+          key: "1",
+          screen: <MyStack count={1} colorClassName="bg-red-500" />,
+          tab: ({ isActive }) => (
+            <View className="flex-1 p-4 items-center">
+              <Text className={isActive ? "font-bold" : "font-medium"}>1</Text>
+            </View>
+          ),
+        },
+        {
+          key: "2",
+          screen: <MyStack count={2} colorClassName="bg-blue-500" />,
+          tab: ({ isActive }) => (
+            <View className="p-4 items-center">
+              <Text className={isActive ? "font-bold" : "font-medium"}>2</Text>
+            </View>
+          ),
+        },
+        {
+          key: "3",
+          screen: <MyStack count={3} colorClassName="bg-purple-500" />,
+          tab: ({ isActive }) => (
+            <View className="p-4 items-center">
+              <Text className={isActive ? "font-bold" : "font-medium"}>3</Text>
+            </View>
+          ),
+        },
+      ]}
+    />
+  );
+}
+
+function MyStack({
+  count,
+  colorClassName,
+}: {
+  count: number;
+  colorClassName?: string;
+}) {
+  return (
+    <StackNavigator
+      rootScreen={<MyScreen count={count} colorClassName={colorClassName} />}
+    />
+  );
+}
+
+function MyScreen({
+  count,
+  colorClassName = "",
+  children,
+}: {
+  count: number;
+  colorClassName?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <View className={"flex-1" + " " + colorClassName}>
+      {children || (
+        <View className="flex-1 items-center justify-center gap-4">
+          <Text>{count}</Text>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.pushScreen(
+                <Stack.Screen>
+                  <MyScreen count={8} colorClassName="bg-white" />
+                </Stack.Screen>
+              )
+            }
+          >
+            <Text>Push</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.popScreen(2);
+            }}
+          >
+            <Text>Pop</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.setTabIndex(1);
+            }}
+          >
+            <Text>Set index</Text>
+          </TouchableOpacity>
         </View>
-      </Tabs.Tabbar>
-    </AppProviders>
-  );
-}
-
-function HomeScreen({ title = "" }) {
-  return (
-    <View styles="flex-1 bg-rose-500 items-center justify-center">
-      <Text styles="text-xl my-6 font-bold">{title}</Text>
-
-      <Pressable
-        onPress={() =>
-          Toasts.push(Toast, {
-            duration: 2000,
-            distanceFromTop: 64,
-            props: { message: "Hello." },
-          })
-        }
-      >
-        <Text styles="text-xl font-bold">Hi.</Text>
-      </Pressable>
-      <Pressable
-        styles="mt-8"
-        onPress={() => {
-          BottomSheets.push(BottomSheet, {
-            snapPoints: [200, 500],
-            props: { message: "Hey." },
-          });
-        }}
-      >
-        <Text styles="text-xl font-bold">Hello.</Text>
-      </Pressable>
-      <Pressable
-        styles="mt-8"
-        onPress={() =>
-          Modals.push(Modal, {
-            props: { message: "Hi." },
-          })
-        }
-      >
-        <Text styles="text-xl font-bold">Hey.</Text>
-      </Pressable>
-      <Pressable
-        styles="mt-8"
-        onPress={() => {
-          Stack.push(Screen, { props: { message: "Howdy." } });
-        }}
-      >
-        <Text styles="text-xl font-bold">Ola.</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-function Toast(props: ToastProps<{ message: string }>) {
-  const { message } = props;
-  return (
-    <View styles="mx-8 py-6 px-4 bg-white shadow rounded-lg">
-      <Text styles="font-semibold text-sm text-center">{message}</Text>
-    </View>
-  );
-}
-
-function BottomSheet(props: BottomSheetProps<{ message: string }>) {
-  const { message } = props;
-  return (
-    <View styles="mx-8 py-6 px-4 bg-white shadow rounded-lg">
-      <Text styles="font-semibold text-lg text-center">{message}</Text>
-    </View>
-  );
-}
-
-function Modal(props: ModalProps<{ message: string }>) {
-  const { message } = props;
-  return (
-    <View styles="mx-8 py-6 px-4 bg-white shadow rounded-lg">
-      <Text styles="font-semibold text-sm text-center">{message}</Text>
-    </View>
-  );
-}
-
-function Screen(props: ScreenProps<{ message: string }>) {
-  const { message, setHeaderProps } = props;
-  return (
-    <View styles="bg-white flex-1 items-center justify-center">
-      <Pressable onPress={() => setHeaderProps({ title: message })}>
-        <Text styles="font-semibold text-lg text-center">{message}</Text>
-      </Pressable>
+      )}
     </View>
   );
 }
