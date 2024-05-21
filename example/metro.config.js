@@ -1,5 +1,8 @@
-const { createMetroConfiguration } = require("expo-yarn-workspaces");
-const withExpoPreview = require("expo-component-preview/withExpoComponentPreview");
-const config = createMetroConfiguration(__dirname);
+// Learn more https://docs.expo.io/guides/customizing-metro
+const { getDefaultConfig } = require('expo/metro-config');
 
-module.exports = withExpoPreview(config);
+/** @type {import('expo/metro-config').MetroConfig} */
+const config = getDefaultConfig(__dirname);
+
+config.resolver.sourceExts.push('mjs');
+module.exports = config;

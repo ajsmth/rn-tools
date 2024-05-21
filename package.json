@@ -15,8 +15,5 @@
     "packages/*",
     "example"
   ],
-  "devDependencies": {
-    "expo-yarn-workspaces": "^1.7.0"
-  },
   "dependencies": {}
 }
