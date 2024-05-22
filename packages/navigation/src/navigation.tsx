@@ -27,11 +27,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /**
  * Ideas:
- *  - single key store for all screens instead of by stack
+ *  - make screens navigationwide
  *  - reset navigation
  *  - monitor rerenders
  *  - warn on parallel stacks?
  *  - lifecycles?
+ *  - testing - internal and jest plugin
  */
 
 let generateStackId = createIdGenerator("stack");
@@ -53,8 +54,14 @@ type PushScreenOptions = {
 };
 
 type NavigationStore = {
-  stacks: StackItem[];
-  tabs: TabItem[];
+  stacks: {
+    lookup: Record<string, StackItem>;
+    ids: string[];
+  };
+  tabs: {
+    lookup: Record<string, TabItem>;
+    ids: string[];
+  };
 
   debugModeEnabled: boolean;
 };
@@ -63,8 +70,14 @@ let storeBase = create<NavigationStore>();
 let useNavigation = storeBase(
   immer((set) => {
     return {
-      stacks: [],
-      tabs: [],
+      stacks: {
+        lookup: {},
+        ids: [],
+      },
+      tabs: {
+        lookup: {},
+        ids: [],
+      },
       debugModeEnabled: false,
     };
   })
@@ -80,7 +93,14 @@ export function setDebugModeEnabled(enabled: boolean) {
   });
 }
 
-let depthCharts = {
+type DepthCharts = {
+  stacksByDepth: Record<string, string[]>;
+  tabsByDepth: Record<string, string[]>;
+  tabParentsById: Record<string, string>;
+  stackParentsById: Record<string, string>;
+};
+
+let depthCharts: DepthCharts = {
   stacksByDepth: {},
   tabsByDepth: {},
   tabParentsById: {},
@@ -106,11 +126,31 @@ type TabItem = {
   isGenerated?: boolean;
 };
 
-export type StackInstance = ReturnType<typeof createStack>;
+export type StackInstance = ReturnType<typeof getStackFns>;
 
 let DEFAULT_SLOT_NAME = "DEFAULT_SLOT";
 
-export function createStack({
+function addStack(stack: StackItem) {
+  setState((state) => {
+    state.stacks.ids = state.stacks.ids
+      .filter((id) => id !== stack.id)
+      .concat(stack.id);
+
+    state.stacks.lookup[stack.id] = stack;
+  });
+}
+
+function addTabs(tabs: TabItem) {
+  setState((state) => {
+    state.tabs.ids = state.tabs.ids
+      .filter((id) => id !== tabs.id)
+      .concat(tabs.id);
+
+    state.tabs.lookup[tabs.id] = tabs;
+  });
+}
+
+function createStack({
   defaultSlotName = DEFAULT_SLOT_NAME,
   id,
 }: {
@@ -123,31 +163,22 @@ export function createStack({
     id: stackId,
     defaultSlotName,
     screens: [],
-    isGenerated: false,
+    isGenerated: !id,
   };
 
-  setState((state) => {
-    state.stacks.push(initialStack);
-  });
+  addStack(initialStack);
 
   return getStackFns(stackId);
 }
 
-function createStackInternal() {
-  let stackId = generateStackId();
+function getStack(stackId: string = "") {
+  let stackItem = getState().stacks.lookup[stackId];
 
-  let initialStack: StackItem = {
-    id: stackId,
-    defaultSlotName: DEFAULT_SLOT_NAME,
-    screens: [],
-    isGenerated: true,
-  };
+  if (!stackItem) {
+    return null;
+  }
 
-  setState((state) => {
-    state.stacks.push(initialStack);
-  });
-
-  return getStackFns(stackId);
+  return getStackFns(stackItem.id);
 }
 
 function getStackFns(stackId: string) {
@@ -157,7 +188,7 @@ function getStackFns(stackId: string) {
       pushScreen(screen, { stackId, ...options }),
     pop: (count: number) => popScreen(count, { stackId }),
     popByKey: (key: string) => popScreenByKey(key, { stackId }),
-    get: () => getState().stacks.find((stack) => stack.id === stackId),
+    get: () => getState().stacks.lookup[stackId],
     reset: () => popScreen(-1, { stackId }),
   };
 }
@@ -167,7 +198,7 @@ function pushScreen(
   options: PushScreenOptions
 ) {
   setState((state) => {
-    let stack = state.stacks.find((stack) => stack.id === options.stackId);
+    let stack = state.stacks.lookup[options.stackId ?? ""];
 
     if (!stack) {
       if (state.debugModeEnabled) {
@@ -192,7 +223,7 @@ function pushScreen(
 
 function popScreen(count = 1, options: { stackId: string }) {
   setState((state) => {
-    let stack = state.stacks.find((stack) => stack.id === options.stackId);
+    let stack = state.stacks.lookup[options.stackId ?? ""];
 
     if (!stack) {
       if (state.debugModeEnabled) {
@@ -212,7 +243,7 @@ function popScreen(count = 1, options: { stackId: string }) {
 
 function popScreenByKey(key: string, options: { stackId: string }) {
   setState((state) => {
-    let stack = state.stacks.find((stack) => stack.id === options.stackId);
+    let stack = state.stacks.lookup[options.stackId ?? ""];
 
     if (!stack) {
       if (state.debugModeEnabled) {
@@ -244,8 +275,8 @@ function registerStack({
     );
   });
 
-  if (isActive) {
-    depthCharts.stacksByDepth[depth]?.push(stackId);
+  if (isActive && !depthCharts.stacksByDepth[depth].includes(stackId)) {
+    depthCharts.stacksByDepth[depth].push(stackId);
   }
 
   if (parentStackId) {
@@ -261,10 +292,11 @@ function unregisterStack({ stackId }: { stackId: string }) {
   }
 
   setState((state) => {
-    let stack = state.stacks.find((stack) => stack.id === stackId);
+    let stack = state.stacks.lookup[stackId];
 
     if (stack?.isGenerated && depthCharts.stackParentsById[stackId] != null) {
-      state.stacks = state.stacks.filter((stack) => stack.id !== stackId);
+      state.stacks.ids = state.stacks.ids.filter((id) => id !== stackId);
+      delete state.stacks.lookup[stackId];
     }
   });
 }
@@ -301,21 +333,24 @@ let ScreenIdContext = React.createContext<string>("");
 let ActiveContext = React.createContext<boolean>(true);
 let DepthContext = React.createContext<number>(0);
 
-function StackRoot({
-  children,
-  stack: initialStack,
-}: {
+type StackRootProps = {
   children: React.ReactNode;
-  stack?: StackInstance;
-}) {
-  let [stackRef, setStackRef] = React.useState(initialStack);
+  id?: string;
+};
+
+function StackRoot({ children, id }: StackRootProps) {
+  let [stackRef, setStackRef] = React.useState<StackInstance | null>(
+    getStack(id)
+  );
+
+  let stack = React.useMemo(() => getStack(id), [id]);
 
   React.useEffect(() => {
-    if (!initialStack) {
-      let newStack = createStackInternal();
-      setStackRef(newStack);
+    if (!stack) {
+      stack = createStack({ id });
+      setStackRef(stack);
     }
-  }, [initialStack]);
+  }, [id]);
 
   let isActive = React.useContext(ActiveContext);
   let parentDepth = React.useContext(DepthContext);
@@ -422,8 +457,8 @@ function StackScreen({
   );
 }
 
-let useStackItem = (stackId?: string) =>
-  useNavigation((state) => state.stacks.find((stack) => stack.id === stackId));
+let useStackItem = (stackId = "") =>
+  useNavigation((state) => state.stacks.lookup[stackId]);
 
 function StackSlot({ slotName = DEFAULT_SLOT_NAME }: { slotName?: string }) {
   let stackId = React.useContext(StackIdContext);
@@ -489,9 +524,7 @@ export let navigation = {
     let remainingScreens = count - screensToPop;
 
     let parentStackId = depthCharts.stackParentsById[stackId];
-    let parentStack = getState().stacks.find(
-      (stack) => stack.id === parentStackId
-    );
+    let parentStack = getState().stacks.lookup[parentStackId];
 
     while (remainingScreens > 0 && parentStackId && parentStack) {
       let screensToPop = Math.min(parentStack.screens.length, remainingScreens);
@@ -501,23 +534,29 @@ export let navigation = {
       let nextParentStack = depthCharts.stackParentsById[parentStack.id];
 
       parentStackId = nextParentStack;
-      parentStack = getState().stacks.find(
-        (stack) => stack.id === parentStackId
-      );
+      parentStack = getState().stacks.lookup[parentStackId];
     }
   },
 
   setTabIndex: (index: number, options?: { tabId?: string }) => {
-    const focusedTabs = getFocusedTabs();
+    let focusedTabs = getFocusedTabs();
     setTabIndex(index, { ...options, tabId: options?.tabId || focusedTabs.id });
   },
 
   reset: () => {
     // TODO
   },
+
+  getStack: (stackId: string) => {
+    return getStack(stackId);
+  },
+
+  getTabs: (tabId: string) => {
+    return getTabs(tabId);
+  },
 };
 
-export type TabsInstance = ReturnType<typeof createTabs>;
+export type TabsInstance = ReturnType<typeof getTabFns>;
 
 export function createTabs({
   id,
@@ -531,35 +570,17 @@ export function createTabs({
   let initialTabs: TabItem = {
     id: tabId,
     activeIndex: initialActiveIndex,
-    isGenerated: false,
+    isGenerated: !id,
   };
 
-  setState((state) => {
-    state.tabs.push(initialTabs);
-  });
-
-  return getTabFns(tabId);
-}
-
-function createTabsInternal() {
-  let tabId = generateTabId();
-
-  let initialTabs: TabItem = {
-    id: tabId,
-    activeIndex: 0,
-    isGenerated: true,
-  };
-
-  setState((state) => {
-    state.tabs.push(initialTabs);
-  });
+  addTabs(initialTabs);
 
   return getTabFns(tabId);
 }
 
 function setActiveIndex(index: number, { tabId }: { tabId: string }) {
   setState((state) => {
-    let tab = state.tabs.find((tab) => tab.id === tabId);
+    let tab = state.tabs.lookup[tabId];
 
     if (tab) {
       tab.activeIndex = index;
@@ -570,7 +591,7 @@ function setActiveIndex(index: number, { tabId }: { tabId: string }) {
 function getTabFns(tabId: string) {
   return {
     id: tabId,
-    get: () => getState().tabs.find((tab) => tab.id === tabId),
+    get: () => getState().tabs.lookup[tabId],
     setActiveIndex: (index: number) => setActiveIndex(index, { tabId }),
     reset: () => setActiveIndex(0, { tabId }),
   };
@@ -591,26 +612,33 @@ let TABS_STUB: TabsInstance = {
 let TabsContext = React.createContext<TabsInstance>(TABS_STUB);
 let TabIdContext = React.createContext<string>("");
 
+type TabsRootProps = {
+  children: React.ReactNode;
+  id?: string;
+};
+
 function TabsRoot({
-  tabs: initialTabs,
   children,
+  id,
 }: {
   children: React.ReactNode;
-  tabs?: TabsInstance;
+  id?: string;
 }) {
-  let [tabsRef, setTabsRef] = React.useState(initialTabs);
-
-  React.useEffect(() => {
-    if (!initialTabs) {
-      let newTabs = createTabsInternal();
-      setTabsRef(newTabs);
-    }
-  }, [initialTabs]);
+  let [tabsRef, setTabsRef] = React.useState<TabsInstance | null>(getTabs(id));
 
   let tabId = tabsRef?.id;
   let depth = React.useContext(DepthContext);
   let isActive = React.useContext(ActiveContext);
   let parentTabId = React.useContext(TabIdContext);
+
+  React.useEffect(() => {
+    let tabs = getTabs(id);
+
+    if (!tabs) {
+      tabs = createTabs({ id });
+      setTabsRef(tabs);
+    }
+  }, [id]);
 
   React.useEffect(() => {
     if (tabId != null) {
@@ -629,7 +657,7 @@ function TabsRoot({
         unregisterTabs({ tabId });
       }
     };
-  }, [tabId, initialTabs]);
+  }, [tabId]);
 
   if (!tabsRef) {
     return null;
@@ -664,8 +692,8 @@ function TabsScreens({
   );
 }
 
-let useTabItem = (tabId?: string) =>
-  useNavigation((state) => state.tabs.find((tabs) => tabs.id === tabId));
+let useTabItem = (tabId = "") =>
+  useNavigation((state) => state.tabs.lookup[tabId]);
 
 function TabsScreen({
   children,
@@ -782,7 +810,7 @@ export let Tabs = {
 
 function setTabIndex(index: number, options: { tabId: string }) {
   setState((state) => {
-    let tab = state.tabs.find((tab) => tab.id === options.tabId);
+    let tab = state.tabs.lookup[options.tabId];
     if (tab) {
       tab.activeIndex = index;
     }
@@ -808,7 +836,7 @@ function registerTabs({
     );
   });
 
-  depthCharts.tabParentsById[tabId] = parentTabId;
+  depthCharts.tabParentsById[tabId] = parentTabId ?? "";
 
   if (isActive) {
     depthCharts.tabsByDepth[depth]?.push(tabId);
@@ -823,10 +851,11 @@ function unregisterTabs({ tabId }: { tabId: string }) {
   }
 
   setState((state) => {
-    let tabs = state.tabs.find((tabs) => tabs.id === tabId);
+    let tabs = state.tabs.lookup[tabId];
 
     if (tabs?.isGenerated) {
-      state.tabs = state.tabs.filter((tabs) => tabs.id !== tabId);
+      state.tabs.ids = state.tabs.ids.filter((id) => id !== tabId);
+      delete state.tabs.lookup[tabId];
     }
   });
 }
@@ -842,13 +871,16 @@ function getFocusedTabs() {
   return getTabFns(topTabId);
 }
 
-type StackNavigatorProps = {
+type StackNavigatorProps = Omit<StackRootProps, "children"> & {
   rootScreen: React.ReactElement<unknown>;
 };
 
-export function StackNavigator({ rootScreen }: StackNavigatorProps) {
+export function StackNavigator({
+  rootScreen,
+  ...rootProps
+}: StackNavigatorProps) {
   return (
-    <Stack.Root>
+    <Stack.Root {...rootProps}>
       <Stack.Screens>
         <Stack.Screen>{rootScreen}</Stack.Screen>
         <Stack.Slot />
@@ -857,7 +889,7 @@ export function StackNavigator({ rootScreen }: StackNavigatorProps) {
   );
 }
 
-type TabNavigatorProps = {
+type TabNavigatorProps = Omit<TabsRootProps, "children"> & {
   screens: TabNavigatorScreenOptions[];
   tabbarPosition?: "top" | "bottom";
   tabbarStyle?: ViewProps["style"];
@@ -870,7 +902,7 @@ type TabNavigatorScreenOptions = {
   tab: TabbarTabProps["children"];
 };
 
-const defaultScreenContainerStyle = {
+let defaultScreenContainerStyle = {
   flex: 1,
 };
 
@@ -879,9 +911,10 @@ export function TabNavigator({
   tabbarPosition = "bottom",
   tabbarStyle,
   screenContainerStyle,
+  ...rootProps
 }: TabNavigatorProps) {
   return (
-    <Tabs.Root>
+    <Tabs.Root {...rootProps}>
       {tabbarPosition === "top" && (
         <Tabs.Tabbar style={tabbarStyle}>
           {screens.map((screen) => {
@@ -905,4 +938,14 @@ export function TabNavigator({
       )}
     </Tabs.Root>
   );
+}
+
+function getTabs(tabId = "") {
+  let tabItem = getState().tabs.lookup[tabId];
+
+  if (!tabItem) {
+    return null;
+  }
+
+  return getTabFns(tabItem.id);
 }

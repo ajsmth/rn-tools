@@ -11,9 +11,10 @@ import {
   StackNavigator,
   TabNavigator,
   defaultTabbarStyle,
-  setDebugModeEnabled
+  setDebugModeEnabled,
 } from "@rn-toolkit/navigation";
 
+setDebugModeEnabled(true);
 
 export default function App() {
   return (
@@ -102,7 +103,7 @@ function MyScreen({
             onPress={() =>
               navigation.pushScreen(
                 <Stack.Screen>
-                  <MyScreen count={8} colorClassName="bg-white" />
+                  <MyTabs />
                 </Stack.Screen>
               )
             }
