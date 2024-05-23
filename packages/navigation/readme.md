@@ -1,36 +1,26 @@
 # @rn-toolkit/navigation
 
-A set of minimal navigation utilities for React Native. Built with `react-native-screens`. Not as robust as a library like `react-navigation`, designed with flexibility in mind.
-
-## Why
-
-- Simple typings
-- Small API for navigation
-- Full control over navigation behaviour
+A set of minimal navigation components for React Native. Built with `react-native-screens`. Not as robust as a library like `react-navigation`. Designed with flexibility in mind. Build your own abstractions on top of this!
 
 ## Installation
 
 ```bash
-expo install @rn-toolkit/navigation react-native-screens
+yarn expo install @rn-toolkit/navigation react-native-screens
 ```
 
 ## Basic Usage
 
-For the basic usage, the `StackNavigator` and `TabNavigator` components will get you up and running quickly. These components are wrappers around the base `Stack` and `Tabs` components. If you need more control you can always use the base components directly - examples for this are provided in the "Advanced" section below.
-
-**Note**: Most apps will likely only need one or two stack navigators and a single tab navigator, but this library is designed to let you nest them as needed.
+For basic usage, the exported `StackNavigator` and `TabNavigator` components will get you up and running quickly
 
 ### Stack Navigator
 
-The `StackNavigator` component is used to manage a stack of screens. The `rootScreen` prop is the initial screen that will be rendered.
-
-Other screens can be pushed ontop of the root screen by the `navigation.pushScreen` method. Similarly screens can be popped off the stack with the `navigation.popScreen` method.
-
-`navigation.popScreen` can be passed a number to pop multiple screens at once. If the number is greater than the number of screens in the stack, all screens will be popped. `navigation.popScreen(-1)` will pop all screens that have been pushed onto the stack.
+The `StackNavigator` component manages stacks of screens. Under the hood this is using `react-native-screens` to handle pushing and popping screens natively. Screens can be pushed and popped via the `navigation.pushScreen` and `navigation.popScreen` methods.
 
 ```tsx
-import { View, Text, Button } from "@react-native";
-import { StackNavigator, navigation } from "@rn-toolkit/navigation";
+import * as React from "react";
+import { View, Text, Button } from "react-native";
+
+import { StackNavigator, Stack, navigation } from "@rn-toolkit/navigation";
 
 function App() {
   return <StackNavigator rootScreen={<MyScreen title="Root Screen" />} />;
@@ -38,13 +28,17 @@ function App() {
 
 function MyScreen({
   title,
-  isRoot = true,
+  showPopButton = false,
 }: {
   title: string;
-  isRoot: boolean;
+  showPopButton?: boolean;
 }) {
   function pushScreen() {
-    navigation.pushScreen(<MyScreen title="Pushed screen" isRoot={false} />);
+    navigation.pushScreen(
+      <Stack.Screen>
+        <MyScreen title="Pushed screen" showPopButton />
+      </Stack.Screen>
+    );
   }
 
   function popScreen() {
@@ -55,18 +49,30 @@ function MyScreen({
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>{title}</Text>
       <Button title="Push screen" onPress={pushScreen} />
-      {!isRoot && <Button title="Pop screen" onPress={popScreen} />}
+      {showPopButton && <Button title="Pop screen" onPress={popScreen} />}
     </View>
   );
 }
 ```
 
-### Tab Navigator
-
-Tabs can be created by passing an array of screens to the `TabNavigator` component. Each screen should have a `key` and a `screen` prop. The `tab` prop is a function that returns the tab component.
+**Note**: Each element that is pushed must be wrapped in a `Stack.Screen` component. An easy workaround is to provide your own wrapper to the push method:
 
 ```tsx
-import { View, Text, Button } from "@react-native";
+function pushScreen(
+  element: React.ReactElement<unknown>,
+  options?: PushScreenOptions
+) {
+  navigation.pushScreen(<Stack.Screen>{element}</Stack.Screen>, options);
+}
+```
+
+### Tab Navigator
+
+The `TabNavigator` component manages tabbed screens. This component is also using `react-native-screens` to handle the tab switching natively. The active tab can be changed via the `navigation.setTabIndex` method, however the tabbar that is rendered is already configured to switch tabs out of the box with no additional configuration.
+
+```tsx
+import * as React from "react";
+import { View, Text, Button } from "react-native";
 import {
   StackNavigator,
   TabNavigator,
@@ -80,48 +86,61 @@ function App() {
 function MyTabs() {
   return (
     <TabNavigator
+      tabbarPosition="bottom"
       screens={[
         {
           key: "1",
-          screen: <MyScreen title="Screen 1" />,
-          tab: ({ isActive }) => (
-            <View className="flex-1 p-4 items-center">
-              <Text className={isActive ? "font-bold" : "font-medium"}>1</Text>
-            </View>
-          ),
+          screen: <MyScreen title="Screen 1" bg="red" />,
+          tab: ({ isActive }) => <MyTab isActive={isActive}>1</MyTab>,
         },
         {
           key: "2",
-          screen: <MyScreen title="Screen 2" />,
-          tab: ({ isActive }) => (
-            <View className="p-4 items-center">
-              <Text className={isActive ? "font-bold" : "font-medium"}>2</Text>
-            </View>
-          ),
+          screen: <MyScreen title="Screen 2" bg="blue" />,
+          tab: ({ isActive }) => <MyTab isActive={isActive}>2</MyTab>,
         },
         {
           key: "3",
-          screen: <MyScreen title="Screen 3" />,
-          tab: ({ isActive }) => (
-            <View className="p-4 items-center">
-              <Text className={isActive ? "font-bold" : "font-medium"}>3</Text>
-            </View>
-          ),
+          screen: <MyScreen title="Screen 3" bg="purple" />,
+          tab: ({ isActive }) => <MyTab isActive={isActive}>3</MyTab>,
         },
       ]}
     />
   );
 }
 
+function MyTab({
+  children,
+  isActive,
+}: {
+  children: React.ReactNode;
+  isActive: boolean;
+}) {
+  return (
+    <View style={{ padding: 16, alignItems: "center" }}>
+      <Text
+        style={isActive ? { fontWeight: "bold" } : { fontWeight: "normal" }}
+      >
+        {children}
+      </Text>
+    </View>
+  );
+}
+
 function MyScreen({
   title,
-  isRoot = true,
+  showPopButton = false,
+  bg,
 }: {
   title: string;
-  isRoot: boolean;
+  showPopButton?: boolean;
+  bg?: string;
 }) {
   function pushScreen() {
-    navigation.pushScreen(<MyScreen title="Pushed screen" isRoot={false} />);
+    navigation.pushScreen(
+      <Stack.Screen>
+        <MyScreen title="Pushed screen" showPopButton />
+      </Stack.Screen>
+    );
   }
 
   function popScreen() {
@@ -129,16 +148,25 @@ function MyScreen({
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: bg || "white",
+      }}
+    >
       <Text>{title}</Text>
       <Button title="Push screen" onPress={pushScreen} />
-      {!isRoot && <Button title="Pop screen" onPress={popScreen} />}
+      {showPopButton && <Button title="Pop screen" onPress={popScreen} />}
     </View>
   );
 }
 ```
 
-Note that our component from the previous example still pushes screens onto the stack as TabNavigator and StackNavigator are composable. If you want each tab to have its own independent stack of screens, you can nest `StackNavigator` components in the `TabNavigator` - the screen components will push to the right stack.
+### Rendering a stack inside of a tabbed screen
+
+The previous example pushes screens on top of the tab navigator, but what if you wanted each tab to have its own stack. We can achieve this by nesting `StackNavigator` components in each tab.
 
 ```tsx
 function MyTabs() {
@@ -148,12 +176,12 @@ function MyTabs() {
         {
           key: "1",
           // Wrap the screen in a StackNavigator:
-          screen: <StackNavigator rootScreen={<MyScreen title="Screen 1" />} />,
-          tab: ({ isActive }) => (
-            <View className="flex-1 p-4 items-center">
-              <Text className={isActive ? "font-bold" : "font-medium"}>1</Text>
-            </View>
+          screen: (
+            <StackNavigator
+              rootScreen={<MyScreen title="Screen 1" bg="red" />}
+            />
           ),
+          tab: ({ isActive }) => <MyTab isActive={isActive}>1</MyTab>,
         },
         // ...other screens
       ]}
@@ -162,95 +190,113 @@ function MyTabs() {
 }
 ```
 
-### Targeting specific StackNavigators
+### Targeting a specific stack
 
-If you want to push to a specific stack in your app for some reason, you can target it with an `id` prop and pass this as an option when pushing the screen. This is useful when you have multiple `StackNavigator` components in your app.
+If you want to push to a specific stack in your app, you can give it an `id` prop and pass this as an option when pushing the screen.
 
 ```tsx
+const MAIN_STACK_ID = "mainStack";
+
 function App() {
   return (
-    <StackNavigator id="main" rootScreen={<MyScreen title="Root Screen" />} />
+    <StackNavigator
+      id={MAIN_STACK_ID}
+      rootScreen={<MyScreen title="Root Screen" />}
+    />
   );
 }
 
-// Customize your helper functions to suite your needs
-// This function is just an example but could be imported in any screen where we might want to push to the main stack
 function pushToMainStack(
   screenElement: React.ReactElement<unknown>,
   options: PushScreenOptions
 ) {
-  navigation.pushScreen(screenElement, { stackId: "main", ...options });
+  navigation.pushScreen(<Stack.Screen>{screenElement}</Stack.Screen>, {
+    stackId: MAIN_STACK_ID,
+    ...options,
+  });
 }
 ```
 
 ### Pushing a screen once
 
-One tradeoff with imperative methods like `navigation.pushScreen` is that you might accidentally push the same screen multiple times. To avoid this, you can use the `key` option which will only push the screen if it is not already in the stack.
+One tradeoff with imperative methods like `navigation.pushScreen` is that you can push the same screen multiple times. In cases where your UI might do this, you can provide a `key` option to only push the screen once. Screen keys are unique across all stacks.
 
 ```tsx
 function pushThisScreenOnce() {
-  navigation.pushScreen(<MyScreen title="Pushed screen" />, {
-    key: "unique-key",
-  });
+  navigation.pushScreen(
+    <Stack.Screen>
+      <MyScreen title="Pushed screen" />
+    </Stack.Screen>,
+    {
+      // This screen will only be pushed once
+      key: "unique-key",
+    }
+  );
 }
 ```
 
-### Targeting specific TabNavigators
+### Targeting specific tabs
 
-Similar to `StackNavigator`, passing an `id` prop to a `TabNavigator` will allow you to target it and update the active tab.
+Similar to `StackNavigator`, passing an `id` prop to a `TabNavigator` will allow you to target it and set the active tab.
 
 ```tsx
+const MAIN_TAB_ID = "mainTabs";
+
 function App() {
-  return <TabNavigator id="main" screens={tabs} />;
+  return <TabNavigator id={MAIN_TAB_ID} screens={tabs} />;
 }
 
-function switchToTab(tabIndex: number) {
-  navigation.setTabIndex(tabIndex, { tabId: "main" });
+function switchMainTabsToTab(tabIndex: number) {
+  navigation.setTabIndex(tabIndex, { tabId: MAIN_TAB_ID });
 }
 ```
 
 ## Advanced Usage
 
-For more advanced usage, you can use the exported `Stack` and `Tabs` components directly. These components provide more control over how the peices of your navigation are rendered - however there is more upfront work of setting things up correctly.
+`Stack` and `Tabs` are the base components of this library. They provide more control over how your screens are rendered. You can use these base components to build more complex navigation flows.
 
 ### Authentication Flow
 
-You can use the `Stack` component to conditionally render screens based on the user's state. In this case we will render the authenticated part of the app based on the `isLoggedIn` value in our example. Under the hood this is using `react-native-screens` components to handle pushing and popping screens natively.
+You can use the `Stack` component to conditionally render screens based on the user's state. Screens that are pushed onto the stack with `pushScreen` are rendered in the `Slot` component, which you can conditionally render as well.
+
+In this case we will render the authenticated part of the app based on the value of the `user` state.
 
 ```tsx
 import * as React from "react";
 import { Stack } from "@rn-toolkit/navigation";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const [user, setUser] = React.useState(null);
 
   return (
     <Stack.Root>
       <Stack.Screens>
         <Stack.Screen>
-          <MyLoginScreen onLoginSuccess={() => setIsLoggedIn(true)} />
+          <MyLoginScreen onLoginSuccess={(user) => setUser(user)} />
         </Stack.Screen>
 
-        {isLoggedIn && (
-          <>
-            <Stack.Screen>
+        {user != null && (
+          <UserContext.Provider value={user}>
+            <Stack.Screen gestureEnabled={false}>
               <MyAuthenticatedApp />
             </Stack.Screen>
             <Stack.Slot />
-          </>
+          </UserContext.Provider>
         )}
       </Stack.Screens>
     </Stack.Root>
   );
 }
-```
 
-You might have noticed the `Stack.Slot` component in the example above. `Stack.Slot` will render screens that are pushed by the `navigation.pushScreen` method. Since `Slot` is a component, it too can be conditionally rendered to control which screens are visible at any given time.
+const UserContext = React.createContext<User | null>(null);
 
-### Deep Linking
+const useUser = () => {
+  const user = React.useContext(UserContext);
 
-Deep linking can be implemented by writing a custom route handler and using the `navigation.pushScreen` methods to navigate to the correct screen.
+  if (user == null) {
+    throw new Error("User not found");
+  }
 
-```tsx
-
+  return user;
+};
 ```

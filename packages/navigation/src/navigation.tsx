@@ -21,13 +21,12 @@ import {
   type PressableProps,
   type ViewProps,
   type ViewStyle,
-  type LayoutChangeEvent,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /**
  * Ideas:
- *  - make screens navigationwide
+ *  - getParent() or expose parentId?
+ *  - tab -> only children fn render prop
  *  - reset navigation
  *  - monitor rerenders
  *  - warn on parallel stacks?
@@ -62,7 +61,10 @@ type NavigationStore = {
     lookup: Record<string, TabItem>;
     ids: string[];
   };
-
+  screens: {
+    lookup: Record<string, ScreenItem>;
+    ids: string[];
+  };
   debugModeEnabled: boolean;
 };
 
@@ -75,6 +77,10 @@ let useNavigation = storeBase(
         ids: [],
       },
       tabs: {
+        lookup: {},
+        ids: [],
+      },
+      screens: {
         lookup: {},
         ids: [],
       },
@@ -110,7 +116,7 @@ let depthCharts: DepthCharts = {
 type StackItem = {
   id: string;
   defaultSlotName?: string;
-  screens: ScreenItem[];
+  screens: string[];
   isGenerated?: boolean;
 };
 
@@ -207,7 +213,7 @@ function pushScreen(
       return;
     }
 
-    if (stack.screens.find((screen) => screen.id === options.key)) {
+    if (state.screens.lookup[options.key ?? ""]) {
       return;
     }
 
@@ -217,7 +223,9 @@ function pushScreen(
       id: options.key || generateScreenId(),
     };
 
-    stack.screens.push(screenItem);
+    stack.screens.push(screenItem.id);
+    state.screens.ids.push(screenItem.id);
+    state.screens.lookup[screenItem.id] = screenItem;
   });
 }
 
@@ -232,10 +240,12 @@ function popScreen(count = 1, options: { stackId: string }) {
       return;
     }
 
-    if (count === -1) {
-      stack.screens = [];
-      return;
-    }
+    stack.screens.slice(-count).forEach((id) => {
+      delete state.screens.lookup[id];
+      state.screens.ids = state.screens.ids.filter(
+        (screenId) => screenId !== id
+      );
+    });
 
     stack.screens = stack.screens.slice(0, -count);
   });
@@ -252,7 +262,10 @@ function popScreenByKey(key: string, options: { stackId: string }) {
       return;
     }
 
-    stack.screens = stack.screens.filter((screen) => screen.id !== key);
+    stack.screens = stack.screens.filter((screenId) => screenId !== key);
+
+    delete state.screens.lookup[key];
+    state.screens.ids = state.screens.ids.filter((id) => id !== key);
   });
 }
 
@@ -297,6 +310,11 @@ function unregisterStack({ stackId }: { stackId: string }) {
     if (stack?.isGenerated && depthCharts.stackParentsById[stackId] != null) {
       state.stacks.ids = state.stacks.ids.filter((id) => id !== stackId);
       delete state.stacks.lookup[stackId];
+
+      stack.screens.forEach((screenId) => {
+        delete state.screens.lookup[screenId];
+        state.screens.ids = state.screens.ids.filter((id) => id !== screenId);
+      });
     }
   });
 }
@@ -457,14 +475,16 @@ function StackScreen({
   );
 }
 
-let useStackItem = (stackId = "") =>
-  useNavigation((state) => state.stacks.lookup[stackId]);
+let useStackScreens = (stackId = "") => {
+  return useNavigation((state) => {
+    let stack = state.stacks.lookup[stackId];
+    return stack?.screens.map((screenId) => state.screens.lookup[screenId]);
+  });
+};
 
 function StackSlot({ slotName = DEFAULT_SLOT_NAME }: { slotName?: string }) {
   let stackId = React.useContext(StackIdContext);
-  let stack = useStackItem(stackId);
-
-  let screens = stack?.screens.filter((screen) => screen.slotName === slotName);
+  let screens = useStackScreens(stackId);
 
   return (
     <>
