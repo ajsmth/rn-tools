@@ -25,8 +25,8 @@ import {
 
 /**
  * Ideas:
- *  - getParent() or expose parentId?
- *  - tab -> only children fn render prop
+ *  - double tap should reset the stack in a tab
+ *  - tab history for back button handler
  *  - reset navigation
  *  - monitor rerenders
  *  - warn on parallel stacks?
@@ -99,18 +99,20 @@ export function setDebugModeEnabled(enabled: boolean) {
   });
 }
 
-type DepthCharts = {
+type RenderCharts = {
   stacksByDepth: Record<string, string[]>;
   tabsByDepth: Record<string, string[]>;
   tabParentsById: Record<string, string>;
   stackParentsById: Record<string, string>;
+  stacksByTabIndex: Record<string, string[]>;
 };
 
-let depthCharts: DepthCharts = {
+let renderCharts: RenderCharts = {
   stacksByDepth: {},
   tabsByDepth: {},
   tabParentsById: {},
   stackParentsById: {},
+  stacksByTabIndex: {},
 };
 
 type StackItem = {
@@ -195,6 +197,10 @@ function getStackFns(stackId: string) {
     pop: (count: number) => popScreen(count, { stackId }),
     popByKey: (key: string) => popScreenByKey(key, { stackId }),
     get: () => getState().stacks.lookup[stackId],
+    getParent: () => {
+      let parentId = renderCharts.stackParentsById[stackId];
+      return getStackFns(parentId);
+    },
     reset: () => popScreen(-1, { stackId }),
   };
 }
@@ -240,6 +246,10 @@ function popScreen(count = 1, options: { stackId: string }) {
       return;
     }
 
+    if (count === -1) {
+      count = stack.screens.length;
+    }
+
     stack.screens.slice(-count).forEach((id) => {
       delete state.screens.lookup[id];
       state.screens.ids = state.screens.ids.filter(
@@ -274,40 +284,57 @@ function registerStack({
   isActive,
   stackId,
   parentStackId,
+  parentTabId,
+  tabIndex,
 }: {
   depth: number;
   isActive: boolean;
   stackId: string;
   parentStackId: string;
+  parentTabId: string;
+  tabIndex: number;
 }) {
-  depthCharts.stacksByDepth[depth] = depthCharts.stacksByDepth[depth] || [];
+  renderCharts.stacksByDepth[depth] = renderCharts.stacksByDepth[depth] || [];
 
-  Object.keys(depthCharts.stacksByDepth).forEach((depth) => {
-    depthCharts.stacksByDepth[depth] = depthCharts.stacksByDepth[depth].filter(
-      (id) => id !== stackId
-    );
+  Object.keys(renderCharts.stacksByDepth).forEach((depth) => {
+    renderCharts.stacksByDepth[depth] = renderCharts.stacksByDepth[
+      depth
+    ].filter((id) => id !== stackId);
   });
 
-  if (isActive && !depthCharts.stacksByDepth[depth].includes(stackId)) {
-    depthCharts.stacksByDepth[depth].push(stackId);
+  if (isActive && !renderCharts.stacksByDepth[depth].includes(stackId)) {
+    renderCharts.stacksByDepth[depth].push(stackId);
   }
 
   if (parentStackId) {
-    depthCharts.stackParentsById[stackId] = parentStackId;
+    renderCharts.stackParentsById[stackId] = parentStackId;
+  }
+
+  if (parentTabId) {
+    let tabIndexKey = sertializeTabIndexKey(parentTabId, tabIndex);
+    renderCharts.stacksByTabIndex[tabIndexKey] =
+      renderCharts.stacksByTabIndex[tabIndexKey] || [];
+
+    if (!renderCharts.stacksByTabIndex[tabIndexKey].includes(stackId)) {
+      renderCharts.stacksByTabIndex[tabIndexKey].push(stackId);
+    }
   }
 }
 
+let sertializeTabIndexKey = (tabId: string, index: number) =>
+  `${tabId}-${index}`;
+
 function unregisterStack({ stackId }: { stackId: string }) {
-  for (let depth in depthCharts.stacksByDepth) {
-    depthCharts.stacksByDepth[depth] = depthCharts.stacksByDepth[depth].filter(
-      (id) => id !== stackId
-    );
+  for (let depth in renderCharts.stacksByDepth) {
+    renderCharts.stacksByDepth[depth] = renderCharts.stacksByDepth[
+      depth
+    ].filter((id) => id !== stackId);
   }
 
   setState((state) => {
     let stack = state.stacks.lookup[stackId];
 
-    if (stack?.isGenerated && depthCharts.stackParentsById[stackId] != null) {
+    if (stack?.isGenerated && renderCharts.stackParentsById[stackId] != null) {
       state.stacks.ids = state.stacks.ids.filter((id) => id !== stackId);
       delete state.stacks.lookup[stackId];
 
@@ -321,11 +348,11 @@ function unregisterStack({ stackId }: { stackId: string }) {
 
 function getFocusedStack() {
   let maxDepth = Math.max(
-    ...Object.keys(depthCharts.stacksByDepth)
-      .filter((key) => depthCharts.stacksByDepth[key].length > 0)
+    ...Object.keys(renderCharts.stacksByDepth)
+      .filter((key) => renderCharts.stacksByDepth[key].length > 0)
       .map(Number)
   );
-  let stackIds = depthCharts.stacksByDepth[maxDepth];
+  let stackIds = renderCharts.stacksByDepth[maxDepth];
   let topStackId = stackIds[stackIds.length - 1];
   return getStackFns(topStackId);
 }
@@ -340,6 +367,7 @@ let stackInstanceStub: StackInstance = {
       screens: [],
     };
   },
+  getParent: () => stackInstanceStub,
   popByKey: () => {},
   reset: () => {},
 };
@@ -376,6 +404,8 @@ function StackRoot({ children, id }: StackRootProps) {
 
   let depth = parentDepth + 1;
   let stackId = stackRef?.id;
+  let parentTabId = React.useContext(TabIdContext);
+  let tabIndex = React.useContext(TabScreenIndexContext);
 
   React.useEffect(() => {
     if (stackId != null) {
@@ -384,9 +414,11 @@ function StackRoot({ children, id }: StackRootProps) {
         isActive,
         stackId,
         parentStackId,
+        parentTabId,
+        tabIndex,
       });
     }
-  }, [stackId, depth, isActive, parentStackId]);
+  }, [stackId, depth, isActive, parentStackId, parentTabId, tabIndex]);
 
   React.useEffect(() => {
     return () => {
@@ -538,12 +570,12 @@ export let navigation = {
     let stackId = stack.id;
     let numScreens = stack.get()?.screens.length || 0;
 
-    let screensToPop = Math.min(numScreens, count);
+    let screensToPop = Math.max(Math.min(numScreens, count), 0);
 
     popScreen(screensToPop, { stackId });
     let remainingScreens = count - screensToPop;
 
-    let parentStackId = depthCharts.stackParentsById[stackId];
+    let parentStackId = renderCharts.stackParentsById[stackId];
     let parentStack = getState().stacks.lookup[parentStackId];
 
     while (remainingScreens > 0 && parentStackId && parentStack) {
@@ -551,7 +583,7 @@ export let navigation = {
       popScreen(screensToPop, { stackId: parentStackId });
       remainingScreens = remainingScreens - screensToPop;
 
-      let nextParentStack = depthCharts.stackParentsById[parentStack.id];
+      let nextParentStack = renderCharts.stackParentsById[parentStack.id];
 
       parentStackId = nextParentStack;
       parentStack = getState().stacks.lookup[parentStackId];
@@ -848,24 +880,24 @@ function registerTabs({
   isActive: boolean;
   parentTabId?: string;
 }) {
-  depthCharts.tabsByDepth[depth] = depthCharts.tabsByDepth[depth] || [];
+  renderCharts.tabsByDepth[depth] = renderCharts.tabsByDepth[depth] || [];
 
-  Object.keys(depthCharts.tabsByDepth).forEach((depth) => {
-    depthCharts.tabsByDepth[depth] = depthCharts.tabsByDepth[depth].filter(
+  Object.keys(renderCharts.tabsByDepth).forEach((depth) => {
+    renderCharts.tabsByDepth[depth] = renderCharts.tabsByDepth[depth].filter(
       (id) => id !== tabId
     );
   });
 
-  depthCharts.tabParentsById[tabId] = parentTabId ?? "";
+  renderCharts.tabParentsById[tabId] = parentTabId ?? "";
 
   if (isActive) {
-    depthCharts.tabsByDepth[depth]?.push(tabId);
+    renderCharts.tabsByDepth[depth]?.push(tabId);
   }
 }
 
 function unregisterTabs({ tabId }: { tabId: string }) {
-  for (let depth in depthCharts.tabsByDepth) {
-    depthCharts.tabsByDepth[depth] = depthCharts.tabsByDepth[depth].filter(
+  for (let depth in renderCharts.tabsByDepth) {
+    renderCharts.tabsByDepth[depth] = renderCharts.tabsByDepth[depth].filter(
       (id) => id !== tabId
     );
   }
@@ -882,11 +914,11 @@ function unregisterTabs({ tabId }: { tabId: string }) {
 
 function getFocusedTabs() {
   let maxDepth = Math.max(
-    ...Object.keys(depthCharts.tabsByDepth)
-      .filter((key) => depthCharts.tabsByDepth[key].length > 0)
+    ...Object.keys(renderCharts.tabsByDepth)
+      .filter((key) => renderCharts.tabsByDepth[key].length > 0)
       .map(Number)
   );
-  let tabIds = depthCharts.tabsByDepth[maxDepth];
+  let tabIds = renderCharts.tabsByDepth[maxDepth];
   let topTabId = tabIds[tabIds.length - 1];
   return getTabFns(topTabId);
 }
@@ -919,7 +951,7 @@ type TabNavigatorProps = Omit<TabsRootProps, "children"> & {
 type TabNavigatorScreenOptions = {
   key: string;
   screen: React.ReactElement<unknown>;
-  tab: TabbarTabProps["children"];
+  tab: (props: { isActive: boolean; onPress: () => void }) => React.ReactNode;
 };
 
 let defaultScreenContainerStyle = {
