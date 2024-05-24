@@ -25,7 +25,6 @@ import {
 
 /**
  * Ideas:
- *  - double tap should reset the stack in a tab
  *  - tab history for back button handler
  *  - reset navigation
  *  - monitor rerenders
@@ -249,15 +248,12 @@ function popScreen(count = 1, options: { stackId: string }) {
     if (count === -1) {
       count = stack.screens.length;
     }
+    let poppedScreenIds = stack.screens.splice(-count, count);
 
-    stack.screens.slice(-count).forEach((id) => {
-      delete state.screens.lookup[id];
-      state.screens.ids = state.screens.ids.filter(
-        (screenId) => screenId !== id
-      );
+    poppedScreenIds.forEach((screenId) => {
+      delete state.screens.lookup[screenId];
+      state.screens.ids = state.screens.ids.filter((id) => id !== screenId);
     });
-
-    stack.screens = stack.screens.slice(0, -count);
   });
 }
 
@@ -507,20 +503,24 @@ function StackScreen({
   );
 }
 
-let useStackScreens = (stackId = "") => {
+let useStackScreens = (stackId = "", slotName: string) => {
   return useNavigation((state) => {
     let stack = state.stacks.lookup[stackId];
-    return stack?.screens.map((screenId) => state.screens.lookup[screenId]);
+    return (
+      stack?.screens
+        .map((screenId) => state.screens.lookup[screenId])
+        .filter((s) => s && s.slotName === slotName) ?? []
+    );
   });
 };
 
 function StackSlot({ slotName = DEFAULT_SLOT_NAME }: { slotName?: string }) {
   let stackId = React.useContext(StackIdContext);
-  let screens = useStackScreens(stackId);
+  let screens = useStackScreens(stackId, slotName);
 
   return (
     <>
-      {screens?.map((screen) => {
+      {screens.map((screen) => {
         return (
           <ScreenIdContext.Provider value={screen.id} key={screen.id}>
             {screen.element}
@@ -635,6 +635,27 @@ function setActiveIndex(index: number, { tabId }: { tabId: string }) {
     let tab = state.tabs.lookup[tabId];
 
     if (tab) {
+
+      if (tab.activeIndex === index) {
+        let tabKey = sertializeTabIndexKey(tabId, index);
+        let stackIds = renderCharts.stacksByTabIndex[tabKey];
+
+        if (stackIds?.length > 0) {
+          stackIds.forEach((stackId) => {
+            let stack = state.stacks.lookup[stackId];
+
+            let count = stack?.screens.length;
+            let poppedScreenIds = stack?.screens.splice(-count, count);
+            poppedScreenIds.forEach((screenId) => {
+              delete state.screens.lookup[screenId];
+              state.screens.ids = state.screens.ids.filter(
+                (id) => id !== screenId
+              );
+            });
+          });
+        }
+      }
+
       tab.activeIndex = index;
     }
   });
