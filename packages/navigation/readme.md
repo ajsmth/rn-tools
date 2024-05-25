@@ -1,6 +1,6 @@
 # @rn-toolkit/navigation
 
-A set of minimal navigation components for React Native. Built with `react-native-screens`. Not as robust as a library like `react-navigation`. Designed with flexibility in mind. Build your own abstractions on top of this!
+A set of useful navigation components for React Native. Built with `react-native-screens`. Designed with flexibility in mind. Build your own abstractions on top of this!
 
 ## Installation
 
@@ -10,11 +10,11 @@ yarn expo install @rn-toolkit/navigation react-native-screens
 
 ## Basic Usage
 
-For basic usage, the exported `StackNavigator` and `TabNavigator` components will get you up and running quickly
+For basic usage, the exported `StackNavigator` and `TabNavigator` components will get you up and running quickly. For more advanced use cases, you can use the `Stack` and `Tabs` base components - more on this in the [Advanced Usage](#advanced-usage) section
 
 ### Stack Navigator
 
-The `StackNavigator` component manages stacks of screens. Under the hood this is using `react-native-screens` to handle pushing and popping screens natively. Screens can be pushed and popped via the `navigation.pushScreen` and `navigation.popScreen` methods.
+The `StackNavigator` component manages stacks of screens. Under the hood this is using `react-native-screens` to handle pushing and popping screens natively. Screens can be pushed and popped via the global `navigation.pushScreen` and `navigation.popScreen` methods.
 
 ```tsx
 import * as React from "react";
@@ -55,10 +55,10 @@ function MyScreen({
 }
 ```
 
-**Note**: Each element that is pushed must be wrapped in a `Stack.Screen` component. An easy workaround is to provide your own wrapper to the push method:
+**Note**: Any screen pushed must be wrapped in a `Stack.Screen` component. You can provide your own wrapper to the push method to simplify your usage:
 
 ```tsx
-function pushScreen(
+function myAppsPushScreen(
   element: React.ReactElement<unknown>,
   options?: PushScreenOptions
 ) {
@@ -253,13 +253,12 @@ function switchMainTabsToTab(tabIndex: number) {
 
 ## Advanced Usage
 
-`Stack` and `Tabs` are the base components of this library. They provide more control over how your screens are rendered. You can use these base components to build more complex navigation flows.
+`Stack` and `Tabs` are the base components of this library - they can be used to implement more complex navigation flows when needed. The navigator components in the previous examples are thin wrappers around these components - you can build your own wrappers on top of these to suite your needs too.
 
-### Authentication Flow
+### Authentication
 
-You can use the `Stack` component to conditionally render screens based on the user's state. Screens that are pushed onto the stack with `pushScreen` are rendered in the `Slot` component, which you can conditionally render as well.
+For this basic example, we want to show the login screen when the user is not logged in, otherwise we want to show our normal app. You can use the `Stack` component to conditionally render screens based on the user's state. 
 
-In this case we will render the authenticated part of the app based on the value of the `user` state.
 
 ```tsx
 import * as React from "react";
@@ -300,3 +299,5 @@ const useUser = () => {
   return user;
 };
 ```
+
+**Note:** Screens that are pushed onto the stack with `pushScreen` are rendered in the `Slot` component, which you can conditionally render as well.
