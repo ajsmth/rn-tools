@@ -1,6 +1,6 @@
 # @rn-toolkit/navigation
 
-A set of useful navigation components for React Native. Built with `react-native-screens`. Designed with flexibility in mind. Build your own abstractions on top of this!
+A set of useful navigation components for React Native. Built with `react-native-screens`. Designed with flexibility in mind. Create your own abstractions on top of this!
 
 ## Installation
 
@@ -10,7 +10,7 @@ yarn expo install @rn-toolkit/navigation react-native-screens
 
 ## Basic Usage
 
-For basic usage, the exported `StackNavigator` and `TabNavigator` components will get you up and running quickly. For more advanced use cases, you can use the `Stack` and `Tabs` base components - more on this in the [Advanced Usage](#advanced-usage) section
+For basic usage, the exported `StackNavigator` and `TabNavigator` components will get you up and running quickly. The [Advanced Usage](#advanced-usage) section covers how to use the lower-level `Stack` and `Tabs` components to handle more advanced navigation patterns.
 
 ### Stack Navigator
 
@@ -251,14 +251,94 @@ function switchMainTabsToTab(tabIndex: number) {
 }
 ```
 
-## Advanced Usage
+## API
 
-The navigator components in the previous examples are thin wrappers around the `Stack` and `Tabs` components - you can build your own wrappers on top of these when you need more control over how your screens are rendering.
+The navigator components in the previous examples are just thin wrappers around the `Stack` and `Tabs` components - you can build your own wrappers on top of these when you need more control over how your screens are rendering. 
+
+This is the full implementation of the `StackNavigator` component:
+
+```tsx
+type StackNavigatorProps = Omit<StackRootProps, "children"> & {
+  rootScreen: React.ReactElement<unknown>;
+};
+
+export function StackNavigator({
+  rootScreen,
+  ...rootProps
+}: StackNavigatorProps) {
+  return (
+    <Stack.Root {...rootProps}>
+      <Stack.Screens>
+        <Stack.Screen>{rootScreen}</Stack.Screen>
+        <Stack.Slot />
+      </Stack.Screens>
+    </Stack.Root>
+  );
+}
+```
+
+Likewise here is the full implementation of the `TabNavigator` component:
+
+```tsx
+type TabNavigatorProps = Omit<TabsRootProps, "children"> & {
+  screens: TabNavigatorScreenOptions[];
+  tabbarPosition?: "top" | "bottom";
+  tabbarStyle?: ViewProps["style"];
+  screenContainerStyle?: RNScreenContainerProps["style"];
+};
+
+type TabNavigatorScreenOptions = {
+  key: string;
+  screen: React.ReactElement<unknown>;
+  tab: (props: { isActive: boolean; onPress: () => void }) => React.ReactNode;
+};
+
+let defaultScreenContainerStyle = {
+  flex: 1,
+};
+
+export function TabNavigator({
+  screens,
+  tabbarPosition = "bottom",
+  tabbarStyle,
+  screenContainerStyle,
+  ...rootProps
+}: TabNavigatorProps) {
+  return (
+    <Tabs.Root {...rootProps}>
+      {tabbarPosition === "top" && (
+        <Tabs.Tabbar style={tabbarStyle}>
+          {screens.map((screen) => {
+            return <Tabs.Tab key={screen.key}>{screen.tab}</Tabs.Tab>;
+          })}
+        </Tabs.Tabbar>
+      )}
+
+      <Tabs.Screens style={screenContainerStyle ?? defaultScreenContainerStyle}>
+        {screens.map((screen) => {
+          return <Tabs.Screen key={screen.key}>{screen.screen}</Tabs.Screen>;
+        })}
+      </Tabs.Screens>
+
+      {tabbarPosition === "bottom" && (
+        <Tabs.Tabbar style={tabbarStyle}>
+          {screens.map((screen) => {
+            return <Tabs.Tab key={screen.key}>{screen.tab}</Tabs.Tab>;
+          })}
+        </Tabs.Tabbar>
+      )}
+    </Tabs.Root>
+  );
+}
+```
+
+Hopefully this gives you an idea of how you can easily create your own components using `Stack` and `Tabs` without too much effort
+
+## Advanced Usage
 
 ### Authentication
 
-For this basic example, we want to show our main app when the user is logged in, otherwise show the login screen. You can use the `Stack` component to conditionally render screens based on the user's state. 
-
+For this example, we want to show our main app when the user is logged in, otherwise show the login screen. You can use the `Stack` component to conditionally render screens based on the user's state.
 
 ```tsx
 import * as React from "react";
