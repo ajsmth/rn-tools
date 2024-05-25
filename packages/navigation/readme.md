@@ -253,11 +253,11 @@ function switchMainTabsToTab(tabIndex: number) {
 
 ## Advanced Usage
 
-`Stack` and `Tabs` are the base components of this library - they can be used to implement more complex navigation flows when needed. The navigator components in the previous examples are thin wrappers around these components - you can build your own wrappers on top of these to suite your needs too.
+The navigator components in the previous examples are thin wrappers around the `Stack` and `Tabs` components - you can build your own wrappers on top of these when you need more control over how your screens are rendering.
 
 ### Authentication
 
-For this basic example, we want to show the login screen when the user is not logged in, otherwise we want to show our normal app. You can use the `Stack` component to conditionally render screens based on the user's state. 
+For this basic example, we want to show our main app when the user is logged in, otherwise show the login screen. You can use the `Stack` component to conditionally render screens based on the user's state. 
 
 
 ```tsx
@@ -300,4 +300,4 @@ const useUser = () => {
 };
 ```
 
-**Note:** Screens that are pushed onto the stack with `pushScreen` are rendered in the `Slot` component, which you can conditionally render as well.
+**Note:** Screens that are pushed onto the stack with `pushScreen` are rendered in the `Slot` component, which you can conditionally render as well. This means all screens will be popped when the user is logged out.
