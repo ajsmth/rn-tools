@@ -14,7 +14,9 @@ For basic usage, the exported `StackNavigator` and `TabNavigator` components wil
 
 ### Stack Navigator
 
-The `StackNavigator` component manages stacks of screens. Under the hood this is using `react-native-screens` to handle pushing and popping screens natively. Screens can be pushed and popped via the global `navigation.pushScreen` and `navigation.popScreen` methods.
+The `StackNavigator` component manages stacks of screens. Under the hood this is using `react-native-screens` to handle pushing and popping natively. 
+
+Screens are pushed and popped via the global `navigation.pushScreen` and `navigation.popScreen` methods.
 
 ```tsx
 import * as React from "react";
@@ -55,7 +57,7 @@ function MyScreen({
 }
 ```
 
-**Note**: Any screen pushed must be wrapped in a `Stack.Screen` component. You can provide your own wrapper to the push method to simplify your usage:
+**Note**: Any screen pushed must be wrapped in a `Stack.Screen` component. Create a wrapper to the push method to simplify your usage:
 
 ```tsx
 function myAppsPushScreen(
@@ -68,7 +70,7 @@ function myAppsPushScreen(
 
 ### Tab Navigator
 
-The `TabNavigator` component manages tabbed screens. This component is also using `react-native-screens` to handle the tab switching natively. The active tab can be changed via the `navigation.setTabIndex` method, however the tabbar that is rendered is already configured to switch tabs out of the box with no additional configuration.
+The `TabNavigator` component also uses `react-native-screens` to handle the tab switching natively. The active tab can be changed via the `navigation.setTabIndex` method, however the tabs that are rendered already handle tabbing between screens without additional configuration.
 
 ```tsx
 import * as React from "react";
@@ -166,7 +168,7 @@ function MyScreen({
 
 ### Rendering a stack inside of a tabbed screen
 
-The previous example pushes screens on top of the tab navigator, but what if you wanted each tab to have its own stack. We can achieve this by nesting `StackNavigator` components in each tab.
+Each tab can have its own stack by nesting the `StackNavigator` component 
 
 ```tsx
 function MyTabs() {
@@ -192,7 +194,7 @@ function MyTabs() {
 
 ### Targeting a specific stack
 
-If you want to push to a specific stack in your app, you can give it an `id` prop and pass this as an option when pushing the screen.
+Provide an `id` prop to a stack and target it explicitly when pushing the screen.
 
 ```tsx
 const MAIN_STACK_ID = "mainStack";
@@ -211,15 +213,17 @@ function pushToMainStack(
   options: PushScreenOptions
 ) {
   navigation.pushScreen(<Stack.Screen>{screenElement}</Stack.Screen>, {
-    stackId: MAIN_STACK_ID,
     ...options,
+    stackId: MAIN_STACK_ID,
   });
 }
 ```
 
 ### Pushing a screen once
 
-One tradeoff with imperative methods like `navigation.pushScreen` is that you can push the same screen multiple times. In cases where your UI might do this, you can provide a `key` option to only push the screen once. Screen keys are unique across all stacks.
+One tradeoff with imperative methods like `navigation.pushScreen` is that it's possible to push the same screen multiple times. In cases where your UI might do this, you can provide a `key` option to only push the screen once. Screen keys are unique across all stacks.
+
+**Note:** Usually when a screen is pushed multiple times it means that the screen should be rendered declaratively rather than pushed with the `pushScreen` method. This is covered in the Advanced section below.
 
 ```tsx
 function pushThisScreenOnce() {
@@ -237,7 +241,7 @@ function pushThisScreenOnce() {
 
 ### Targeting specific tabs
 
-Similar to `StackNavigator`, passing an `id` prop to a `TabNavigator` will allow you to target it and set the active tab.
+Similar to `StackNavigator`, pass an `id` prop to a `TabNavigator` and target a navigator expliclity when setting the active tab.
 
 ```tsx
 const MAIN_TAB_ID = "mainTabs";
@@ -253,7 +257,7 @@ function switchMainTabsToTab(tabIndex: number) {
 
 ## API
 
-The navigator components in the previous examples are just thin wrappers around the `Stack` and `Tabs` components - you can build your own wrappers on top of these when you need more control over how your screens are rendering. 
+The navigator components in the previous examples are just thin wrappers around `Stack` and `Tabs` components exported by this library. Build your own wrappers on top of these base components if you need more control over how your screens are rendering. 
 
 This is the full implementation of the `StackNavigator` component:
 
@@ -284,17 +288,13 @@ type TabNavigatorProps = Omit<TabsRootProps, "children"> & {
   screens: TabNavigatorScreenOptions[];
   tabbarPosition?: "top" | "bottom";
   tabbarStyle?: ViewProps["style"];
-  screenContainerStyle?: RNScreenContainerProps["style"];
+  screenContainerStyle?: ViewProps["style"];
 };
 
 type TabNavigatorScreenOptions = {
   key: string;
   screen: React.ReactElement<unknown>;
   tab: (props: { isActive: boolean; onPress: () => void }) => React.ReactNode;
-};
-
-let defaultScreenContainerStyle = {
-  flex: 1,
 };
 
 export function TabNavigator({
@@ -314,7 +314,7 @@ export function TabNavigator({
         </Tabs.Tabbar>
       )}
 
-      <Tabs.Screens style={screenContainerStyle ?? defaultScreenContainerStyle}>
+      <Tabs.Screens style={screenContainerStyle}>
         {screens.map((screen) => {
           return <Tabs.Screen key={screen.key}>{screen.screen}</Tabs.Screen>;
         })}
@@ -332,7 +332,7 @@ export function TabNavigator({
 }
 ```
 
-Hopefully this gives you an idea of how you can easily create your own components using `Stack` and `Tabs` without too much effort
+Hopefully this gives you an idea of how you might create your own components using `Stack` and `Tabs` without too much effort
 
 ## Advanced Usage
 

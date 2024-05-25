@@ -124,6 +124,13 @@ function MyScreen({
           >
             <Text>Set index</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.reset();
+            }}
+          >
+            <Text>Reset</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>

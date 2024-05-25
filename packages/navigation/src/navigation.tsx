@@ -26,6 +26,8 @@ import {
 /**
  * Ideas:
  *  - reset navigation
+ *    - tabs / stack ref should read from store, not local state ref -> should recreate after being destroyed?
+ *  - provide initial state?
  *  - monitor rerenders
  *  - warn on parallel stacks?
  *  - lifecycles?
@@ -117,7 +119,6 @@ type StackItem = {
   id: string;
   defaultSlotName?: string;
   screens: string[];
-  isGenerated?: boolean;
 };
 
 type ScreenItem = {
@@ -129,7 +130,6 @@ type ScreenItem = {
 type TabItem = {
   id: string;
   activeIndex: number;
-  isGenerated?: boolean;
   history: number[];
 };
 
@@ -170,7 +170,6 @@ function createStack({
     id: stackId,
     defaultSlotName,
     screens: [],
-    isGenerated: !id,
   };
 
   addStack(initialStack);
@@ -334,11 +333,11 @@ function unregisterStack({ stackId }: { stackId: string }) {
   setState((state) => {
     let stack = state.stacks.lookup[stackId];
 
-    if (stack?.isGenerated && renderCharts.stackParentsById[stackId] != null) {
+    if (renderCharts.stackParentsById[stackId] != null) {
       state.stacks.ids = state.stacks.ids.filter((id) => id !== stackId);
       delete state.stacks.lookup[stackId];
 
-      stack.screens.forEach((screenId) => {
+      stack?.screens.forEach((screenId) => {
         delete state.screens.lookup[screenId];
         state.screens.ids = state.screens.ids.filter((id) => id !== screenId);
       });
@@ -368,6 +367,7 @@ let stackInstanceStub: StackInstance = {
     };
   },
   getParent: () => stackInstanceStub,
+  canGoBack: () => false,
   popByKey: () => {},
   reset: () => {},
 };
@@ -389,14 +389,15 @@ function StackRoot({ children, id }: StackRootProps) {
     getStack(id)
   );
 
-  let stack = React.useMemo(() => getStack(id), [id]);
+  let stack = React.useMemo(() => getStack(stackRef?.id), [stackRef]);
+  console.log("StackRoot", { id, stackRef, stack });
 
   React.useEffect(() => {
     if (!stack) {
-      stack = createStack({ id });
-      setStackRef(stack);
+      console.log(`creatingNewStack`, { id });
+      setStackRef(createStack({ id }));
     }
-  }, [id]);
+  }, [id, stack]);
 
   let isActive = React.useContext(ActiveContext);
   let parentDepth = React.useContext(DepthContext);
@@ -609,7 +610,30 @@ export let navigation = {
   },
 
   reset: () => {
-    // TODO
+    setState((state) => {
+      state.stacks = {
+        lookup: {},
+        ids: [],
+      };
+
+      state.tabs = {
+        lookup: {},
+        ids: [],
+      };
+
+      state.screens = {
+        lookup: {},
+        ids: [],
+      };
+    });
+
+    renderCharts = {
+      stacksByDepth: {},
+      tabsByDepth: {},
+      tabParentsById: {},
+      stackParentsById: {},
+      stacksByTabIndex: {},
+    };
   },
 
   getStack: (stackId: string) => {
@@ -623,7 +647,7 @@ export let navigation = {
 
 export type TabsInstance = ReturnType<typeof getTabFns>;
 
-export function createTabs({
+function createTabs({
   id,
   initialActiveIndex = 0,
 }: {
@@ -635,7 +659,6 @@ export function createTabs({
   let initialTabs: TabItem = {
     id: tabId,
     activeIndex: initialActiveIndex,
-    isGenerated: !id,
     history: [],
   };
 
@@ -704,6 +727,7 @@ let TABS_STUB: TabsInstance = {
     return {
       id: "STUB",
       activeIndex: 0,
+      history: [],
     };
   },
   setActiveIndex: () => {},
@@ -732,14 +756,13 @@ function TabsRoot({
   let isActive = React.useContext(ActiveContext);
   let parentTabId = React.useContext(TabIdContext);
 
-  React.useEffect(() => {
-    let tabs = getTabs(id);
+  let tabs = React.useMemo(() => getTabs(tabsRef?.id), [tabsRef]);
 
+  React.useEffect(() => {
     if (!tabs) {
-      tabs = createTabs({ id });
-      setTabsRef(tabs);
+      setTabsRef(createTabs({ id }));
     }
-  }, [id]);
+  }, [tabs]);
 
   React.useEffect(() => {
     if (tabId != null) {
@@ -774,6 +797,10 @@ function TabsRoot({
 }
 
 let TabScreenIndexContext = React.createContext<number>(0);
+
+let defaultScreenContainerStyle = {
+  flex: 1,
+};
 
 function TabsScreens({
   children,
@@ -812,7 +839,7 @@ function TabsScreen({
   React.useEffect(() => {
     function backHandler() {
       let tabs = getTabs(tabId)?.get();
-      
+
       if (tabs && tabs.history.length > 0) {
         goBack({ tabId });
         return true;
@@ -971,12 +998,8 @@ function unregisterTabs({ tabId }: { tabId: string }) {
   }
 
   setState((state) => {
-    let tabs = state.tabs.lookup[tabId];
-
-    if (tabs?.isGenerated) {
-      state.tabs.ids = state.tabs.ids.filter((id) => id !== tabId);
-      delete state.tabs.lookup[tabId];
-    }
+    state.tabs.ids = state.tabs.ids.filter((id) => id !== tabId);
+    delete state.tabs.lookup[tabId];
   });
 }
 
@@ -1022,10 +1045,6 @@ type TabNavigatorScreenOptions = {
   tab: (props: { isActive: boolean; onPress: () => void }) => React.ReactNode;
 };
 
-let defaultScreenContainerStyle = {
-  flex: 1,
-};
-
 export function TabNavigator({
   screens,
   tabbarPosition = "bottom",
@@ -1043,7 +1062,7 @@ export function TabNavigator({
         </Tabs.Tabbar>
       )}
 
-      <Tabs.Screens style={screenContainerStyle ?? defaultScreenContainerStyle}>
+      <Tabs.Screens style={screenContainerStyle}>
         {screens.map((screen) => {
           return <Tabs.Screen key={screen.key}>{screen.screen}</Tabs.Screen>;
         })}
