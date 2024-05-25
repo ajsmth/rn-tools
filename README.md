@@ -1,3 +1,7 @@
 # rn-toolkit
 
-Somewhat opinionated packages for developing React Native and Expo apps
+A set of tools to help you build React Native apps.
+
+## Navigation
+
+- [@rntoolkit/navigation](packages/navigation/README.md)
