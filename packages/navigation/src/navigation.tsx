@@ -25,7 +25,6 @@ import {
 
 /**
  * Ideas:
- *  - tab history for back button handler
  *  - reset navigation
  *  - monitor rerenders
  *  - warn on parallel stacks?
@@ -131,6 +130,7 @@ type TabItem = {
   id: string;
   activeIndex: number;
   isGenerated?: boolean;
+  history: number[];
 };
 
 export type StackInstance = ReturnType<typeof getStackFns>;
@@ -199,6 +199,10 @@ function getStackFns(stackId: string) {
     getParent: () => {
       let parentId = renderCharts.stackParentsById[stackId];
       return getStackFns(parentId);
+    },
+    canGoBack: () => {
+      let stack = getState().stacks.lookup[stackId];
+      return stack?.screens.length > 0;
     },
     reset: () => popScreen(-1, { stackId }),
   };
@@ -461,10 +465,13 @@ function StackScreens({
 function StackScreen({
   children,
   style: styleProp,
+  gestureEnabled = true,
   ...props
 }: { children: React.ReactNode } & RNScreenProps) {
   let screenId = React.useContext(ScreenIdContext);
   let stack = React.useContext(StackContext);
+
+  let isActive = React.useContext(ActiveContext);
 
   let onDismissed: RNScreenProps["onDismissed"] = React.useCallback(
     (e) => {
@@ -476,7 +483,7 @@ function StackScreen({
 
   React.useEffect(() => {
     function backHandler() {
-      if (props.gestureEnabled) {
+      if (gestureEnabled && isActive && stack.canGoBack()) {
         stack.popByKey(screenId);
         return true;
       }
@@ -489,7 +496,7 @@ function StackScreen({
     return () => {
       BackHandler.removeEventListener("hardwareBackPress", backHandler);
     };
-  }, [props.gestureEnabled, stack, screenId]);
+  }, [gestureEnabled, stack, screenId, isActive]);
 
   let style = React.useMemo(
     () => styleProp || StyleSheet.absoluteFill,
@@ -497,7 +504,13 @@ function StackScreen({
   );
 
   return (
-    <RNScreen {...props} style={style} onDismissed={onDismissed}>
+    <RNScreen
+      {...props}
+      style={style}
+      activityState={isActive ? 2 : 0}
+      gestureEnabled={gestureEnabled}
+      onDismissed={onDismissed}
+    >
       {children}
     </RNScreen>
   );
@@ -550,7 +563,7 @@ export let useStack = () => React.useContext(StackContext);
 
 navigationStore.subscribe((state) => {
   if (state.debugModeEnabled) {
-    console.log("State updated", state);
+    console.debug("@rntoolkit/navigation state updated: ", state);
   }
 });
 
@@ -623,6 +636,7 @@ export function createTabs({
     id: tabId,
     activeIndex: initialActiveIndex,
     isGenerated: !id,
+    history: [],
   };
 
   addTabs(initialTabs);
@@ -635,7 +649,6 @@ function setActiveIndex(index: number, { tabId }: { tabId: string }) {
     let tab = state.tabs.lookup[tabId];
 
     if (tab) {
-
       if (tab.activeIndex === index) {
         let tabKey = sertializeTabIndexKey(tabId, index);
         let stackIds = renderCharts.stacksByTabIndex[tabKey];
@@ -656,7 +669,22 @@ function setActiveIndex(index: number, { tabId }: { tabId: string }) {
         }
       }
 
+      tab.history = tab.history.filter((i) => i !== tab.activeIndex);
+      tab.history.push(tab.activeIndex);
       tab.activeIndex = index;
+    }
+  });
+}
+
+function goBack({ tabId = "" }: { tabId?: string }) {
+  setState((state) => {
+    let tab = state.tabs.lookup[tabId];
+
+    if (tab) {
+      let last = tab.history.pop();
+      if (last != null) {
+        tab.activeIndex = last;
+      }
     }
   });
 }
@@ -780,6 +808,25 @@ function TabsScreen({
   let parentIsActive = React.useContext(ActiveContext);
   let activeIndex = tabs?.activeIndex;
   let isActive = index === activeIndex;
+
+  React.useEffect(() => {
+    function backHandler() {
+      let tabs = getTabs(tabId)?.get();
+      
+      if (tabs && tabs.history.length > 0) {
+        goBack({ tabId });
+        return true;
+      }
+
+      return false;
+    }
+
+    BackHandler.addEventListener("hardwareBackPress", backHandler);
+
+    return () => {
+      BackHandler.removeEventListener("hardwareBackPress", backHandler);
+    };
+  }, []);
 
   let style = React.useMemo(
     () => styleProp || StyleSheet.absoluteFill,
