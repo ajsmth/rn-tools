@@ -713,6 +713,7 @@ function goBack({ tabId = "" }: { tabId?: string }) {
     }
   });
 }
+let test = 1
 
 function getTabFns(tabId: string) {
   return {
@@ -732,7 +733,12 @@ let TABS_STUB: TabsInstance = {
       history: [],
     };
   },
+
+
+
   setActiveIndex: noop,
+
+  
   reset: noop,
 };
 

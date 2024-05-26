@@ -33,11 +33,5 @@
   },
   "dependencies": {
     "zustand": "^4.5.2"
-  },
-  "lint-staged": {
-    "**/*.{js,jsx,ts,tsx}": [
-      "eslint -c ./.eslintrc.js --fix",
-      "prettier --write"
-    ]
   }
 }
