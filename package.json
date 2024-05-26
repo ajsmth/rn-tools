@@ -9,15 +9,16 @@
     "publish:ui": "cd packages/ui && yarn build && yarn publish --no-git-tag-version",
     "publish:navigation": "cd packages/navigation && yarn build && yarn publish --no-git-tag-version",
     "publish:tailwind": "cd packages/tailwind && yarn build && yarn publish --no-git-tag-version",
-    "publish:core": "cd packages/core && yarn build && yarn publish --no-git-tag-version"
+    "publish:core": "cd packages/core && yarn build && yarn publish --no-git-tag-version",
+    "prepare": "husky"
   },
   "workspaces": [
     "packages/*",
     "example"
   ],
-  "packageManager": "yarn@4.0.2",
+  "packageManager": "yarn@4.2.2",
   "dependencies": {
-    "husky": "^9.0.11",
+    "husky": "^8.0.3",
     "lint-staged": "^15.2.5"
   }
 }

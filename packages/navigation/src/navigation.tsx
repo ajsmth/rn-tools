@@ -1,8 +1,13 @@
 import * as React from "react";
-
-import { create } from "zustand";
-import { immer } from "zustand/middleware/immer";
-
+import {
+  BackHandler,
+  Pressable,
+  StyleSheet,
+  View,
+  type PressableProps,
+  type ViewProps,
+  type ViewStyle,
+} from "react-native";
 import {
   ScreenStack as RNScreenStack,
   ScreenStackProps as RNScreenStackProps,
@@ -13,15 +18,8 @@ import {
   ScreenContainer as RNScreenContainer,
   ScreenContainerProps as RNScreenContainerProps,
 } from "react-native-screens";
-import {
-  BackHandler,
-  Pressable,
-  StyleSheet,
-  View,
-  type PressableProps,
-  type ViewProps,
-  type ViewStyle,
-} from "react-native";
+import { create } from "zustand";
+import { immer } from "zustand/middleware/immer";
 
 /**
  * Ideas:
@@ -71,7 +69,7 @@ type NavigationStore = {
 
 let storeBase = create<NavigationStore>();
 let useNavigation = storeBase(
-  immer((set) => {
+  immer(() => {
     return {
       stacks: {
         lookup: {},
@@ -178,7 +176,7 @@ function createStack({
   return getStackFns(stackId);
 }
 
-function getStack(stackId: string = "") {
+function getStack(stackId = "") {
   let stackItem = getState().stacks.lookup[stackId];
 
   if (!stackItem) {
@@ -357,10 +355,12 @@ function getFocusedStack() {
   return getStackFns(topStackId);
 }
 
+const noop = () => null;
+
 let stackInstanceStub: StackInstance = {
   id: "STUB",
-  push: () => {},
-  pop: () => {},
+  push: noop,
+  pop: noop,
   get: () => {
     return {
       id: "STUB",
@@ -369,8 +369,8 @@ let stackInstanceStub: StackInstance = {
   },
   getParent: () => stackInstanceStub,
   canGoBack: () => false,
-  popByKey: () => {},
-  reset: () => {},
+  popByKey: noop,
+  reset: noop,
 };
 
 let StackContext = React.createContext<StackInstance>(stackInstanceStub);
@@ -468,6 +468,7 @@ function StackScreen({
   children,
   style: styleProp,
   gestureEnabled = true,
+  onDismissed: onDismissedProp,
   ...props
 }: { children: React.ReactNode } & RNScreenProps) {
   let screenId = React.useContext(ScreenIdContext);
@@ -478,9 +479,9 @@ function StackScreen({
   let onDismissed: RNScreenProps["onDismissed"] = React.useCallback(
     (e) => {
       stack.popByKey(screenId);
-      props.onDismissed?.(e);
+      onDismissedProp?.(e);
     },
-    [stack, screenId, props.onDismissed]
+    [stack, screenId, onDismissedProp]
   );
 
   React.useEffect(() => {
@@ -506,6 +507,7 @@ function StackScreen({
   );
 
   return (
+    // @ts-expect-error - cleanup typings
     <RNScreen
       {...props}
       style={style}
@@ -547,7 +549,6 @@ function StackSlot({ slotName = DEFAULT_SLOT_NAME }: { slotName?: string }) {
 }
 
 function StackScreenHeader({
-  children,
   ...props
 }: { children: React.ReactNode } & RNScreenStackHeaderConfigProps) {
   return <RNScreenStackHeaderConfig {...props} />;
@@ -580,7 +581,7 @@ export let navigation = {
       stackId: options?.stackId || focusedStack.id,
     });
   },
-  popScreen: (count: number = 1) => {
+  popScreen: (count = 1) => {
     let stack = getFocusedStack();
     let stackId = stack.id;
     let numScreens = stack.get()?.screens.length || 0;
@@ -731,8 +732,8 @@ let TABS_STUB: TabsInstance = {
       history: [],
     };
   },
-  setActiveIndex: () => {},
-  reset: () => {},
+  setActiveIndex: noop,
+  reset: noop,
 };
 
 let TabsContext = React.createContext<TabsInstance>(TABS_STUB);
@@ -763,7 +764,7 @@ function TabsRoot({
     if (!tabs) {
       setTabsRef(createTabs({ id }));
     }
-  }, [tabs]);
+  }, [tabs, id]);
 
   React.useEffect(() => {
     if (tabId != null) {
@@ -805,7 +806,6 @@ let defaultScreenContainerStyle = {
 
 function TabsScreens({
   children,
-  style: styleProp,
   ...props
 }: { children: React.ReactNode } & RNScreenContainerProps) {
   return (
@@ -854,7 +854,7 @@ function TabsScreen({
     return () => {
       BackHandler.removeEventListener("hardwareBackPress", backHandler);
     };
-  }, []);
+  }, [tabId]);
 
   let style = React.useMemo(
     () => styleProp || StyleSheet.absoluteFill,
@@ -862,6 +862,7 @@ function TabsScreen({
   );
 
   return (
+    // @ts-expect-error - cleanup typings
     <RNScreen
       active={isActive ? 1 : 0}
       activityState={isActive ? 2 : 0}
@@ -909,6 +910,10 @@ type TabbarTabProps = {
     | ((props: { isActive: boolean; onPress: () => void }) => React.ReactNode);
 } & Omit<PressableProps, "children">;
 
+let defaultTabStyle: ViewStyle = {
+  flex: 1,
+};
+
 function TabsTab({ children, ...props }: TabbarTabProps) {
   let tabId = React.useContext(TabIdContext);
   let index = React.useContext(TabScreenIndexContext);
@@ -920,12 +925,6 @@ function TabsTab({ children, ...props }: TabbarTabProps) {
   let onPress: () => void = React.useCallback(() => {
     setActiveIndex(index, { tabId });
   }, [tabId, index]);
-
-  let defaultTabStyle: ViewStyle = React.useMemo(() => {
-    return {
-      flex: 1,
-    };
-  }, []);
 
   let style = React.useMemo(() => {
     let baseStyle = props.style || defaultTabStyle;
@@ -942,6 +941,7 @@ function TabsTab({ children, ...props }: TabbarTabProps) {
   }, [isActive, onPress, children]);
 
   return (
+    // @ts-expect-error - cleanup typings
     <Pressable onPress={onPress} style={style} {...props}>
       {renderChildren}
     </Pressable>

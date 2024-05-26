@@ -1,10 +1,3 @@
-import * as React from "react";
-import { Text, View, TouchableOpacity } from "react-native";
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
-
 import {
   navigation,
   Stack,
@@ -13,6 +6,12 @@ import {
   defaultTabbarStyle,
   setDebugModeEnabled,
 } from "@rn-toolkit/navigation";
+import * as React from "react";
+import { Text, View, TouchableOpacity } from "react-native";
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 setDebugModeEnabled(true);
 
@@ -32,7 +31,7 @@ function MyTabs() {
       ...defaultTabbarStyle,
       bottom,
     };
-  }, []);
+  }, [bottom]);
 
   return (
     <TabNavigator

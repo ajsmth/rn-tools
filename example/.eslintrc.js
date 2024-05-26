@@ -1,3 +1,1 @@
-let rootConfig = require("@rn-toolkit/eslint");
-
-module.exports = rootConfig;
+module.exports = require("@rn-toolkit/eslint-config")

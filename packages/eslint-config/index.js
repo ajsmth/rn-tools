@@ -1,8 +1,3 @@
-/**
- * This is intended to be a basic starting point for linting in the Indie Stack.
- * It relies on recommended configs out of the box for simplicity, but you can
- * and should modify this configuration to best suit your team's needs.
- */
 
 /** @type {import('eslint').Linter.Config} */
 module.exports = {
@@ -23,6 +18,8 @@ module.exports = {
 
   // Base config
   extends: ["eslint:recommended"],
+
+  ignorePatterns: ["**/**.md"],
 
   overrides: [
     // React
@@ -72,7 +69,8 @@ module.exports = {
         "prettier",
       ],
       rules: {
-        "eslint/prefer-const": "off",
+        "eslint/prefer-const": 0,
+        "prefer-const": 0,
 
         "unused-imports/no-unused-imports": "error",
         "unused-imports/no-unused-vars": [
@@ -97,13 +95,6 @@ module.exports = {
         "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/consistent-type-definitions": "off",
       },
-    },
-
-    // Markdown
-    {
-      files: ["**/*.md"],
-      plugins: ["markdown"],
-      extends: ["plugin:markdown/recommended", "prettier"],
     },
 
     // Jest/Vitest
@@ -137,4 +128,4 @@ module.exports = {
       },
     },
   ],
-};
+}; 
