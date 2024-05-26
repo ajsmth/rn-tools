@@ -27,6 +27,7 @@ import {
  * Ideas:
  *  - reset navigation
  *    - tabs / stack ref should read from store, not local state ref -> should recreate after being destroyed?
+ *  - remove immer?
  *  - provide initial state?
  *  - monitor rerenders
  *  - warn on parallel stacks?

@@ -15,5 +15,9 @@
     "packages/*",
     "example"
   ],
-  "dependencies": {}
+  "packageManager": "yarn@4.0.2",
+  "dependencies": {
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.5"
+  }
 }

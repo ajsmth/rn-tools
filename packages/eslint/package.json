@@ -1,0 +1,21 @@
+{
+  "name": "@rn-toolkit/eslint",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "author": "andy",
+  "license": "MIT",
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.8.0",
+    "@typescript-eslint/parser": "^6.8.0",
+    "eslint": "^8.56.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jest": "^27.4.3",
+    "eslint-plugin-jest-dom": "^5.1.0",
+    "eslint-plugin-jsx-a11y": "^6.7.1",
+    "eslint-plugin-markdown": "^3.0.1",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-testing-library": "^6.1.0",
+    "eslint-plugin-unused-imports": "^3.0.0"
+  }
+}
