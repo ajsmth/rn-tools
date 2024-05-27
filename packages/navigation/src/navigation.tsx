@@ -23,8 +23,6 @@ import { immer } from "zustand/middleware/immer";
 
 /**
  * Ideas:
- *  - reset navigation
- *    - tabs / stack ref should read from store, not local state ref -> should recreate after being destroyed?
  *  - remove immer?
  *  - provide initial state?
  *  - monitor rerenders
@@ -351,6 +349,15 @@ function getFocusedStack() {
       .map(Number)
   );
   let stackIds = renderCharts.stacksByDepth[maxDepth];
+
+  if (!stackIds || stackIds?.length === 0) {
+    if (getState().debugModeEnabled) {
+      console.warn("No focused stack found");
+    }
+
+    return;
+  }
+
   let topStackId = stackIds[stackIds.length - 1];
   return getStackFns(topStackId);
 }
@@ -385,42 +392,48 @@ type StackRootProps = {
   id?: string;
 };
 
-function StackRoot({ children, id }: StackRootProps) {
-  let [stackRef, setStackRef] = React.useState<StackInstance | null>(
-    getStack(id)
-  );
+let useStackInternal = (stackId = "") =>
+  useNavigation((state) => {
+    let stack = state.stacks.lookup[stackId];
 
-  let stack = React.useMemo(() => getStack(stackRef?.id), [stackRef]);
-  console.log("StackRoot", { id, stackRef, stack });
-
-  React.useEffect(() => {
     if (!stack) {
-      console.log(`creatingNewStack`, { id });
-      setStackRef(createStack({ id }));
+      return null;
     }
-  }, [id, stack]);
+
+    return getStackFns(stack.id);
+  });
+
+function StackRoot({ children, id }: StackRootProps) {
+  let idRef = React.useRef(id || generateStackId());
+  let stack = useStackInternal(idRef.current);
 
   let isActive = React.useContext(ActiveContext);
   let parentDepth = React.useContext(DepthContext);
   let parentStackId = React.useContext(StackIdContext);
 
   let depth = parentDepth + 1;
-  let stackId = stackRef?.id;
+  let stackId = idRef.current;
   let parentTabId = React.useContext(TabIdContext);
   let tabIndex = React.useContext(TabScreenIndexContext);
 
+  React.useLayoutEffect(() => {
+    if (!stack) {
+      createStack({ id: idRef.current });
+    }
+  }, [stack]);
+
   React.useEffect(() => {
-    if (stackId != null) {
+    if (stack != null) {
       registerStack({
         depth,
         isActive,
-        stackId,
+        stackId: stack.id,
         parentStackId,
         parentTabId,
         tabIndex,
       });
     }
-  }, [stackId, depth, isActive, parentStackId, parentTabId, tabIndex]);
+  }, [stack, depth, isActive, parentStackId, parentTabId, tabIndex]);
 
   React.useEffect(() => {
     return () => {
@@ -430,13 +443,13 @@ function StackRoot({ children, id }: StackRootProps) {
     };
   }, [stackId]);
 
-  if (!stackRef) {
+  if (!stack) {
     return null;
   }
 
   return (
-    <StackContext.Provider value={stackRef}>
-      <StackIdContext.Provider value={stackRef.id}>
+    <StackContext.Provider value={stack}>
+      <StackIdContext.Provider value={stack.id}>
         <DepthContext.Provider value={depth}>
           <ActiveContext.Provider value={isActive}>
             {children}
@@ -578,7 +591,7 @@ export let navigation = {
     let focusedStack = getFocusedStack();
     return pushScreen(element, {
       ...options,
-      stackId: options?.stackId || focusedStack.id,
+      stackId: options?.stackId || focusedStack?.id,
     });
   },
   popScreen: (count = 1) => {
@@ -713,7 +726,6 @@ function goBack({ tabId = "" }: { tabId?: string }) {
     }
   });
 }
-let test = 1
 
 function getTabFns(tabId: string) {
   return {
@@ -734,11 +746,8 @@ let TABS_STUB: TabsInstance = {
     };
   },
 
-
-
   setActiveIndex: noop,
 
-  
   reset: noop,
 };
 
@@ -750,6 +759,17 @@ type TabsRootProps = {
   id?: string;
 };
 
+let useTabsInternal = (tabId = "") =>
+  useNavigation((state) => {
+    let tab = state.tabs.lookup[tabId];
+
+    if (!tab) {
+      return null;
+    }
+
+    return getTabFns(tab.id);
+  });
+
 function TabsRoot({
   children,
   id,
@@ -757,31 +777,30 @@ function TabsRoot({
   children: React.ReactNode;
   id?: string;
 }) {
-  let [tabsRef, setTabsRef] = React.useState<TabsInstance | null>(getTabs(id));
+  let tabIdRef = React.useRef(id || generateTabId());
+  let tabId = tabIdRef.current;
+  let tabs = useTabsInternal(tabId);
 
-  let tabId = tabsRef?.id;
+  React.useLayoutEffect(() => {
+    if (!tabs) {
+      createTabs({ id: tabIdRef.current });
+    }
+  }, [tabs]);
+
   let depth = React.useContext(DepthContext);
   let isActive = React.useContext(ActiveContext);
   let parentTabId = React.useContext(TabIdContext);
 
-  let tabs = React.useMemo(() => getTabs(tabsRef?.id), [tabsRef]);
-
   React.useEffect(() => {
-    if (!tabs) {
-      setTabsRef(createTabs({ id }));
-    }
-  }, [tabs, id]);
-
-  React.useEffect(() => {
-    if (tabId != null) {
+    if (tabs != null) {
       registerTabs({
         depth,
         isActive,
-        tabId,
+        tabId: tabs.id,
         parentTabId,
       });
     }
-  }, [tabId, depth, isActive, parentTabId]);
+  }, [tabs, depth, isActive, parentTabId]);
 
   React.useEffect(() => {
     return () => {
@@ -791,15 +810,13 @@ function TabsRoot({
     };
   }, [tabId]);
 
-  if (!tabsRef) {
+  if (!tabs) {
     return null;
   }
 
   return (
-    <TabsContext.Provider value={tabsRef}>
-      <TabIdContext.Provider value={tabsRef.id}>
-        {children}
-      </TabIdContext.Provider>
+    <TabsContext.Provider value={tabs}>
+      <TabIdContext.Provider value={tabs.id}>{children}</TabIdContext.Provider>
     </TabsContext.Provider>
   );
 }
@@ -1043,7 +1060,6 @@ type TabNavigatorProps = Omit<TabsRootProps, "children"> & {
   screens: TabNavigatorScreenOptions[];
   tabbarPosition?: "top" | "bottom";
   tabbarStyle?: ViewProps["style"];
-  screenContainerStyle?: RNScreenContainerProps["style"];
 };
 
 type TabNavigatorScreenOptions = {
@@ -1056,9 +1072,9 @@ export function TabNavigator({
   screens,
   tabbarPosition = "bottom",
   tabbarStyle,
-  screenContainerStyle,
   ...rootProps
 }: TabNavigatorProps) {
+  // return <View style={{ flex:1, backgroundColor: "red" }} />
   return (
     <Tabs.Root {...rootProps}>
       {tabbarPosition === "top" && (
@@ -1069,7 +1085,7 @@ export function TabNavigator({
         </Tabs.Tabbar>
       )}
 
-      <Tabs.Screens style={screenContainerStyle}>
+      <Tabs.Screens>
         {screens.map((screen) => {
           return <Tabs.Screen key={screen.key}>{screen.screen}</Tabs.Screen>;
         })}

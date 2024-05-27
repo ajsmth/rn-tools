@@ -85,7 +85,6 @@ function MyStack({
 }
 
 function MyScreen({
-  count,
   colorClassName = "",
   children,
 }: {
@@ -97,7 +96,6 @@ function MyScreen({
     <View className={"flex-1" + " " + colorClassName}>
       {children || (
         <View className="flex-1 items-center justify-center gap-4">
-          <Text>{count}</Text>
           <TouchableOpacity
             onPress={() =>
               navigation.pushScreen(
@@ -107,7 +105,18 @@ function MyScreen({
               )
             }
           >
-            <Text>Push</Text>
+            <Text>Push Tabs</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.pushScreen(
+                <Stack.Screen>
+                  <MyScreen />
+                </Stack.Screen>
+              )
+            }
+          >
+            <Text>Push Screen</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {

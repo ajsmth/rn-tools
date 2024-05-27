@@ -14,7 +14,7 @@ For basic usage, the exported `StackNavigator` and `TabNavigator` components wil
 
 ### Stack Navigator
 
-The `StackNavigator` component manages stacks of screens. Under the hood this is using `react-native-screens` to handle pushing and popping natively. 
+The `StackNavigator` component manages stacks of screens. Under the hood this is using `react-native-screens` to handle pushing and popping natively.
 
 Screens are pushed and popped via the global `navigation.pushScreen` and `navigation.popScreen` methods.
 
@@ -168,7 +168,7 @@ function MyScreen({
 
 ### Rendering a stack inside of a tabbed screen
 
-Each tab can have its own stack by nesting the `StackNavigator` component 
+Each tab can have its own stack by nesting the `StackNavigator` component
 
 ```tsx
 function MyTabs() {
@@ -257,7 +257,7 @@ function switchMainTabsToTab(tabIndex: number) {
 
 ## API
 
-The navigator components in the previous examples are just thin wrappers around `Stack` and `Tabs` components exported by this library. Build your own wrappers on top of these base components if you need more control over how your screens are rendering. 
+The navigator components in the previous examples are just thin wrappers around `Stack` and `Tabs` components exported by this library. Build your own wrappers on top of these base components if you need more control over how your screens are rendering.
 
 This is the full implementation of the `StackNavigator` component:
 
@@ -288,7 +288,6 @@ type TabNavigatorProps = Omit<TabsRootProps, "children"> & {
   screens: TabNavigatorScreenOptions[];
   tabbarPosition?: "top" | "bottom";
   tabbarStyle?: ViewProps["style"];
-  screenContainerStyle?: ViewProps["style"];
 };
 
 type TabNavigatorScreenOptions = {
@@ -301,7 +300,6 @@ export function TabNavigator({
   screens,
   tabbarPosition = "bottom",
   tabbarStyle,
-  screenContainerStyle,
   ...rootProps
 }: TabNavigatorProps) {
   return (
@@ -314,7 +312,7 @@ export function TabNavigator({
         </Tabs.Tabbar>
       )}
 
-      <Tabs.Screens style={screenContainerStyle}>
+      <Tabs.Screens>
         {screens.map((screen) => {
           return <Tabs.Screen key={screen.key}>{screen.screen}</Tabs.Screen>;
         })}
