@@ -17,9 +17,11 @@ setDebugModeEnabled(true);
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <MyTabs />
-    </SafeAreaProvider>
+    <React.StrictMode>
+      <SafeAreaProvider>
+        <MyTabs />
+      </SafeAreaProvider>
+    </React.StrictMode>
   );
 }
 
@@ -40,7 +42,7 @@ function MyTabs() {
       screens={[
         {
           key: "1",
-          screen: <MyStack count={1} colorClassName="bg-red-500" />,
+          screen: <MyStack colorClassName="bg-red-500" />,
           tab: ({ isActive }) => (
             <View className="flex-1 p-4 items-center">
               <Text className={isActive ? "font-bold" : "font-medium"}>1</Text>
@@ -49,7 +51,7 @@ function MyTabs() {
         },
         {
           key: "2",
-          screen: <MyStack count={2} colorClassName="bg-blue-500" />,
+          screen: <MyStack colorClassName="bg-blue-500" />,
           tab: ({ isActive }) => (
             <View className="p-4 items-center">
               <Text className={isActive ? "font-bold" : "font-medium"}>2</Text>
@@ -58,7 +60,7 @@ function MyTabs() {
         },
         {
           key: "3",
-          screen: <MyStack count={3} colorClassName="bg-purple-500" />,
+          screen: <MyStack colorClassName="bg-purple-500" />,
           tab: ({ isActive }) => (
             <View className="p-4 items-center">
               <Text className={isActive ? "font-bold" : "font-medium"}>3</Text>
@@ -70,25 +72,16 @@ function MyTabs() {
   );
 }
 
-function MyStack({
-  count,
-  colorClassName,
-}: {
-  count: number;
-  colorClassName?: string;
-}) {
+function MyStack({ colorClassName }: { colorClassName?: string }) {
   return (
-    <StackNavigator
-      rootScreen={<MyScreen count={count} colorClassName={colorClassName} />}
-    />
+    <StackNavigator rootScreen={<MyScreen colorClassName={colorClassName} />} />
   );
 }
 
 function MyScreen({
-  colorClassName = "",
+  colorClassName = "white",
   children,
 }: {
-  count: number;
   colorClassName?: string;
   children?: React.ReactNode;
 }) {

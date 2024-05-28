@@ -23,7 +23,7 @@ import { immer } from "zustand/middleware/immer";
 
 /**
  * Ideas:
- *  - remove immer?
+ *  - remove immer - reducer fn easier to test?
  *  - provide initial state?
  *  - monitor rerenders
  *  - warn on parallel stacks?
@@ -477,6 +477,11 @@ function StackScreens({
   );
 }
 
+let defaultScreenStyle: ViewStyle = {
+  ...StyleSheet.absoluteFillObject,
+  backgroundColor: "white",
+};
+
 function StackScreen({
   children,
   style: styleProp,
@@ -514,10 +519,7 @@ function StackScreen({
     };
   }, [gestureEnabled, stack, screenId, isActive]);
 
-  let style = React.useMemo(
-    () => styleProp || StyleSheet.absoluteFill,
-    [styleProp]
-  );
+  let style = React.useMemo(() => styleProp || defaultScreenStyle, [styleProp]);
 
   return (
     // @ts-expect-error - cleanup typings
