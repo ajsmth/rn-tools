@@ -1,7 +1,7 @@
 export type PushScreenOptions = {
   stackId?: string;
   slotName?: string;
-  key?: string;
+  screenId?: string;
 };
 
 export type StackItem = {

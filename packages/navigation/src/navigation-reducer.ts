@@ -16,7 +16,35 @@ import {
   serializeTabIndexKey,
 } from "./utils";
 
-const DEFAULT_SLOT_NAME = "DEFAULT_SLOT";
+export let DEFAULT_SLOT_NAME = "DEFAULT_SLOT";
+
+function getInitialState(): NavigationState {
+  return {
+    stacks: {
+      ids: [],
+      lookup: {},
+    },
+    screens: {
+      ids: [],
+      lookup: {},
+    },
+    tabs: {
+      ids: [],
+      lookup: {},
+    },
+    debugModeEnabled: false,
+  };
+}
+
+export let initialState = getInitialState();
+
+export let initialRenderCharts: RenderCharts = {
+  stacksByDepth: {},
+  tabsByDepth: {},
+  tabParentsById: {},
+  stackParentsById: {},
+  stacksByTabIndex: {},
+};
 
 type CreateStackAction = {
   type: "CREATE_STACK_INSTANCE";
@@ -39,10 +67,9 @@ type UnregisterStackAction = {
   stackId: string;
 };
 
-type PushScreenStackAction = {
+type PushScreenStackAction = PushScreenOptions & {
   type: "PUSH_SCREEN";
   element: React.ReactElement<RNScreenProps>;
-  options: PushScreenOptions;
 };
 
 type PopScreenByCountAction = {
@@ -101,7 +128,22 @@ type TabActions =
   | UnregisterTabAction
   | TabBackAction;
 
-export type NavigationAction = StackActions | TabActions;
+type SetDebugModeAction = {
+  type: "SET_DEBUG_MODE";
+  enabled: boolean;
+};
+
+type DebugActions = SetDebugModeAction;
+
+type ResetNavigationAction = {
+  type: "RESET_NAVIGATION";
+};
+
+export type NavigationAction =
+  | StackActions
+  | TabActions
+  | DebugActions
+  | ResetNavigationAction;
 
 export function reducer(
   state: NavigationState,
@@ -118,16 +160,13 @@ export function reducer(
         screens: [],
       };
 
-      return Object.assign(state, {
-        stacks: {
-          ids: state.stacks.ids
-            .filter((id) => id !== initialStack.id)
-            .concat(initialStack.id),
-          lookup: Object.assign({}, state.stacks.lookup, {
-            [action.stackId]: initialStack,
-          }),
-        },
-      });
+      let nextState = Object.assign({}, state);
+      nextState.stacks.ids = nextState.stacks.ids
+        .filter((id) => id !== initialStack.id)
+        .concat(initialStack.id);
+
+      nextState.stacks.lookup[action.stackId] = initialStack;
+      return nextState;
     }
 
     case "REGISTER_STACK": {
@@ -169,6 +208,8 @@ export function reducer(
       let { stackId } = action;
       let { renderCharts } = context;
 
+      let nextState = Object.assign({}, state);
+
       for (let depth in renderCharts.stacksByDepth) {
         renderCharts.stacksByDepth[depth] = renderCharts.stacksByDepth[
           depth
@@ -178,8 +219,6 @@ export function reducer(
       let stack = state.stacks.lookup[stackId];
 
       if (stack && renderCharts.stackParentsById[stackId] != null) {
-        let nextState = Object.assign(state, {});
-
         stack.screens.forEach((screenId) => {
           delete nextState.screens.lookup[screenId];
           nextState.screens.ids = nextState.screens.ids.filter(
@@ -187,48 +226,46 @@ export function reducer(
           );
         });
 
-        nextState.stacks = {
-          ids: state.stacks.ids.filter((id) => id !== stackId),
-          lookup: Object.assign({}, state.stacks.lookup, {
-            [stackId]: undefined,
-          }),
-        };
-
-        return Object.assign(state, nextState);
+        nextState.stacks.ids = nextState.stacks.ids.filter(
+          (id) => id !== stackId
+        );
+        delete nextState.stacks.lookup[stackId];
       }
 
-      return state;
+      return nextState;
     }
 
     case "PUSH_SCREEN": {
-      let { element, options } = action;
-      let stack = state.stacks.lookup[options.stackId ?? ""];
+      let { element, stackId, screenId, slotName } = action;
+      let stack = state.stacks.lookup[stackId];
 
       if (!stack) {
         if (state.debugModeEnabled) {
-          console.warn("Stack not found: ", options.stackId);
+          console.warn("Stack not found: ", stackId);
         }
         return state;
       }
 
-      if (options.key && state.screens.lookup[options.key] != null) {
+      if (screenId && state.screens.lookup[screenId] != null) {
         return state;
       }
 
+      let nextState = Object.assign({}, state);
+
       let screenItem: ScreenItem = {
         element,
-        slotName: options.slotName || stack.defaultSlotName,
-        id: options.key || generateScreenId(),
+        slotName: slotName || stack.defaultSlotName,
+        id: screenId || generateScreenId(),
         stackId: stack.id,
       };
 
-      let nextState = Object.assign(state, {
-        screens: {
-          ids: state.screens.ids.concat(screenItem.id),
-          lookup: Object.assign({}, state.screens.lookup, {
-            [screenItem.id]: screenItem,
-          }),
-        },
+      nextState.screens.ids = nextState.screens.ids.concat(screenItem.id);
+      nextState.screens.lookup[screenItem.id] = screenItem;
+
+      nextState.stacks.lookup[stackId] = Object.assign(stack, {
+        screens: stack.screens
+          .filter((id) => id !== screenItem.id)
+          .concat(screenItem.id),
       });
 
       return nextState;
@@ -236,7 +273,7 @@ export function reducer(
 
     case "POP_SCREEN_BY_COUNT": {
       let { count, stackId } = action;
-      let stack = state.stacks.lookup[stackId ?? ""];
+      let stack = state.stacks.lookup[stackId];
 
       if (!stack) {
         if (state.debugModeEnabled) {
@@ -249,9 +286,11 @@ export function reducer(
         count = stack.screens.length;
       }
 
-      let poppedScreenIds = stack.screens.splice(-count, count);
-
-      let nextState = Object.assign(state, {});
+      let nextState = Object.assign({}, state);
+      let poppedScreenIds = nextState.stacks.lookup[stackId].screens.splice(
+        -count,
+        count
+      );
 
       poppedScreenIds.forEach((screenId) => {
         delete nextState.screens.lookup[screenId];
@@ -277,7 +316,7 @@ export function reducer(
         return state;
       }
 
-      let nextState = Object.assign(state);
+      let nextState = Object.assign({}, state);
 
       nextState.stacks.lookup[stackId] = Object.assign(stack, {
         screens: stack.screens.filter((screenId) => screenId !== key),
@@ -294,7 +333,7 @@ export function reducer(
     }
 
     case "CREATE_TAB_INSTANCE": {
-      let { tabId, initialActiveIndex } = action;
+      let { tabId, initialActiveIndex = 0 } = action;
 
       let initialTabs: TabItem = {
         id: tabId || generateTabId(),
@@ -302,7 +341,7 @@ export function reducer(
         history: [],
       };
 
-      let nextState = Object.assign(state);
+      let nextState = Object.assign({}, state);
 
       nextState.tabs.lookup[initialTabs.id] = initialTabs;
       nextState.tabs.ids = nextState.tabs.ids
@@ -317,7 +356,6 @@ export function reducer(
       let { renderCharts } = context;
 
       let tab = state.tabs.lookup[tabId];
-
       if (!tab) {
         if (state.debugModeEnabled) {
           console.warn("Tab not found: ", tabId);
@@ -326,7 +364,15 @@ export function reducer(
         return state;
       }
 
-      let nextState: NavigationState = Object.assign(state);
+      let nextState: NavigationState = Object.assign({}, state);
+      nextState.tabs.lookup[tabId] = Object.assign(
+        {},
+        {
+          ...nextState.tabs.lookup[tabId],
+          activeIndex: index,
+          history: tab.history.filter((i) => i !== index).concat(index),
+        }
+      );
 
       if (tab.activeIndex === index) {
         let tabKey = serializeTabIndexKey(tabId, index);
@@ -335,22 +381,22 @@ export function reducer(
         if (stackIds?.length > 0) {
           stackIds.forEach((stackId) => {
             let stack = nextState.stacks.lookup[stackId];
+            let screenIdsToRemove = stack.screens;
 
-            let count = stack?.screens.length;
-            let poppedScreenIds = stack?.screens.splice(-count, count);
-            poppedScreenIds.forEach((screenId) => {
-              delete nextState.screens.lookup[screenId];
-              nextState.screens.ids = nextState.screens.ids.filter(
-                (id) => id !== screenId
-              );
+            let nextScreensLookup = Object.assign({}, nextState.screens.lookup);
+
+            screenIdsToRemove.forEach((id) => {
+              delete nextScreensLookup[id];
             });
+
+            nextState.stacks.lookup[stackId].screens = [];
+            nextState.screens.ids = nextState.screens.ids.filter(
+              (id) => !screenIdsToRemove.includes(id)
+            );
+            nextState.screens.lookup = nextScreensLookup;
           });
         }
       }
-
-      tab.history = tab.history.filter((i) => i !== tab.activeIndex);
-      tab.history.push(tab.activeIndex);
-      tab.activeIndex = index;
 
       return nextState;
     }
@@ -393,7 +439,7 @@ export function reducer(
 
     case "TAB_BACK": {
       let { tabId } = action;
-      let nextState: NavigationState = Object.assign(state);
+      let nextState: NavigationState = Object.assign({}, state);
 
       let tab = nextState.tabs.lookup[tabId];
       let last = tab.history.pop();
@@ -402,6 +448,16 @@ export function reducer(
       }
 
       return nextState;
+    }
+
+    case "SET_DEBUG_MODE": {
+      let { enabled } = action;
+      return Object.assign(state, { debugModeEnabled: enabled });
+    }
+
+    case "RESET_NAVIGATION": {
+      context.renderCharts = initialRenderCharts;
+      return getInitialState();
     }
 
     default: {

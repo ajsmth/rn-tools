@@ -197,7 +197,7 @@ function MyTabs() {
 Provide an `id` prop to a stack and target it explicitly when pushing the screen.
 
 ```tsx
-const MAIN_STACK_ID = "mainStack";
+let MAIN_STACK_ID = "mainStack";
 
 function App() {
   return (
@@ -244,7 +244,7 @@ function pushThisScreenOnce() {
 Similar to `StackNavigator`, pass an `id` prop to a `TabNavigator` and target a navigator expliclity when setting the active tab.
 
 ```tsx
-const MAIN_TAB_ID = "mainTabs";
+let MAIN_TAB_ID = "mainTabs";
 
 function App() {
   return <TabNavigator id={MAIN_TAB_ID} screens={tabs} />;
@@ -343,7 +343,7 @@ import * as React from "react";
 import { Stack } from "@rn-toolkit/navigation";
 
 function App() {
-  const [user, setUser] = React.useState(null);
+  let [user, setUser] = React.useState(null);
 
   return (
     <Stack.Root>
@@ -365,10 +365,10 @@ function App() {
   );
 }
 
-const UserContext = React.createContext<User | null>(null);
+let UserContext = React.createContext<User | null>(null);
 
-const useUser = () => {
-  const user = React.useContext(UserContext);
+let useUser = () => {
+  let user = React.useContext(UserContext);
 
   if (user == null) {
     throw new Error("User not found");

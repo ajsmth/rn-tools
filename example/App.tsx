@@ -4,7 +4,6 @@ import {
   StackNavigator,
   TabNavigator,
   defaultTabbarStyle,
-  setDebugModeEnabled,
 } from "@rn-toolkit/navigation";
 import * as React from "react";
 import { Text, View, TouchableOpacity } from "react-native";
@@ -13,22 +12,20 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-setDebugModeEnabled(true);
+navigation.setDebugModeEnabled(true)
 
 export default function App() {
   return (
-    <React.StrictMode>
-      <SafeAreaProvider>
-        <MyTabs />
-      </SafeAreaProvider>
-    </React.StrictMode>
+    <SafeAreaProvider>
+      <MyTabs />
+    </SafeAreaProvider>
   );
 }
 
 function MyTabs() {
-  const { bottom } = useSafeAreaInsets();
+  let { bottom } = useSafeAreaInsets();
 
-  const tabbarStyle = React.useMemo(() => {
+  let tabbarStyle = React.useMemo(() => {
     return {
       ...defaultTabbarStyle,
       bottom,

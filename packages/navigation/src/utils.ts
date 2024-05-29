@@ -10,6 +10,5 @@ function createIdGenerator(name: string) {
   };
 }
 
-
 export let serializeTabIndexKey = (tabId: string, index: number) =>
   `${tabId}-${index}`;
