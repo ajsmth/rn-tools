@@ -19,13 +19,12 @@ The `StackNavigator` component manages stacks of screens. Under the hood this is
 Screens are pushed and popped via the global `navigation.pushScreen` and `navigation.popScreen` methods.
 
 ```tsx
+import { StackNavigator, Stack, navigation } from "@rn-toolkit/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
 
-import { StackNavigator, Stack, navigation } from "@rn-toolkit/navigation";
-
-function App() {
-  return <StackNavigator rootScreen={<MyScreen title="Root Screen" />} />;
+export function BasicStack() {
+  return <Stack.Navigator rootScreen={<MyScreen title="Root Screen" />} />;
 }
 
 function MyScreen({
@@ -57,10 +56,10 @@ function MyScreen({
 }
 ```
 
-**Note**: Any screen pushed must be wrapped in a `Stack.Screen` component. Create a wrapper to the push method to simplify your usage:
+**Note**: The element given to `pushScreen` needs to be wrapped in a `Stack.Screen` component. Create a wrapper to simplify your usage if you'd like:
 
 ```tsx
-function myAppsPushScreen(
+function myPushScreen(
   element: React.ReactElement<unknown>,
   options?: PushScreenOptions
 ) {
@@ -73,22 +72,36 @@ function myAppsPushScreen(
 The `TabNavigator` component also uses `react-native-screens` to handle the tab switching natively. The active tab can be changed via the `navigation.setTabIndex` method, however the tabs that are rendered already handle tabbing between screens without additional configuration.
 
 ```tsx
-import * as React from "react";
-import { View, Text, Button } from "react-native";
 import {
   StackNavigator,
   TabNavigator,
   navigation,
+  Stack,
+  defaultTabbarStyle,
 } from "@rn-toolkit/navigation";
+import * as React from "react";
+import { View, Text, Button } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-function App() {
-  return <StackNavigator rootScreen={<MyTabs />} />;
+export function BasicTabs() {
+  return <Stack.Navigator rootScreen={<MyTabs />} />;
 }
 
 function MyTabs() {
+  // This hook requires you to wrap your app in a SafeAreaProvider component - see the `react-native-safe-area-context` package
+  let insets = useSafeAreaInsets();
+
+  let tabbarStyle = React.useMemo(() => {
+    return {
+      ...defaultTabbarStyle,
+      bottom: insets.bottom,
+    };
+  }, [insets.bottom]);
+
   return (
-    <TabNavigator
+    <Tabs.Navigator
       tabbarPosition="bottom"
+      tabbarStyle={tabbarStyle}
       screens={[
         {
           key: "1",
@@ -173,13 +186,13 @@ Each tab can have its own stack by nesting the `StackNavigator` component
 ```tsx
 function MyTabs() {
   return (
-    <TabNavigator
+    <Tabs.Navigator
       screens={[
         {
           key: "1",
           // Wrap the screen in a StackNavigator:
           screen: (
-            <StackNavigator
+            <Stack.Navigator
               rootScreen={<MyScreen title="Screen 1" bg="red" />}
             />
           ),
@@ -201,7 +214,7 @@ let MAIN_STACK_ID = "mainStack";
 
 function App() {
   return (
-    <StackNavigator
+    <Stack.Navigator
       id={MAIN_STACK_ID}
       rootScreen={<MyScreen title="Root Screen" />}
     />
@@ -221,7 +234,7 @@ function pushToMainStack(
 
 ### Pushing a screen once
 
-One tradeoff with imperative methods like `navigation.pushScreen` is that it's possible to push the same screen multiple times. In cases where your UI might do this, you can provide a `key` option to only push the screen once. Screen keys are unique across all stacks.
+One tradeoff with imperative methods like `navigation.pushScreen` is that it's possible to push the same screen multiple times. In cases where your UI might do this, you can provide a `screenId` option to only push the screen once. Screen ids are unique across all stacks.
 
 **Note:** Usually when a screen is pushed multiple times it means that the screen should be rendered declaratively rather than pushed with the `pushScreen` method. This is covered in the Advanced section below.
 
@@ -233,7 +246,7 @@ function pushThisScreenOnce() {
     </Stack.Screen>,
     {
       // This screen will only be pushed once
-      key: "unique-key",
+      screenId: "unique-key",
     }
   );
 }
@@ -247,7 +260,7 @@ Similar to `StackNavigator`, pass an `id` prop to a `TabNavigator` and target a 
 let MAIN_TAB_ID = "mainTabs";
 
 function App() {
-  return <TabNavigator id={MAIN_TAB_ID} screens={tabs} />;
+  return <Tabs.Navigator id={MAIN_TAB_ID} screens={tabs} />;
 }
 
 function switchMainTabsToTab(tabIndex: number) {
@@ -255,11 +268,11 @@ function switchMainTabsToTab(tabIndex: number) {
 }
 ```
 
-## API
+## Components
 
-The navigator components in the previous examples are just thin wrappers around `Stack` and `Tabs` components exported by this library. Build your own wrappers on top of these base components if you need more control over how your screens are rendering.
+The components in the previous examples are thin wrappers around the `Stack` and `Tabs` components exported by this library. Build your own wrappers on top of these base components if you need more control over how your screens are rendering.
 
-This is the full implementation of the `StackNavigator` component:
+For reference, this is the full implementation of the `StackNavigator` component:
 
 ```tsx
 type StackNavigatorProps = Omit<StackRootProps, "children"> & {
@@ -378,4 +391,14 @@ let useUser = () => {
 };
 ```
 
-**Note:** Screens that are pushed onto the stack with `pushScreen` are rendered in the `Slot` component, which you can conditionally render as well. This means all screens will be popped when the user is logged out.
+**Note:** Screens that are pushed using `pushScreen` are rendered in the `Slot` component
+
+### Deep linking
+
+### Header components
+
+You can use the `Stack.Header` component to render a header for your screens, so long as you pass it as the first child to your screen component. Under the hood the `Stack.Header` component is just the one exported by `react-native-screens`. It provides some convenience over rolling your own headers at times.
+
+### Prevent going back
+
+The `Stack.Screen` component is also exported from `react-native-screens` component. You can use the `gestureEnabled` prop to prevent the user from being able to swipe back on any screen, and the `preventNativeDismiss` prop to prevent the user from being able to dismiss the screen natively.

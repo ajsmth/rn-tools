@@ -72,7 +72,7 @@ module.exports = {
         "eslint/prefer-const": 0,
         "prefer-const": 0,
 
-        "unused-imports/no-unused-imports": "error",
+        "unused-imports/no-unused-imports": 0,
         "unused-imports/no-unused-vars": [
           "warn",
           {

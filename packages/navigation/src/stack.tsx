@@ -1,13 +1,13 @@
 import * as React from "react";
 import { BackHandler, StyleSheet, type ViewStyle } from "react-native";
 import {
-  ScreenStack as RNScreenStack,
   ScreenStackProps as RNScreenStackProps,
   Screen as RNScreen,
   ScreenProps as RNScreenProps,
   ScreenStackHeaderConfig as RNScreenStackHeaderConfig,
   ScreenStackHeaderConfigProps as RNScreenStackHeaderConfigProps,
 } from "react-native-screens";
+import ScreenStackNativeComponent from "react-native-screens/src/fabric/ScreenStackNativeComponent";
 
 import {
   ActiveContext,
@@ -22,6 +22,25 @@ import { generateStackId } from "./utils";
 
 let StackIdContext = React.createContext<string>("");
 let ScreenIdContext = React.createContext<string>("");
+
+const RNScreenStack = React.memo(function RNScreenStack(
+  props: RNScreenStackProps
+) {
+  const { children, gestureDetectorBridge, ...rest } = props;
+  const ref = React.useRef(null);
+
+  React.useEffect(() => {
+    if (gestureDetectorBridge) {
+      gestureDetectorBridge.current.stackUseEffectCallback(ref);
+    }
+  });
+
+  return (
+    <ScreenStackNativeComponent {...rest} ref={ref}>
+      {children}
+    </ScreenStackNativeComponent>
+  );
+});
 
 type StackRootProps = {
   children: React.ReactNode;
@@ -47,7 +66,6 @@ function StackRoot({ children, id }: StackRootProps) {
   let stackId = idRef.current;
   let parentTabId = React.useContext(TabIdContext);
   let tabIndex = React.useContext(TabScreenIndexContext);
-
 
   let dispatch = useNavigationDispatch();
 
@@ -95,19 +113,16 @@ function StackRoot({ children, id }: StackRootProps) {
 }
 
 function StackScreens({
-  children,
   style: styleProp,
   ...props
-}: { children: React.ReactNode } & RNScreenStackProps) {
+}: RNScreenStackProps) {
   let style = React.useMemo(
     () => styleProp || StyleSheet.absoluteFill,
     [styleProp]
   );
 
   return (
-    <RNScreenStack {...props} style={style}>
-      {children}
-    </RNScreenStack>
+    <RNScreenStack {...props} style={style} />
   );
 }
 
@@ -116,7 +131,7 @@ let defaultScreenStyle: ViewStyle = {
   backgroundColor: "white",
 };
 
-type StackScreenProps = RNScreenProps;
+export type StackScreenProps = RNScreenProps;
 
 let StackScreen = React.memo(function StackScreen({
   children,
@@ -165,7 +180,7 @@ let StackScreen = React.memo(function StackScreen({
     <RNScreen
       {...props}
       style={style}
-      activityState={isActive ? 2 : 0}
+      // activityState={isActive ? 2 : 0}
       gestureEnabled={gestureEnabled}
       onDismissed={onDismissed}
     >
@@ -208,23 +223,15 @@ let StackSlot = React.memo(function StackSlot({
 
 let StackScreenHeader = React.memo(function StackScreenHeader({
   ...props
-}: { children: React.ReactNode } & RNScreenStackHeaderConfigProps) {
+}: RNScreenStackHeaderConfigProps) {
   return <RNScreenStackHeaderConfig {...props} />;
 });
-
-export let Stack = {
-  Root: StackRoot,
-  Screens: StackScreens,
-  Screen: StackScreen,
-  Header: StackScreenHeader,
-  Slot: StackSlot,
-};
 
 type StackNavigatorProps = Omit<StackRootProps, "children"> & {
   rootScreen: React.ReactElement<unknown>;
 };
 
-export function StackNavigator({
+let StackNavigator = React.memo(function StackNavigator({
   rootScreen,
   ...rootProps
 }: StackNavigatorProps) {
@@ -236,4 +243,13 @@ export function StackNavigator({
       </Stack.Screens>
     </Stack.Root>
   );
-}
+});
+
+export let Stack = {
+  Root: StackRoot,
+  Screens: StackScreens,
+  Screen: StackScreen,
+  Header: StackScreenHeader,
+  Slot: StackSlot,
+  Navigator: StackNavigator,
+};

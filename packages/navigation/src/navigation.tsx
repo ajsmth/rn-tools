@@ -12,11 +12,7 @@ import type { PushScreenOptions } from "./types";
 
 /**
  * Ideas:
- *  - remove immer - reducer fn easier to test?
- *  - provide initial state?
- *  - monitor rerenders
- *  - warn on parallel stacks?
- *  - lifecycles?
+ *  - lifecycles / screen tracking
  *  - testing - internal and jest plugin
  */
 

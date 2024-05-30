@@ -12,13 +12,31 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-navigation.setDebugModeEnabled(true)
+import { NavigationExamples } from "./src/navigation-examples";
+
+navigation.setDebugModeEnabled(true);
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <MyTabs />
+      <Stack.Navigator rootScreen={<RootScreen />} />
     </SafeAreaProvider>
+  );
+}
+
+function RootScreen() {
+  let insets = useSafeAreaInsets();
+
+  return (
+    <View className="flex-1 px-4" style={{ paddingTop: insets.top + 64 }}>
+      <TouchableOpacity
+        onPress={() => navigation.pushScreen(<NavigationExamples />)}
+      >
+        <Text className="font-semibold text-lg underline">
+          Navigation Examples
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -33,7 +51,7 @@ function MyTabs() {
   }, [bottom]);
 
   return (
-    <TabNavigator
+    <Tabs.Navigator
       tabbarPosition="bottom"
       tabbarStyle={tabbarStyle}
       screens={[
@@ -71,7 +89,7 @@ function MyTabs() {
 
 function MyStack({ colorClassName }: { colorClassName?: string }) {
   return (
-    <StackNavigator rootScreen={<MyScreen colorClassName={colorClassName} />} />
+    <Stack.Navigator rootScreen={<MyScreen colorClassName={colorClassName} />} />
   );
 }
 

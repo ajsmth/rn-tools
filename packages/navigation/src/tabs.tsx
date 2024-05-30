@@ -241,27 +241,8 @@ let TabsTab = React.memo(function TabsTab({
   );
 });
 
-export let Tabs = {
-  Root: TabsRoot,
-  Screens: TabsScreens,
-  Screen: TabsScreen,
-  Tabbar: TabsTabbar,
-  Tab: TabsTab,
-};
 
-export type TabNavigatorProps = Omit<TabsRootProps, "children"> & {
-  screens: TabNavigatorScreenOptions[];
-  tabbarPosition?: "top" | "bottom";
-  tabbarStyle?: ViewProps["style"];
-};
-
-export type TabNavigatorScreenOptions = {
-  key: string;
-  screen: React.ReactElement<unknown>;
-  tab: (props: { isActive: boolean; onPress: () => void }) => React.ReactNode;
-};
-
-export let TabNavigator = React.memo(function TabNavigator({
+let TabNavigator = React.memo(function TabNavigator({
   screens,
   tabbarPosition = "bottom",
   tabbarStyle,
@@ -293,3 +274,24 @@ export let TabNavigator = React.memo(function TabNavigator({
     </Tabs.Root>
   );
 });
+
+export let Tabs = {
+  Root: TabsRoot,
+  Screens: TabsScreens,
+  Screen: TabsScreen,
+  Tabbar: TabsTabbar,
+  Tab: TabsTab,
+  Navigator: TabNavigator,
+};
+
+export type TabNavigatorProps = Omit<TabsRootProps, "children"> & {
+  screens: TabNavigatorScreenOptions[];
+  tabbarPosition?: "top" | "bottom";
+  tabbarStyle?: ViewProps["style"];
+};
+
+export type TabNavigatorScreenOptions = {
+  key: string;
+  screen: React.ReactElement<unknown>;
+  tab: (props: { isActive: boolean; onPress: () => void }) => React.ReactNode;
+};

@@ -1,10 +1,11 @@
 import * as React from "react";
 import { createStore, useStore as useStoreContext } from "zustand";
+import { devtools, redux } from "zustand/middleware";
 
 import {
   initialRenderCharts,
   initialState,
-  reducer,
+  reducer as navigationReducer,
   type NavigationAction,
 } from "./navigation-reducer";
 import type { NavigationState } from "./types";
@@ -12,15 +13,14 @@ import type { NavigationState } from "./types";
 export type NavigationStore = ReturnType<typeof createNavigationStore>;
 
 export function createNavigationStore() {
-  let renderCharts = Object.assign(initialRenderCharts);
-  let store = createStore(() => initialState);
+  let renderCharts = Object.assign({}, initialRenderCharts);
 
-  let dispatch = (action: NavigationAction) => {
-    store.setState((state) => {
-      let nextState = reducer(state, action, { renderCharts });
-      return { ...nextState };
-    });
+  let reducer = (state: NavigationState, action: NavigationAction) => {
+    let nextState = navigationReducer(state, action, { renderCharts });
+    return { ...nextState };
   };
+
+  let store = createStore(devtools(redux(reducer, initialState)));
 
   store.subscribe((state) => {
     if (state.debugModeEnabled) {
@@ -32,14 +32,13 @@ export function createNavigationStore() {
   });
 
   return {
-    store,
-    dispatch,
+    store: store,
+    dispatch: store.dispatch,
     renderCharts,
   };
 }
 
 export let rootStore = createNavigationStore();
-
 export let NavigationStateContext = React.createContext(rootStore.store);
 export let NavigationDispatchContext = React.createContext(rootStore.dispatch);
 

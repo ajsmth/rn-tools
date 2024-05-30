@@ -1,5 +1,11 @@
 # @rn-toolkit/tailwind
 
+# Do not use this!
+
+This package is really old and outdated - it was a fun experiment but it's not a good idea to use it in a real project. I'm keeping it around for historical purposes but I don't recommend using it - use NativeWind instead!
+
+
+
 A babel plugin to enhance react-native primitives with tailwind classnames.
 
 ## Setup
