@@ -19,7 +19,7 @@ The `Stack.Navigator` component manages stacks of screens. Under the hood this i
 Screens are pushed and popped via the global `navigation.pushScreen` and `navigation.popScreen` methods.
 
 ```tsx
-import { Stack.Navigator, Stack, navigation } from "@rn-toolkit/navigation";
+import { Stack, navigation } from "@rn-toolkit/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
 
@@ -73,8 +73,8 @@ The `Tabs.Navigator` component also uses `react-native-screens` to handle the ta
 
 ```tsx
 import {
-  Stack.Navigator,
-  Tabs.Navigator,
+  Stack,
+  Tabs,
   navigation,
   Stack,
   defaultTabbarStyle,
