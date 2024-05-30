@@ -10,7 +10,7 @@ yarn expo install @rn-toolkit/navigation react-native-screens
 
 ## Basic Usage
 
-For basic usage, the exported `Stack.Navigator` and `Tabs.Navigator` components will get you up and running quickly. The [Advanced Usage](#advanced-usage) section covers how to use the lower-level `Stack` and `Tabs` components to handle more advanced navigation patterns.
+For basic usage, the exported `Stack.Navigator` and `Tabs.Navigator` components will get you up and running quickly. The [Guides](#guides) section covers how to use the lower-level `Stack` and `Tabs` components in a variety of navigation patterns.
 
 ### Stack Navigator
 
@@ -236,7 +236,7 @@ function pushToMainStack(
 
 One tradeoff with imperative methods like `navigation.pushScreen` is that it's possible to push the same screen multiple times. In cases where your UI might do this, you can provide a `screenId` option to only push the screen once. Screen ids are unique across all stacks.
 
-**Note:** Usually when a screen is pushed multiple times it means that the screen should be rendered declaratively rather than pushed with the `pushScreen` method. This is covered in the Advanced section below.
+**Note:** Usually when a screen is pushed multiple times and you intend for it to be pushed once means it should be rendered declaratively rather than pushed. This is covered in the Advanced section below.
 
 ```tsx
 function pushThisScreenOnce() {
@@ -345,7 +345,7 @@ export function Tabs.Navigator({
 
 Hopefully this gives you an idea of how you might create your own components using `Stack` and `Tabs` without too much effort
 
-## Advanced Usage
+## Guides
 
 ### Authentication
 
