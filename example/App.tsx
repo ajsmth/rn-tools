@@ -1,8 +1,6 @@
 import {
   navigation,
   Stack,
-  StackNavigator,
-  TabNavigator,
   defaultTabbarStyle,
 } from "@rn-toolkit/navigation";
 import * as React from "react";

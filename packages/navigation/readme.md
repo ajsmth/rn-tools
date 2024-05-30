@@ -10,16 +10,16 @@ yarn expo install @rn-toolkit/navigation react-native-screens
 
 ## Basic Usage
 
-For basic usage, the exported `StackNavigator` and `TabNavigator` components will get you up and running quickly. The [Advanced Usage](#advanced-usage) section covers how to use the lower-level `Stack` and `Tabs` components to handle more advanced navigation patterns.
+For basic usage, the exported `Stack.Navigator` and `Tabs.Navigator` components will get you up and running quickly. The [Advanced Usage](#advanced-usage) section covers how to use the lower-level `Stack` and `Tabs` components to handle more advanced navigation patterns.
 
 ### Stack Navigator
 
-The `StackNavigator` component manages stacks of screens. Under the hood this is using `react-native-screens` to handle pushing and popping natively.
+The `Stack.Navigator` component manages stacks of screens. Under the hood this is using `react-native-screens` to handle pushing and popping natively.
 
 Screens are pushed and popped via the global `navigation.pushScreen` and `navigation.popScreen` methods.
 
 ```tsx
-import { StackNavigator, Stack, navigation } from "@rn-toolkit/navigation";
+import { Stack.Navigator, Stack, navigation } from "@rn-toolkit/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
 
@@ -69,12 +69,12 @@ function myPushScreen(
 
 ### Tab Navigator
 
-The `TabNavigator` component also uses `react-native-screens` to handle the tab switching natively. The active tab can be changed via the `navigation.setTabIndex` method, however the tabs that are rendered already handle tabbing between screens without additional configuration.
+The `Tabs.Navigator` component also uses `react-native-screens` to handle the tab switching natively. The active tab can be changed via the `navigation.setTabIndex` method, however the tabs that are rendered already handle tabbing between screens without additional configuration.
 
 ```tsx
 import {
-  StackNavigator,
-  TabNavigator,
+  Stack.Navigator,
+  Tabs.Navigator,
   navigation,
   Stack,
   defaultTabbarStyle,
@@ -181,7 +181,7 @@ function MyScreen({
 
 ### Rendering a stack inside of a tabbed screen
 
-Each tab can have its own stack by nesting the `StackNavigator` component
+Each tab can have its own stack by nesting the `Stack.Navigator` component
 
 ```tsx
 function MyTabs() {
@@ -190,7 +190,7 @@ function MyTabs() {
       screens={[
         {
           key: "1",
-          // Wrap the screen in a StackNavigator:
+          // Wrap the screen in a Stack.Navigator:
           screen: (
             <Stack.Navigator
               rootScreen={<MyScreen title="Screen 1" bg="red" />}
@@ -254,7 +254,7 @@ function pushThisScreenOnce() {
 
 ### Targeting specific tabs
 
-Similar to `StackNavigator`, pass an `id` prop to a `TabNavigator` and target a navigator expliclity when setting the active tab.
+Similar to `Stack.Navigator`, pass an `id` prop to a `Tabs.Navigator` and target a navigator expliclity when setting the active tab.
 
 ```tsx
 let MAIN_TAB_ID = "mainTabs";
@@ -272,17 +272,17 @@ function switchMainTabsToTab(tabIndex: number) {
 
 The components in the previous examples are thin wrappers around the `Stack` and `Tabs` components exported by this library. Build your own wrappers on top of these base components if you need more control over how your screens are rendering.
 
-For reference, this is the full implementation of the `StackNavigator` component:
+For reference, this is the full implementation of the `Stack.Navigator` component:
 
 ```tsx
-type StackNavigatorProps = Omit<StackRootProps, "children"> & {
+type Stack.NavigatorProps = Omit<StackRootProps, "children"> & {
   rootScreen: React.ReactElement<unknown>;
 };
 
-export function StackNavigator({
+export function Stack.Navigator({
   rootScreen,
   ...rootProps
-}: StackNavigatorProps) {
+}: Stack.NavigatorProps) {
   return (
     <Stack.Root {...rootProps}>
       <Stack.Screens>
@@ -294,27 +294,27 @@ export function StackNavigator({
 }
 ```
 
-Likewise here is the full implementation of the `TabNavigator` component:
+Likewise here is the full implementation of the `Tabs.Navigator` component:
 
 ```tsx
-type TabNavigatorProps = Omit<TabsRootProps, "children"> & {
-  screens: TabNavigatorScreenOptions[];
+type Tabs.NavigatorProps = Omit<TabsRootProps, "children"> & {
+  screens: Tabs.NavigatorScreenOptions[];
   tabbarPosition?: "top" | "bottom";
   tabbarStyle?: ViewProps["style"];
 };
 
-type TabNavigatorScreenOptions = {
+type Tabs.NavigatorScreenOptions = {
   key: string;
   screen: React.ReactElement<unknown>;
   tab: (props: { isActive: boolean; onPress: () => void }) => React.ReactNode;
 };
 
-export function TabNavigator({
+export function Tabs.Navigator({
   screens,
   tabbarPosition = "bottom",
   tabbarStyle,
   ...rootProps
-}: TabNavigatorProps) {
+}: Tabs.NavigatorProps) {
   return (
     <Tabs.Root {...rootProps}>
       {tabbarPosition === "top" && (
