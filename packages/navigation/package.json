@@ -1,6 +1,6 @@
 {
   "name": "@rn-toolkit/navigation",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "main": "./src/index.ts",
   "license": "MIT",
   "files": [
