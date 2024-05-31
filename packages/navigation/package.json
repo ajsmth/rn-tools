@@ -30,7 +30,7 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
-    "react-native-screens": "~3.4.0"
+    "react-native-screens": "*"
   },
   "dependencies": {
     "zustand": "^4.5.2"
