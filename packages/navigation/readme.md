@@ -1,6 +1,6 @@
 # @rn-toolkit/navigation
 
-A set of useful navigation components for React Native. Built with `react-native-screens`. Designed with flexibility in mind. Create your own abstractions on top of this!
+A set of useful navigation components for React Native. Built with `react-native-screens`. Designed with flexibility in mind.
 
 ## Installation
 
@@ -10,13 +10,17 @@ yarn expo install @rn-toolkit/navigation react-native-screens
 
 ## Basic Usage
 
-For basic usage, the exported `Stack.Navigator` and `Tabs.Navigator` components will get you up and running quickly. The [Guides](#guides) section covers how to use the lower-level `Stack` and `Tabs` components in a variety of navigation patterns.
+For basic usage, the exported `Stack.Navigator` and `Tabs.Navigator` will get you up and running quickly. The [Guides](#guides) section covers how to use lower-level `Stack` and `Tabs` components in a variety of navigation patterns.
 
 ### Stack Navigator
 
 The `Stack.Navigator` component manages stacks of screens. Under the hood this is using `react-native-screens` to handle pushing and popping natively.
 
-Screens are pushed and popped via the global `navigation.pushScreen` and `navigation.popScreen` methods.
+Screens are pushed and popped by the exported navigation methods:
+
+- `navigation.pushScreen(screenElement: React.ReactElement<ScreenProps>, options?: PushScreenOptions) => void`
+
+- `navigation.popScreen(numberOfScreens: number) => void`
 
 ```tsx
 import { Stack, navigation } from "@rn-toolkit/navigation";
@@ -56,7 +60,7 @@ function MyScreen({
 }
 ```
 
-**Note**: The element given to `pushScreen` needs to be wrapped in a `Stack.Screen` component. Create a wrapper to simplify your usage if you'd like:
+**Note**: The components passed to `navigation.pushScreen` need to be wrapped in a `Stack.Screen` component. Create a wrapper to simplify your usage if you'd like:
 
 ```tsx
 function myPushScreen(
@@ -69,7 +73,7 @@ function myPushScreen(
 
 ### Tab Navigator
 
-The `Tabs.Navigator` component also uses `react-native-screens` to handle the tab switching natively. The active tab can be changed via the `navigation.setTabIndex` method, however the tabs that are rendered already handle tabbing between screens without additional configuration.
+The `Tabs.Navigator` component also uses `react-native-screens` to handle the tab switching natively. The active tab can be changed via the `navigation.setTabIndex` method, however the build in tabbar already handles switching between screens.
 
 ```tsx
 import {
@@ -181,7 +185,9 @@ function MyScreen({
 
 ### Rendering a stack inside of a tabbed screen
 
-Each tab can have its own stack by nesting the `Stack.Navigator` component
+Each tab can have its own stack by nesting the `Stack.Navigator` component.
+
+- `navigation.pushScreen` will still work relative by pushing to the relative parent stack of the screen. See the next section for how to push a screen onto a specific stack.
 
 ```tsx
 function MyTabs() {
@@ -207,7 +213,7 @@ function MyTabs() {
 
 ### Targeting a specific stack
 
-Provide an `id` prop to a stack and target it explicitly when pushing the screen.
+Provide an `id` prop to a stack and target when pushing the screen.
 
 ```tsx
 let MAIN_STACK_ID = "mainStack";
@@ -234,9 +240,7 @@ function pushToMainStack(
 
 ### Pushing a screen once
 
-One tradeoff with imperative methods like `navigation.pushScreen` is that it's possible to push the same screen multiple times. In cases where your UI might do this, you can provide a `screenId` option to only push the screen once. Screen ids are unique across all stacks.
-
-**Note:** Usually when a screen is pushed multiple times and you intend for it to be pushed once means it should be rendered declaratively rather than pushed. This is covered in the Advanced section below.
+Provide a `screenId` option to only push the screen once. Screen ids are unique across all stacks.
 
 ```tsx
 function pushThisScreenOnce() {
@@ -270,16 +274,18 @@ function switchMainTabsToTab(tabIndex: number) {
 
 ## Components
 
-The components in the previous examples are thin wrappers around the `Stack` and `Tabs` components exported by this library. Build your own wrappers on top of these base components if you need more control over how your screens are rendering.
+The `Navigator` components in the previous examples are convenience wrappers around other lower level `Stack` and `Tabs` components. This section will briefly cover each of the underlying components so that you can build your own wrappers if needed
 
-For reference, this is the full implementation of the `Stack.Navigator` component:
+### Stack
+
+This is the implementation of the exported `Stack.Navigator` component:
 
 ```tsx
-type Stack.NavigatorProps = Omit<StackRootProps, "children"> & {
+type StackNavigatorProps = Omit<StackRootProps, "children"> & {
   rootScreen: React.ReactElement<unknown>;
 };
 
-export function Stack.Navigator({
+export function StackNavigator({
   rootScreen,
   ...rootProps
 }: Stack.NavigatorProps) {
@@ -294,18 +300,32 @@ export function Stack.Navigator({
 }
 ```
 
-Likewise here is the full implementation of the `Tabs.Navigator` component:
+- `Stack.Root` - The root component for a stack navigator.
+- `Stack.Screens` - The container for all screens in a stack.
+  - This is a `react-native-screens` StackScreenContainer component under the hood.
+  - All UI rendered children should be `Stack.Screen` or `Stack.Slot` components.
+  - You can still render contexts and other non-UI components directly under `Stack.Screens`. See the Authentication guide for examples of this
+- `Stack.Screen` - A screen in a stack.
+  - This is a `react-native-screens` StackScreen component under the hood.
+  - Notable props include `gestureEnabled`, `stackPresentation` and `preventNativeDismiss` to control how the screen can be interacted with.
+  - Reference for props that can be passed: [Screen Props](https://github.com/software-mansion/react-native-screens/blob/main/guides/GUIDE_FOR_LIBRARY_AUTHORS.md#screen)
+- `Stack.Slot` - A slot for screens to be pushed into.
+  - This component is used to render screens that are pushed using `navigation.pushScreen` - don't forget to render this somewhere in `Stack.Screens`!
+
+## Tabs
+
+This is the implementation of the exported `Tabs.Navigator` component:
 
 ```tsx
-type Tabs.NavigatorProps = Omit<TabsRootProps, "children"> & {
+type TabsNavigatorProps = Omit<TabsRootProps, "children"> & {
   screens: Tabs.NavigatorScreenOptions[];
   tabbarPosition?: "top" | "bottom";
   tabbarStyle?: ViewProps["style"];
 };
 
-type Tabs.NavigatorScreenOptions = {
+type TabsNavigatorScreenOptions = {
   key: string;
-  screen: React.ReactElement<unknown>;
+  screen: React.ReactElement<ScreenProps>;
   tab: (props: { isActive: boolean; onPress: () => void }) => React.ReactNode;
 };
 
@@ -314,7 +334,7 @@ export function Tabs.Navigator({
   tabbarPosition = "bottom",
   tabbarStyle,
   ...rootProps
-}: Tabs.NavigatorProps) {
+}: TabsNavigatorProps) {
   return (
     <Tabs.Root {...rootProps}>
       {tabbarPosition === "top" && (
@@ -343,7 +363,15 @@ export function Tabs.Navigator({
 }
 ```
 
-Hopefully this gives you an idea of how you might create your own components using `Stack` and `Tabs` without too much effort
+- `Tabs.Root` - The root component for a tabs navigator.
+- `Tabs.Screens` - The container for all screens in a tabs navigator.
+  - This is a `react-native-screens` ScreenContainer component under the hood.
+  - All UI rendered children should be `Tabs.Screen` components.
+- `Tabs.Screen` - A screen in a tabs navigator.
+- `Tabs.Tabbar` - The tab bar for a tabs navigator.
+  - Each child Tab of the tab bar will target the screen that corresponds to its index
+- `Tabs.Tab` - A tab in a tabs navigator
+  - This is a Pressable component that switches the active screen
 
 ## Guides
 
@@ -392,13 +420,3 @@ let useUser = () => {
 ```
 
 **Note:** Screens that are pushed using `pushScreen` are rendered in the `Slot` component
-
-### Deep linking
-
-### Header components
-
-You can use the `Stack.Header` component to render a header for your screens, so long as you pass it as the first child to your screen component. Under the hood the `Stack.Header` component is just the one exported by `react-native-screens`. It provides some convenience over rolling your own headers at times.
-
-### Prevent going back
-
-The `Stack.Screen` component is also exported from `react-native-screens` component. You can use the `gestureEnabled` prop to prevent the user from being able to swipe back on any screen, and the `preventNativeDismiss` prop to prevent the user from being able to dismiss the screen natively.
