@@ -6,10 +6,17 @@ import {
 } from "@rn-tools/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 export function BasicTabs() {
-  return <Stack.Navigator rootScreen={<MyTabs />} />;
+  return (
+    <SafeAreaProvider>
+      <Stack.Navigator rootScreen={<MyTabs />} />
+    </SafeAreaProvider>
+  );
 }
 
 function MyTabs() {
@@ -19,8 +26,8 @@ function MyTabs() {
     return {
       ...defaultTabbarStyle,
       bottom: insets.bottom,
-    }
-  }, [insets.bottom]) 
+    };
+  }, [insets.bottom]);
 
   return (
     <Tabs.Navigator

@@ -75,24 +75,33 @@ function myPushScreen(
 
 The `Tabs.Navigator` component also uses `react-native-screens` to handle the tab switching natively. The active tab can be changed via the `navigation.setTabIndex` method, however the build in tabbar already handles switching between screens.
 
+Before getting starteed - wrap your app in a `SafeAreaProvider` component to ensure the tab bar is positioned correctly on devices with notches.
+
+`yarn expo install react-native-safe-area-context`
+
 ```tsx
 import {
   Stack,
   Tabs,
   navigation,
-  Stack,
   defaultTabbarStyle,
 } from "@rn-tools/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 export function BasicTabs() {
-  return <Stack.Navigator rootScreen={<MyTabs />} />;
+  return (
+    <SafeAreaProvider>
+      <Stack.Navigator rootScreen={<MyTabs />} />
+    </SafeAreaProvider>
+  );
 }
 
 function MyTabs() {
-  // This hook requires you to wrap your app in a SafeAreaProvider component - see the `react-native-safe-area-context` package
   let insets = useSafeAreaInsets();
 
   let tabbarStyle = React.useMemo(() => {
@@ -418,5 +427,3 @@ let useUser = () => {
   return user;
 };
 ```
-
-**Note:** Screens that are pushed using `pushScreen` are rendered in the `Slot` component

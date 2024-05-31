@@ -12,6 +12,7 @@ import type { PushScreenOptions } from "./types";
 
 /**
  * Ideas:
+ *  - pull in safe area provider and use as default props to tabs
  *  - lifecycles / screen tracking
  *  - testing - internal and jest plugin
  */
