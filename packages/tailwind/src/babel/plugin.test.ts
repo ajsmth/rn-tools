@@ -5,7 +5,7 @@ import plugin from "./plugin";
 const fixtures = path.join(__dirname, "__fixtures__");
 
 pluginTester({
-  pluginName: "@rn-toolkit/tailwind",
+  pluginName: "@rn-tools/tailwind",
   plugin,
   fixtures,
   babelOptions: {

@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.16.7",
-    "@rn-toolkit/eslint-config": "*",
-    "@rn-toolkit/navigation": "*",
+    "@rn-tools/eslint-config": "*",
+    "@rn-tools/navigation": "*",
     "expo": "^51.0.8",
     "expo-status-bar": "~1.12.1",
     "immer": "^10.1.1",

@@ -2689,9 +2689,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rn-toolkit/eslint-config@npm:*, @rn-toolkit/eslint-config@workspace:packages/eslint-config":
+"@rn-tools/eslint-config@npm:*, @rn-tools/eslint-config@workspace:packages/eslint-config":
   version: 0.0.0-use.local
-  resolution: "@rn-toolkit/eslint-config@workspace:packages/eslint-config"
+  resolution: "@rn-tools/eslint-config@workspace:packages/eslint-config"
   dependencies:
     "@typescript-eslint/eslint-plugin": "npm:^6.8.0"
     "@typescript-eslint/parser": "npm:^6.8.0"
@@ -2708,11 +2708,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rn-toolkit/navigation@npm:*, @rn-toolkit/navigation@workspace:packages/navigation":
+"@rn-tools/navigation@npm:*, @rn-tools/navigation@workspace:packages/navigation":
   version: 0.0.0-use.local
-  resolution: "@rn-toolkit/navigation@workspace:packages/navigation"
+  resolution: "@rn-tools/navigation@workspace:packages/navigation"
   dependencies:
-    "@rn-toolkit/eslint-config": "npm:*"
+    "@rn-tools/eslint-config": "npm:*"
     "@types/jest": "npm:^27.0.3"
     "@types/react": "npm:~18.2.79"
     "@types/react-native": "npm:^0.72.8"
@@ -2734,9 +2734,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rn-toolkit/tailwind@workspace:packages/tailwind":
+"@rn-tools/tailwind@workspace:packages/tailwind":
   version: 0.0.0-use.local
-  resolution: "@rn-toolkit/tailwind@workspace:packages/tailwind"
+  resolution: "@rn-tools/tailwind@workspace:packages/tailwind"
   dependencies:
     "@babel/plugin-syntax-jsx": "npm:^7.18.6"
     "@babel/preset-typescript": "npm:^7.18.6"
@@ -6046,8 +6046,8 @@ __metadata:
   dependencies:
     "@babel/core": "npm:^7.12.9"
     "@babel/preset-typescript": "npm:^7.16.7"
-    "@rn-toolkit/eslint-config": "npm:*"
-    "@rn-toolkit/navigation": "npm:*"
+    "@rn-tools/eslint-config": "npm:*"
+    "@rn-tools/navigation": "npm:*"
     "@types/react": "npm:~18.2.79"
     "@types/react-native": "npm:^0.72.8"
     eslint: "npm:8.57.0"

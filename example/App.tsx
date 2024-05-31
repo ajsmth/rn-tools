@@ -2,7 +2,7 @@ import {
   navigation,
   Stack,
   defaultTabbarStyle,
-} from "@rn-toolkit/navigation";
+} from "@rn-tools/navigation";
 import * as React from "react";
 import { Text, View, TouchableOpacity } from "react-native";
 import {

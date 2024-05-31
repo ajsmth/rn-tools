@@ -1,4 +1,4 @@
-# @rn-toolkit/tailwind
+# @rn-tools/tailwind
 
 # Do not use this!
 
@@ -11,7 +11,7 @@ A babel plugin to enhance react-native primitives with tailwind classnames.
 ## Setup
 
 ```bash
-yarn add @rn-toolkit/tailwind
+yarn add @rn-tools/tailwind
 ```
 
 Update your project babel config:
@@ -19,7 +19,7 @@ Update your project babel config:
 ```js
 // babel.config.js
 module.exports = {
-  plugins: ["@rn-toolkit/tailwind/babel"],
+  plugins: ["@rn-tools/tailwind/babel"],
 };
 ```
 
@@ -42,7 +42,7 @@ module.exports = {
 (Optional) Add a `tailwind.d.ts` somewhere in your project:
 
 ```ts
-/// <reference types="@rn-toolkit/tailwind/types" />
+/// <reference types="@rn-tools/tailwind/types" />
 ```
 
 ## Usage

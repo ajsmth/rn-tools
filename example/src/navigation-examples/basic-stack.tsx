@@ -1,4 +1,4 @@
-import { Stack, navigation } from "@rn-toolkit/navigation";
+import { Stack, navigation } from "@rn-tools/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
 

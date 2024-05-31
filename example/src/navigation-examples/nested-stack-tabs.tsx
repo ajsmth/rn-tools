@@ -3,7 +3,7 @@ import {
   Stack,
   defaultTabbarStyle,
   Tabs,
-} from "@rn-toolkit/navigation";
+} from "@rn-tools/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

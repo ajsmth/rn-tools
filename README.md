@@ -1,7 +1,7 @@
-# rn-toolkit
+# rn-tools
 
 A set of libraries to help you build React Native apps.
 
 ## Navigation
 
-- [@rn-toolkit/navigation](packages/navigation/readme.md)
+- [@rn-tools/navigation](packages/navigation/readme.md)

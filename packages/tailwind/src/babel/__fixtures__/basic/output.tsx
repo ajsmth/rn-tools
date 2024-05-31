@@ -1,4 +1,4 @@
-import TailwindWrapper from "@rn-toolkit/tailwind";
+import TailwindWrapper from "@rn-tools/tailwind";
 import * as React from "react";
 import { View, Text } from "react-native";
 

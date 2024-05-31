@@ -58,7 +58,7 @@ export default function tailwindBabelPlugin(): PluginObj {
 
               let importStatement = importDeclaration(
                 [importDefaultSpecifier(identifier("TailwindWrapper"))],
-                stringLiteral("@rn-toolkit/tailwind")
+                stringLiteral("@rn-tools/tailwind")
               );
 
               path.node.body.unshift(importStatement as any);

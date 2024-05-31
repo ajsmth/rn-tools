@@ -1,4 +1,4 @@
-import { navigation, Stack } from "@rn-toolkit/navigation";
+import { navigation, Stack } from "@rn-tools/navigation";
 import * as React from "react";
 import { Text, View, TouchableOpacity } from "react-native";
 
