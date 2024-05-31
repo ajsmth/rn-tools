@@ -1,11 +1,11 @@
-# @rn-toolkit/navigation
+# @rn-tools/navigation
 
 A set of useful navigation components for React Native. Built with `react-native-screens`. Designed with flexibility in mind.
 
 ## Installation
 
 ```bash
-yarn expo install @rn-toolkit/navigation react-native-screens
+yarn expo install @rn-tools/navigation react-native-screens
 ```
 
 ## Basic Usage
@@ -23,7 +23,7 @@ Screens are pushed and popped by the exported navigation methods:
 - `navigation.popScreen(numberOfScreens: number) => void`
 
 ```tsx
-import { Stack, navigation } from "@rn-toolkit/navigation";
+import { Stack, navigation } from "@rn-tools/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
 
@@ -82,7 +82,7 @@ import {
   navigation,
   Stack,
   defaultTabbarStyle,
-} from "@rn-toolkit/navigation";
+} from "@rn-tools/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -381,7 +381,7 @@ For this example, we want to show our main app when the user is logged in, other
 
 ```tsx
 import * as React from "react";
-import { Stack } from "@rn-toolkit/navigation";
+import { Stack } from "@rn-tools/navigation";
 
 function App() {
   let [user, setUser] = React.useState(null);

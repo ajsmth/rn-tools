@@ -1,5 +1,5 @@
 {
-  "name": "@rn-toolkit/navigation",
+  "name": "@rn-tools/navigation",
   "version": "2.0.0",
   "main": "./src/index.ts",
   "license": "MIT",
@@ -12,7 +12,7 @@
     "lint": "eslint -c ./.eslintrc.js ."
   },
   "devDependencies": {
-    "@rn-toolkit/eslint-config": "*",
+    "@rn-tools/eslint-config": "*",
     "@types/jest": "^27.0.3",
     "@types/react": "~18.2.79",
     "@types/react-native": "^0.72.8",
