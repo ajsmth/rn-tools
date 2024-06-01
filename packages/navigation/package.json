@@ -30,6 +30,7 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
+    "react-native-safe-area-context": "*",
     "react-native-screens": "*"
   },
   "dependencies": {

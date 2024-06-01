@@ -5,20 +5,23 @@ import { Text, View, TouchableOpacity } from "react-native";
 import { AuthenticationExample } from "./authentication";
 import { BasicStack } from "./basic-stack";
 import { BasicTabs } from "./basic-tabs";
+import { HeaderExample } from "./header";
 import { NestedStackTabs } from "./nested-stack-tabs";
 import { PushScreenOnce } from "./push-screen-once";
 
 export function NavigationExamples() {
   return (
-    <Stack.Screen>
+    <Stack.Screen style={{ paddingVertical: 48, backgroundColor: "white" }}>
       <Stack.Header title="Navigation" />
 
-      <View className="flex-1 pt-28" style={{ gap: 8 }}>
+      <View className="flex-1" style={{ gap: 8 }}>
         <NavLink label="Basic Stack" screen={<BasicStack />} />
         <NavLink label="Basic Tabs" screen={<BasicTabs />} />
         <NavLink label="Stacks in Tabs" screen={<NestedStackTabs />} />
         <NavLink label="Push screen once" screen={<PushScreenOnce />} />
         <NavLink label="Authentication" screen={<AuthenticationExample />} />
+
+        <NavLink label="Header" screen={<HeaderExample />} />
       </View>
     </Stack.Screen>
   );
@@ -34,16 +37,18 @@ function NavLink({
   return (
     <TouchableOpacity
       className="px-4"
-      onPress={() =>
+      onPress={() => {
         navigation.pushScreen(
           <Stack.Screen>
             <Stack.Header title={label} />
             {screen}
           </Stack.Screen>
-        )
-      }
+        );
+      }}
     >
       <Text className="font-semibold text-lg underline">{label}</Text>
     </TouchableOpacity>
   );
 }
+
+

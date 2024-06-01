@@ -9,15 +9,17 @@ export function BasicStack() {
 
 function MyScreen({
   title,
-  showPopButton = false,
+  children
 }: {
   title: string;
-  showPopButton?: boolean;
+  children?: React.ReactNode;
 }) {
   function pushScreen() {
     navigation.pushScreen(
       <Stack.Screen>
-        <MyScreen title="Pushed screen" showPopButton />
+        <MyScreen title="Pushed screen">
+          <Button title="Pop screen" onPress={popScreen} />
+        </MyScreen>
       </Stack.Screen>
     );
   }
@@ -30,7 +32,7 @@ function MyScreen({
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>{title}</Text>
       <Button title="Push screen" onPress={pushScreen} />
-      {showPopButton && <Button title="Pop screen" onPress={popScreen} />}
+      {children}
     </View>
   );
 }

@@ -365,12 +365,13 @@ export function reducer(
       }
 
       let nextState: NavigationState = Object.assign({}, state);
+      let currentIndex = tab.activeIndex;
       nextState.tabs.lookup[tabId] = Object.assign(
         {},
         {
           ...nextState.tabs.lookup[tabId],
           activeIndex: index,
-          history: tab.history.filter((i) => i !== index).concat(index),
+          history: tab.history.filter((i) => i !== index).concat(currentIndex),
         }
       );
 
@@ -441,11 +442,16 @@ export function reducer(
       let { tabId } = action;
       let nextState: NavigationState = Object.assign({}, state);
 
-      let tab = nextState.tabs.lookup[tabId];
-      let last = tab.history.pop();
-      if (last != null) {
-        tab.activeIndex = last;
-      }
+      let tab  = nextState.tabs.lookup[tabId];
+
+      let lastActiveIndex = tab.history[tab.history.length - 1];
+
+      nextState.tabs.lookup = Object.assign({}, nextState.tabs.lookup, {
+        [tabId]: Object.assign({}, nextState.tabs.lookup[tabId], {
+          activeIndex: lastActiveIndex,
+          history: tab.history.filter((i) => i !== lastActiveIndex),
+        }),
+      });
 
       return nextState;
     }

@@ -80,19 +80,19 @@ function MyAuthenticatedApp() {
 
 function MyScreen({
   title,
-  showPopButton = false,
-  bg,
   children,
+  bg,
 }: {
   title: string;
-  showPopButton?: boolean;
-  bg?: string;
   children?: React.ReactNode;
+  bg?: string;
 }) {
   function pushScreen() {
     navigation.pushScreen(
       <Stack.Screen>
-        <MyScreen title="Pushed screen" showPopButton />
+        <MyScreen title="Pushed screen" bg={bg}>
+          <Button title="Pop screen" onPress={popScreen} />
+        </MyScreen>
       </Stack.Screen>
     );
   }
@@ -110,10 +110,9 @@ function MyScreen({
         backgroundColor: bg || "white",
       }}
     >
-      <Text style={{ fontSize: 28, fontWeight: "bold" }}>{title}</Text>
-      {children}
+      <Text>{title}</Text>
       <Button title="Push screen" onPress={pushScreen} />
-      {showPopButton && <Button title="Pop screen" onPress={popScreen} />}
+      {children}
     </View>
   );
 }

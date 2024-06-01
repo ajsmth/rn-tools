@@ -2730,6 +2730,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-native: "*"
+    react-native-safe-area-context: "*"
     react-native-screens: "*"
   languageName: unknown
   linkType: soft

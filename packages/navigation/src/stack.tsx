@@ -1,5 +1,14 @@
 import * as React from "react";
-import { BackHandler, StyleSheet, type ViewStyle } from "react-native";
+import {
+  BackHandler,
+  PixelRatio,
+  Platform,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+  type LayoutRectangle,
+  type ViewStyle,
+} from "react-native";
 import {
   ScreenStackProps as RNScreenStackProps,
   Screen as RNScreen,
@@ -18,16 +27,18 @@ import {
 import { DEFAULT_SLOT_NAME } from "./navigation-reducer";
 import { useNavigationDispatch, useNavigationState } from "./navigation-store";
 import type { StackItem } from "./types";
-import { generateStackId } from "./utils";
+import { generateStackId, useSafeAreaInsetsSafe } from "./utils";
 
 let StackIdContext = React.createContext<string>("");
 let ScreenIdContext = React.createContext<string>("");
 
-const RNScreenStack = React.memo(function RNScreenStack(
+// Component returned from `react-native-screens` references `react-navigation` data structures in recent updates
+// This is a workaround to make it work with our custom navigation
+let RNScreenStack = React.memo(function RNScreenStack(
   props: RNScreenStackProps
 ) {
-  const { children, gestureDetectorBridge, ...rest } = props;
-  const ref = React.useRef(null);
+  let { children, gestureDetectorBridge, ...rest } = props;
+  let ref = React.useRef(null);
 
   React.useEffect(() => {
     if (gestureDetectorBridge) {
@@ -112,18 +123,13 @@ function StackRoot({ children, id }: StackRootProps) {
   );
 }
 
-function StackScreens({
-  style: styleProp,
-  ...props
-}: RNScreenStackProps) {
+function StackScreens({ style: styleProp, ...props }: RNScreenStackProps) {
   let style = React.useMemo(
     () => styleProp || StyleSheet.absoluteFill,
     [styleProp]
   );
 
-  return (
-    <RNScreenStack {...props} style={style} />
-  );
+  return <RNScreenStack {...props} style={style} />;
 }
 
 let defaultScreenStyle: ViewStyle = {
@@ -180,7 +186,7 @@ let StackScreen = React.memo(function StackScreen({
     <RNScreen
       {...props}
       style={style}
-      // activityState={isActive ? 2 : 0}
+      activityState={isActive ? 2 : 0}
       gestureEnabled={gestureEnabled}
       onDismissed={onDismissed}
     >
@@ -224,7 +230,23 @@ let StackSlot = React.memo(function StackSlot({
 let StackScreenHeader = React.memo(function StackScreenHeader({
   ...props
 }: RNScreenStackHeaderConfigProps) {
-  return <RNScreenStackHeaderConfig {...props} />;
+  let layout = useWindowDimensions();
+  let insets = useSafeAreaInsetsSafe();
+
+  let headerHeight = React.useMemo(() => {
+    if (Platform.OS === "android") {
+      return 0;
+    }
+
+    return getDefaultHeaderHeight(layout, false, insets.top);
+  }, [layout, insets]);
+
+  return (
+    <React.Fragment>
+      <RNScreenStackHeaderConfig {...props} />
+      <View style={{ height: headerHeight }} />
+    </React.Fragment>
+  );
 });
 
 type StackNavigatorProps = Omit<StackRootProps, "children"> & {
@@ -253,3 +275,46 @@ export let Stack = {
   Slot: StackSlot,
   Navigator: StackNavigator,
 };
+
+// `onLayout` event does not return a value for the native header component
+// This function is copied from react-navigation to get the default header heights
+function getDefaultHeaderHeight(
+  layout: Pick<LayoutRectangle, "width" | "height">,
+  // TODO - handle modal headers and substacks
+  modalPresentation: boolean,
+  topInset: number
+): number {
+  let headerHeight;
+
+  // On models with Dynamic Island the status bar height is smaller than the safe area top inset.
+  let hasDynamicIsland = Platform.OS === "ios" && topInset > 50;
+  let statusBarHeight = hasDynamicIsland
+    ? topInset - (5 + 1 / PixelRatio.get())
+    : topInset;
+
+  let isLandscape = layout.width > layout.height;
+
+  if (Platform.OS === "ios") {
+    if (Platform.isPad || Platform.isTV) {
+      if (modalPresentation) {
+        headerHeight = 56;
+      } else {
+        headerHeight = 50;
+      }
+    } else {
+      if (isLandscape) {
+        headerHeight = 32;
+      } else {
+        if (modalPresentation) {
+          headerHeight = 56;
+        } else {
+          headerHeight = 44;
+        }
+      }
+    }
+  } else {
+    headerHeight = 64;
+  }
+
+  return headerHeight + statusBarHeight;
+}

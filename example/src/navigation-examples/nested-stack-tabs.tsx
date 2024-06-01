@@ -1,31 +1,15 @@
-import {
-  navigation,
-  Stack,
-  defaultTabbarStyle,
-  Tabs,
-} from "@rn-tools/navigation";
+import { navigation, Stack, Tabs } from "@rn-tools/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function NestedStackTabs() {
   return <Stack.Navigator rootScreen={<MyTabs />} />;
 }
 
 function MyTabs() {
-  let insets = useSafeAreaInsets();
-
-  let tabbarStyle = React.useMemo(() => {
-    return {
-      ...defaultTabbarStyle,
-      bottom: insets.bottom,
-    };
-  }, [insets.bottom]);
-
   return (
     <Tabs.Navigator
       tabbarPosition="bottom"
-      tabbarStyle={tabbarStyle}
       screens={[
         {
           key: "1",

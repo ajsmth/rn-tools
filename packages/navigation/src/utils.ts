@@ -1,3 +1,6 @@
+import { Platform } from 'react-native';
+import { useSafeAreaInsets, type EdgeInsets } from 'react-native-safe-area-context'
+
 export let generateStackId = createIdGenerator("stack");
 export let generateScreenId = createIdGenerator("screen");
 export let generateTabId = createIdGenerator("tab");
@@ -12,3 +15,27 @@ function createIdGenerator(name: string) {
 
 export let serializeTabIndexKey = (tabId: string, index: number) =>
   `${tabId}-${index}`;
+
+
+
+
+let baseInsets: EdgeInsets = {
+  top: Platform.OS === "ios" ? 59 : 49,
+  bottom: Platform.OS === "ios" ? 34 : 0,
+  right: 0,
+  left: 0,
+};
+
+export function useSafeAreaInsetsSafe() {
+  let insets = baseInsets;
+
+  try {
+    // Linter thinks this is conditional but it seems fine
+    // eslint-disable-next-line
+    insets = useSafeAreaInsets();
+  } catch (error) {
+    console.log("useSafeAreaInsets is not available");
+  }
+
+  return insets;
+}

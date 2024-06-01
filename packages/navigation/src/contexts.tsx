@@ -1,4 +1,4 @@
-import * as React from 'react'
+import * as React from "react";
 
 export let StackIdContext = React.createContext<string>("");
 export let ScreenIdContext = React.createContext<string>("");

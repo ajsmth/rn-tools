@@ -1,15 +1,7 @@
-import {
-  Tabs,
-  navigation,
-  Stack,
-  defaultTabbarStyle,
-} from "@rn-tools/navigation";
+import { Tabs, navigation, Stack } from "@rn-tools/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export function BasicTabs() {
   return (
@@ -20,19 +12,10 @@ export function BasicTabs() {
 }
 
 function MyTabs() {
-  let insets = useSafeAreaInsets();
-
-  let tabbarStyle = React.useMemo(() => {
-    return {
-      ...defaultTabbarStyle,
-      bottom: insets.bottom,
-    };
-  }, [insets.bottom]);
-
   return (
     <Tabs.Navigator
       tabbarPosition="bottom"
-      tabbarStyle={tabbarStyle}
+      tabbarStyle={{ backgroundColor: "blue" }}
       screens={[
         {
           key: "1",
@@ -74,17 +57,19 @@ function MyTab({
 
 function MyScreen({
   title,
-  showPopButton = false,
+  children,
   bg,
 }: {
   title: string;
-  showPopButton?: boolean;
+  children?: React.ReactNode;
   bg?: string;
 }) {
   function pushScreen() {
     navigation.pushScreen(
       <Stack.Screen>
-        <MyScreen title="Pushed screen" showPopButton />
+        <MyScreen title="Pushed screen" bg={bg}>
+          <Button title="Pop screen" onPress={popScreen} />
+        </MyScreen>
       </Stack.Screen>
     );
   }
@@ -104,7 +89,7 @@ function MyScreen({
     >
       <Text>{title}</Text>
       <Button title="Push screen" onPress={pushScreen} />
-      {showPopButton && <Button title="Pop screen" onPress={popScreen} />}
+      {children}
     </View>
   );
 }

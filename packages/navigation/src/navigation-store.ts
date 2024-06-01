@@ -17,19 +17,17 @@ export function createNavigationStore() {
 
   let reducer = (state: NavigationState, action: NavigationAction) => {
     let nextState = navigationReducer(state, action, { renderCharts });
+    if (nextState.debugModeEnabled) {
+      console.debug(
+        `[@rntoolkit/navigation] action: ${action.type}`,
+        state,
+        nextState
+      );
+    }
     return { ...nextState };
   };
 
   let store = createStore(devtools(redux(reducer, initialState)));
-
-  store.subscribe((state) => {
-    if (state.debugModeEnabled) {
-      console.debug("[@rntoolkit/navigation] state updated: ", {
-        state,
-        renderCharts,
-      });
-    }
-  });
 
   return {
     store: store,
@@ -52,4 +50,9 @@ export function useNavigationState<T>(
 export function useNavigationDispatch() {
   let dispatch = React.useContext(NavigationDispatchContext);
   return dispatch;
+}
+
+export function useGetNavigationStore() {
+  let context = React.useContext(NavigationStateContext);
+  return context.getState
 }

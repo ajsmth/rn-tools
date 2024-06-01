@@ -2,6 +2,7 @@ import {
   navigation,
   Stack,
   defaultTabbarStyle,
+  Tabs,
 } from "@rn-tools/navigation";
 import * as React from "react";
 import { Text, View, TouchableOpacity } from "react-native";
@@ -92,7 +93,7 @@ function MyStack({ colorClassName }: { colorClassName?: string }) {
 }
 
 function MyScreen({
-  colorClassName = "white",
+  colorClassName = "bg-white",
   children,
 }: {
   colorClassName?: string;

@@ -1,6 +1,6 @@
 # @rn-tools/navigation
 
-A set of useful navigation components for React Native. Built with `react-native-screens`. Designed with flexibility in mind.
+A set of useful navigation components for React Native. Built with `react-native-screens` and designed with flexibility in mind.
 
 ## Installation
 
@@ -11,6 +11,11 @@ yarn expo install @rn-tools/navigation react-native-screens
 ## Basic Usage
 
 For basic usage, the exported `Stack.Navigator` and `Tabs.Navigator` will get you up and running quickly. The [Guides](#guides) section covers how to use lower-level `Stack` and `Tabs` components in a variety of navigation patterns.
+
+**Note:** It's recommended that you install and wrap your app in a `SafeAreaProvider` to ensure components are rendered correctly based on the device's insets: 
+
+`yarn expo install react-native-safe-area-context`
+
 
 ### Stack Navigator
 
@@ -33,15 +38,17 @@ export function BasicStack() {
 
 function MyScreen({
   title,
-  showPopButton = false,
+  children,
 }: {
   title: string;
-  showPopButton?: boolean;
+  children?: React.ReactNode;
 }) {
   function pushScreen() {
     navigation.pushScreen(
       <Stack.Screen>
-        <MyScreen title="Pushed screen" showPopButton />
+        <MyScreen title="Pushed screen">
+          <Button title="Pop screen" onPress={popScreen} />
+        </MyScreen>
       </Stack.Screen>
     );
   }
@@ -54,7 +61,7 @@ function MyScreen({
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>{title}</Text>
       <Button title="Push screen" onPress={pushScreen} />
-      {showPopButton && <Button title="Pop screen" onPress={popScreen} />}
+      {children}
     </View>
   );
 }
@@ -75,23 +82,14 @@ function myPushScreen(
 
 The `Tabs.Navigator` component also uses `react-native-screens` to handle the tab switching natively. The active tab can be changed via the `navigation.setTabIndex` method, however the build in tabbar already handles switching between screens.
 
-Before getting starteed - wrap your app in a `SafeAreaProvider` component to ensure the tab bar is positioned correctly on devices with notches.
-
-`yarn expo install react-native-safe-area-context`
 
 ```tsx
-import {
-  Stack,
-  Tabs,
-  navigation,
-  defaultTabbarStyle,
-} from "@rn-tools/navigation";
+import { Tabs, navigation, Stack } from "@rn-tools/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+
+// It's recommended to wrap your App in a SafeAreaProvider once
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export function BasicTabs() {
   return (
@@ -102,19 +100,10 @@ export function BasicTabs() {
 }
 
 function MyTabs() {
-  let insets = useSafeAreaInsets();
-
-  let tabbarStyle = React.useMemo(() => {
-    return {
-      ...defaultTabbarStyle,
-      bottom: insets.bottom,
-    };
-  }, [insets.bottom]);
-
   return (
     <Tabs.Navigator
       tabbarPosition="bottom"
-      tabbarStyle={tabbarStyle}
+      tabbarStyle={{ backgroundColor: "blue" }}
       screens={[
         {
           key: "1",
@@ -156,17 +145,19 @@ function MyTab({
 
 function MyScreen({
   title,
-  showPopButton = false,
+  children,
   bg,
 }: {
   title: string;
-  showPopButton?: boolean;
+  children?: React.ReactNode;
   bg?: string;
 }) {
   function pushScreen() {
     navigation.pushScreen(
       <Stack.Screen>
-        <MyScreen title="Pushed screen" showPopButton />
+        <MyScreen title="Pushed screen" bg={bg}>
+          <Button title="Pop screen" onPress={popScreen} />
+        </MyScreen>
       </Stack.Screen>
     );
   }
@@ -186,17 +177,18 @@ function MyScreen({
     >
       <Text>{title}</Text>
       <Button title="Push screen" onPress={pushScreen} />
-      {showPopButton && <Button title="Pop screen" onPress={popScreen} />}
+      {children}
     </View>
   );
 }
+
 ```
 
 ### Rendering a stack inside of a tabbed screen
 
 Each tab can have its own stack by nesting the `Stack.Navigator` component.
 
-- `navigation.pushScreen` will still work relative by pushing to the relative parent stack of the screen. See the next section for how to push a screen onto a specific stack.
+- `navigation.pushScreen` will push to the relative parent stack of the screen. See the next section for how to push a screen onto a specific stack.
 
 ```tsx
 function MyTabs() {
@@ -278,6 +270,64 @@ function App() {
 
 function switchMainTabsToTab(tabIndex: number) {
   navigation.setTabIndex(tabIndex, { tabId: MAIN_TAB_ID });
+}
+```
+
+### Rendering a header
+
+Use the `Stack.Header` component to render a native header in a screen.
+
+Under the hood this is using `react-native-screens` header - [here is a reference for the available props](https://github.com/software-mansion/react-native-screens/blob/main/guides/GUIDE_FOR_LIBRARY_AUTHORS.md#screenstackheaderconfig)
+
+**Note:** Wrap your App in a `SafeAreaProvider` to ensure your screen components are rendered correctly with the header
+
+**Note:**: The header component has to be the first child of the `Stack.Screen` component.
+
+```tsx
+import { navigation, Stack } from "@rn-tools/navigation";
+import * as React from "react";
+import { Button, View, TextInput } from "react-native";
+
+export function HeaderExample() {
+  return (
+    <View>
+      <Button
+        title="Push screen with header"
+        onPress={() => navigation.pushScreen(<MyScreenWithHeader />)}
+      />
+    </View>
+  );
+}
+
+function MyScreenWithHeader() {
+  let [title, setTitle] = React.useState("");
+
+  return (
+    <Stack.Screen>
+      <Stack.Header
+        title={title}
+        // Some potentially useful props - see the reference posted above for all available props
+        backTitle="Custom back title"
+        backTitleFontSize={16}
+        hideBackButton={false}
+      />
+
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          paddingVertical: 48,
+        }}
+      >
+        <TextInput
+          style={{ fontSize: 26, fontWeight: "semibold" }}
+          value={title}
+          onChangeText={setTitle}
+          placeholder="Enter header text"
+        />
+      </View>
+    </Stack.Screen>
+  );
 }
 ```
 
