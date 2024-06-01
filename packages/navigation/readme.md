@@ -356,7 +356,9 @@ function MyScreenWithHeader() {
 
 ## Components
 
-The `Navigator` components in the previous examples are convenience wrappers around other lower level `Stack` and `Tabs` components. This section will briefly cover each of the underlying components so that you can build your own wrappers if needed
+The `Navigator` components in the previous examples are fairly straightforward wrappers around other lower level `Stack` and `Tabs` components. 
+
+If you need to customize behaviour, design a component API you prefer to use, or just enjoy writing your own components, you can use these implementations as a reference to build your own.
 
 ### Stack
 
@@ -394,6 +396,7 @@ export function StackNavigator({
 - `Stack.Slot` - A slot for screens to be pushed into.
   - This component is used to render screens that are pushed using `navigation.pushScreen` - don't forget to render this somewhere in `Stack.Screens`!
 - `Stack.Header` - A header for a screen.
+  - **Must be rendered as the first child of a `Stack.Screen` component.**
   - This is a `react-native-screens` StackHeader component under the hood.
   - Reference for props that can be passed: [Header Props](https://github.com/software-mansion/react-native-screens/blob/main/guides/GUIDE_FOR_LIBRARY_AUTHORS.md#screenstackheaderconfig)
 
@@ -471,6 +474,8 @@ let TabNavigator = React.memo(function TabNavigator({
   - Each child Tab of the tab bar will target the screen that corresponds to its index
 - `Tabs.Tab` - A tab in a tabs navigator
   - This is a Pressable component that switches the active screen
+
+
 
 ## Guides
 
