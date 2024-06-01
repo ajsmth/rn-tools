@@ -91,7 +91,7 @@ function MyScreen({
 }
 ```
 
-**Note**: The components passed to `navigation.pushScreen` need to be wrapped in a `Stack.Screen` component. Create a wrapper to simplify your usage if you'd like:
+**Note**: The components passed to `navigation.pushScreen` need to be wrapped in a `Stack.Screen`. Create a wrapper to simplify your usage if you'd like:
 
 ```tsx
 function myPushScreen(
@@ -211,8 +211,6 @@ function MyScreen({
 ### Rendering a stack inside of a tabbed screen
 
 Each tab can have its own stack by nesting the `Stack.Navigator` component.
-
-- `navigation.pushScreen` will push to the relative parent stack of the screen. See the next section for how to push a screen onto a specific stack.
 
 ```tsx
 function MyTabs() {
@@ -395,6 +393,9 @@ export function StackNavigator({
   - Reference for props that can be passed: [Screen Props](https://github.com/software-mansion/react-native-screens/blob/main/guides/GUIDE_FOR_LIBRARY_AUTHORS.md#screen)
 - `Stack.Slot` - A slot for screens to be pushed into.
   - This component is used to render screens that are pushed using `navigation.pushScreen` - don't forget to render this somewhere in `Stack.Screens`!
+- `Stack.Header` - A header for a screen.
+  - This is a `react-native-screens` StackHeader component under the hood.
+  - Reference for props that can be passed: [Header Props](https://github.com/software-mansion/react-native-screens/blob/main/guides/GUIDE_FOR_LIBRARY_AUTHORS.md#screenstackheaderconfig)
 
 ## Tabs
 
