@@ -278,6 +278,7 @@ export let Stack = {
 
 // `onLayout` event does not return a value for the native header component
 // This function is copied from react-navigation to get the default header heights
+// Ref: https://github.com/react-navigation/react-navigation/blob/main/packages/elements/src/Header/getDefaultHeaderHeight.tsx#L5
 function getDefaultHeaderHeight(
   layout: Pick<LayoutRectangle, "width" | "height">,
   // TODO - handle modal headers and substacks
