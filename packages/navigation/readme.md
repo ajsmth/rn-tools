@@ -2,30 +2,54 @@
 
 A set of useful navigation components for React Native. Built with `react-native-screens` and designed with flexibility in mind.
 
+## Table of Contents
+
+- [Installation](#installation)
+- [Basic Usage](#basic-usage)
+  - [Stack Navigator](#stack-navigator)
+  - [Tab Navigator](#tab-navigator)
+  - [Rendering a stack inside of a tabbed screen](#rendering-a-stack-inside-of-a-tabbed-screen)
+  - [Targeting a specific stack](#targeting-a-specific-stack)
+  - [Pushing a screen once](#pushing-a-screen-once)
+  - [Targeting specific tabs](#targeting-specific-tabs)
+  - [Rendering a header](#rendering-a-header)
+- [Components](#components)
+  - [Stack](#stack)
+  - [Tabs](#tabs)
+- [Guides](#guides)
+  - [Authentication](#authentication)
+
 ## Installation
 
 ```bash
 yarn expo install @rn-tools/navigation react-native-screens
 ```
 
+**Note:** It's recommended that you install and wrap your app in a `SafeAreaProvider` to ensure components are rendered correctly based on the device's insets:
+
+```bash
+yarn expo install react-native-safe-area-context
+```
+
 ## Basic Usage
 
-For basic usage, the exported `Stack.Navigator` and `Tabs.Navigator` will get you up and running quickly. The [Guides](#guides) section covers how to use lower-level `Stack` and `Tabs` components in a variety of navigation patterns.
+For basic usage, the exported `Stack.Navigator` and `Tabs.Navigator` will get you up and running quickly.
 
-**Note:** It's recommended that you install and wrap your app in a `SafeAreaProvider` to ensure components are rendered correctly based on the device's insets: 
+The [Guides](#guides) section covers how to use lower-level `Stack` and `Tabs` components in a variety of navigation patterns.
 
-`yarn expo install react-native-safe-area-context`
-
+`Stack` and `Tabs` are composable components that can be safely nested within each other without any additional configuration or setup.
 
 ### Stack Navigator
 
-The `Stack.Navigator` component manages stacks of screens. Under the hood this is using `react-native-screens` to handle pushing and popping natively.
+The `Stack.Navigator` component manages screens. Under the hood this is using `react-native-screens` to handle pushing and popping natively.
 
 Screens are pushed and popped by the exported navigation methods:
 
 - `navigation.pushScreen(screenElement: React.ReactElement<ScreenProps>, options?: PushScreenOptions) => void`
 
 - `navigation.popScreen(numberOfScreens: number) => void`
+
+In the majority of cases, these methods will determine the right stack without you needing to specify. But you can target a specific stacks as well if you need to! This is covered in the [Targeting a specific stack](#targeting-a-specific-stack) section.
 
 ```tsx
 import { Stack, navigation } from "@rn-tools/navigation";
@@ -80,8 +104,9 @@ function myPushScreen(
 
 ### Tab Navigator
 
-The `Tabs.Navigator` component also uses `react-native-screens` to handle the tab switching natively. The active tab can be changed via the `navigation.setTabIndex` method, however the build in tabbar already handles switching between screens.
+The `Tabs.Navigator` component also uses `react-native-screens` to handle switching between tabs natively.
 
+The active tab can be changed via the `navigation.setTabIndex` method, however the built in tabbar handles switching between screens out of the box.
 
 ```tsx
 import { Tabs, navigation, Stack } from "@rn-tools/navigation";
@@ -181,7 +206,6 @@ function MyScreen({
     </View>
   );
 }
-
 ```
 
 ### Rendering a stack inside of a tabbed screen
@@ -281,7 +305,7 @@ Under the hood this is using `react-native-screens` header - [here is a referenc
 
 **Note:** Wrap your App in a `SafeAreaProvider` to ensure your screen components are rendered correctly with the header
 
-**Note:**: The header component has to be the first child of the `Stack.Screen` component.
+**Note:**: The header component **has to be the first child** of a `Stack.Screen` component.
 
 ```tsx
 import { navigation, Stack } from "@rn-tools/navigation";
@@ -304,6 +328,7 @@ function MyScreenWithHeader() {
 
   return (
     <Stack.Screen>
+      {/* Header must be the first child */}
       <Stack.Header
         title={title}
         // Some potentially useful props - see the reference posted above for all available props
@@ -376,24 +401,37 @@ export function StackNavigator({
 This is the implementation of the exported `Tabs.Navigator` component:
 
 ```tsx
-type TabsNavigatorProps = Omit<TabsRootProps, "children"> & {
-  screens: Tabs.NavigatorScreenOptions[];
+export type TabNavigatorProps = Omit<TabsRootProps, "children"> & {
+  screens: TabNavigatorScreenOptions[];
   tabbarPosition?: "top" | "bottom";
   tabbarStyle?: ViewProps["style"];
 };
 
-type TabsNavigatorScreenOptions = {
+export type TabNavigatorScreenOptions = {
   key: string;
-  screen: React.ReactElement<ScreenProps>;
+  screen: React.ReactElement<unknown>;
   tab: (props: { isActive: boolean; onPress: () => void }) => React.ReactNode;
 };
 
-export function Tabs.Navigator({
+let TabNavigator = React.memo(function TabNavigator({
   screens,
   tabbarPosition = "bottom",
-  tabbarStyle,
+  tabbarStyle: tabbarStyleProp,
   ...rootProps
-}: TabsNavigatorProps) {
+}: TabNavigatorProps) {
+  let insets = useSafeAreaInsetsSafe();
+
+  let tabbarStyle = React.useMemo(() => {
+    return [
+      defaultTabbarStyle,
+      {
+        paddingBottom: tabbarPosition === "bottom" ? insets.bottom : 0,
+        paddingTop: tabbarPosition === "top" ? insets.top : 0,
+      },
+      tabbarStyleProp,
+    ];
+  }, [tabbarPosition, tabbarStyleProp, insets]);
+
   return (
     <Tabs.Root {...rootProps}>
       {tabbarPosition === "top" && (
@@ -419,7 +457,8 @@ export function Tabs.Navigator({
       )}
     </Tabs.Root>
   );
-}
+});
+
 ```
 
 - `Tabs.Root` - The root component for a tabs navigator.
