@@ -34,7 +34,7 @@ export function useSafeAreaInsetsSafe() {
     // eslint-disable-next-line
     insets = useSafeAreaInsets();
   } catch (error) {
-    console.log("useSafeAreaInsets is not available");
+    console.warn("`react-native-safe-area-context` missing - Please install and wrap your app in a SafeAreaProvider" );
   }
 
   return insets;

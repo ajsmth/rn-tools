@@ -9,7 +9,7 @@ export function DeepLinksExample() {
   // let { path } = Linking.parse(url)
 
   // But it's easier to test hardcoded strings for the sake of this example
-  let path = "/testing/home/item/1";
+  let path = "/testing/home/item/2";
 
   return (
     <Stack.Navigator
@@ -124,7 +124,14 @@ function MyScreen({
 }) {
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      <View className="flex-1 items-center justify-center gap-4">
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 4,
+        }}
+      >
         <Text style={{ fontSize: 26, fontWeight: "semibold" }}>{title}</Text>
 
         {!isRoot && (
