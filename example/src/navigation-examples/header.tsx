@@ -1,10 +1,10 @@
 import { navigation, Stack } from "@rn-tools/navigation";
 import * as React from "react";
-import { Button, View, TextInput } from "react-native";
+import { Button, View, TextInput, Text } from "react-native";
 
 export function HeaderExample() {
   return (
-    <View style={{ flex: 1 }}>
+    <View>
       <Button
         title="Push screen with header"
         onPress={() => navigation.pushScreen(<MyScreenWithHeader />)}
@@ -18,12 +18,18 @@ function MyScreenWithHeader() {
 
   return (
     <Stack.Screen>
+      {/* Header must be the first child */}
       <Stack.Header
         title={title}
+        // Some potentially useful props - see the reference posted above for all available props
         backTitle="Custom back title"
         backTitleFontSize={16}
         hideBackButton={false}
-      />
+      >
+        <Stack.HeaderRight>
+          <Text>Custom right text!</Text>
+        </Stack.HeaderRight>
+      </Stack.Header>
 
       <View
         style={{

@@ -18,6 +18,7 @@ A set of useful navigation components for React Native. Built with `react-native
   - [Tabs](#tabs)
 - [Guides](#guides)
   - [Authentication](#authentication)
+  - [Preventing going back](#preventing-going-back)
 
 ## Installation
 
@@ -301,6 +302,8 @@ Use the `Stack.Header` component to render a native header in a screen.
 
 Under the hood this is using `react-native-screens` header - [here is a reference for the available props](https://github.com/software-mansion/react-native-screens/blob/main/guides/GUIDE_FOR_LIBRARY_AUTHORS.md#screenstackheaderconfig)
 
+You can provide custom left, center, and right views in the header by using the `Stack.HeaderLeft`, `Stack.HeaderCenter`, and `Stack.HeaderRight` view container components as children of `Stack.Header`.
+
 **Note:** Wrap your App in a `SafeAreaProvider` to ensure your screen components are rendered correctly with the header
 
 **Note:**: The header component **has to be the first child** of a `Stack.Screen` component.
@@ -308,7 +311,7 @@ Under the hood this is using `react-native-screens` header - [here is a referenc
 ```tsx
 import { navigation, Stack } from "@rn-tools/navigation";
 import * as React from "react";
-import { Button, View, TextInput } from "react-native";
+import { Button, View, TextInput, Text } from "react-native";
 
 export function HeaderExample() {
   return (
@@ -333,7 +336,11 @@ function MyScreenWithHeader() {
         backTitle="Custom back title"
         backTitleFontSize={16}
         hideBackButton={false}
-      />
+      >
+        <Stack.HeaderRight>
+          <Text>Custom right text!</Text>
+        </Stack.HeaderRight>
+      </Stack.Header>
 
       <View
         style={{
