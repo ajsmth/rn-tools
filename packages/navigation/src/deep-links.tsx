@@ -19,7 +19,7 @@ type DeepLinksProps<T> = {
   children: React.ReactNode;
 };
 
-export function DeepLinks<T>({ path, handlers, children }: DeepLinksProps<T>) {
+export function DeepLinks<T>({ path = '', handlers = [], children }: DeepLinksProps<T>) {
   React.useEffect(() => {
     let matchers = buildMatchers(handlers);
 

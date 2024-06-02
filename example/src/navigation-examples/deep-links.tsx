@@ -1,7 +1,7 @@
 import { DeepLinks, navigation, Stack, Tabs } from "@rn-tools/navigation";
+import * as Linking from "expo-linking";
 import * as React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import * as Linking from "expo-linking";
 
 export function DeepLinksExample() {
   // You'll likely want to use Expo's Linking API to get the current URL and path
@@ -9,48 +9,52 @@ export function DeepLinksExample() {
   // let { path } = Linking.parse(url)
 
   // But it's easier to test hardcoded strings for the sake of this example
-  let path = "/testing/home/item/9";
+  let path = "/testing/home/item/1";
 
   return (
-    <DeepLinks
-      path={path}
-      handlers={[
-        {
-          path: "/testing/home/item1/:itemId",
-          handler: (params: { itemId: string }) => {
-            let itemId = params.itemId;
+    <Stack.Navigator
+      rootScreen={
+        <DeepLinks
+          path={path}
+          handlers={[
+            {
+              path: "/testing/home/item1/:itemId",
+              handler: (params: { itemId: string }) => {
+                let itemId = params.itemId;
 
-            // Go to home tab
-            navigation.setTabIndex(0);
+                // Go to home tab
+                navigation.setTabIndex(0);
 
-            // Push the screen we want
-            navigation.pushScreen(
-              <Stack.Screen>
-                <MyScreen title={`Item: ${itemId}`} />
-              </Stack.Screen>
-            );
-          },
-        },
-        {
-          path: "/testing/home/item/:itemId",
-          handler: (params: { itemId: string }) => {
-            let itemId = params.itemId;
+                // Push the screen we want
+                navigation.pushScreen(
+                  <Stack.Screen>
+                    <MyScreen title={`Item: ${itemId}`} />
+                  </Stack.Screen>
+                );
+              },
+            },
+            {
+              path: "/testing/home/item/:itemId",
+              handler: (params: { itemId: string }) => {
+                let itemId = params.itemId;
 
-            // Go to home tab
-            navigation.setTabIndex(0);
+                // Go to home tab
+                navigation.setTabIndex(0);
 
-            // Push the screen we want
-            navigation.pushScreen(
-              <Stack.Screen>
-                <MyScreen title={`Item: ${itemId}`} />
-              </Stack.Screen>
-            );
-          },
-        },
-      ]}
-    >
-      <MyTabs />
-    </DeepLinks>
+                // Push the screen we want
+                navigation.pushScreen(
+                  <Stack.Screen>
+                    <MyScreen title={`Item: ${itemId}`} />
+                  </Stack.Screen>
+                );
+              },
+            },
+          ]}
+        >
+          <MyTabs />
+        </DeepLinks>
+      }
+    />
   );
 }
 
