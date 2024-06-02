@@ -5,10 +5,11 @@ import { Text, View, TouchableOpacity } from "react-native";
 import { AuthenticationExample } from "./authentication";
 import { BasicStack } from "./basic-stack";
 import { BasicTabs } from "./basic-tabs";
+import { DeepLinks, DeepLinksExample } from "./deep-links";
 import { HeaderExample } from "./header";
 import { NestedStackTabs } from "./nested-stack-tabs";
-import { PushScreenOnce } from "./push-screen-once";
 import { PreventGoingBack } from "./prevent-going-back";
+import { PushScreenOnce } from "./push-screen-once";
 
 export function NavigationExamples() {
   return (
@@ -21,9 +22,9 @@ export function NavigationExamples() {
         <NavLink label="Stacks in Tabs" screen={<NestedStackTabs />} />
         <NavLink label="Push screen once" screen={<PushScreenOnce />} />
         <NavLink label="Authentication" screen={<AuthenticationExample />} />
-
         <NavLink label="Header" screen={<HeaderExample />} />
         <NavLink label="Prevent going back" screen={<PreventGoingBack />} />
+        <NavLink label="Deep Links" screen={<DeepLinksExample />} />
       </View>
     </Stack.Screen>
   );

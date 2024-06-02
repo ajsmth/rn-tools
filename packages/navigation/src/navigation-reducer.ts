@@ -103,6 +103,12 @@ type SetTabIndexAction = {
   tabId: string;
 };
 
+type PopActiveTabAction = {
+  type: "POP_ACTIVE_TAB";
+  tabId: string;
+  index: number;
+};
+
 type RegisterTabAction = {
   type: "REGISTER_TAB";
   depth: number;
@@ -126,7 +132,8 @@ type TabActions =
   | SetTabIndexAction
   | RegisterTabAction
   | UnregisterTabAction
-  | TabBackAction;
+  | TabBackAction
+  | PopActiveTabAction;
 
 type SetDebugModeAction = {
   type: "SET_DEBUG_MODE";
@@ -375,28 +382,35 @@ export function reducer(
         }
       );
 
-      if (tab.activeIndex === index) {
-        let tabKey = serializeTabIndexKey(tabId, index);
-        let stackIds = renderCharts.stacksByTabIndex[tabKey];
+      return nextState;
+    }
 
-        if (stackIds?.length > 0) {
-          stackIds.forEach((stackId) => {
-            let stack = nextState.stacks.lookup[stackId];
-            let screenIdsToRemove = stack.screens;
+    case "POP_ACTIVE_TAB": {
+      let { tabId, index } = action;
+      let { renderCharts } = context;
 
-            let nextScreensLookup = Object.assign({}, nextState.screens.lookup);
+      let tabKey = serializeTabIndexKey(tabId, index);
+      let stackIds = renderCharts.stacksByTabIndex[tabKey];
 
-            screenIdsToRemove.forEach((id) => {
-              delete nextScreensLookup[id];
-            });
+      let nextState: NavigationState = Object.assign({}, state);
 
-            nextState.stacks.lookup[stackId].screens = [];
-            nextState.screens.ids = nextState.screens.ids.filter(
-              (id) => !screenIdsToRemove.includes(id)
-            );
-            nextState.screens.lookup = nextScreensLookup;
+      if (stackIds?.length > 0) {
+        stackIds.forEach((stackId) => {
+          let stack = nextState.stacks.lookup[stackId];
+          let screenIdsToRemove = stack.screens;
+
+          let nextScreensLookup = Object.assign({}, nextState.screens.lookup);
+
+          screenIdsToRemove.forEach((id) => {
+            delete nextScreensLookup[id];
           });
-        }
+
+          nextState.stacks.lookup[stackId].screens = [];
+          nextState.screens.ids = nextState.screens.ids.filter(
+            (id) => !screenIdsToRemove.includes(id)
+          );
+          nextState.screens.lookup = nextScreensLookup;
+        });
       }
 
       return nextState;
@@ -442,7 +456,7 @@ export function reducer(
       let { tabId } = action;
       let nextState: NavigationState = Object.assign({}, state);
 
-      let tab  = nextState.tabs.lookup[tabId];
+      let tab = nextState.tabs.lookup[tabId];
 
       let lastActiveIndex = tab.history[tab.history.length - 1];
 

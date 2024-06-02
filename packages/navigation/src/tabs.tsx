@@ -225,7 +225,11 @@ let TabsTab = React.memo(function TabsTab({
 
   let onPress: () => void = React.useCallback(() => {
     dispatch({ type: "SET_TAB_INDEX", tabId, index });
-  }, [tabId, index, dispatch]);
+
+    if (isActive) {
+      dispatch({ type: "POP_ACTIVE_TAB", tabId, index });
+    }
+  }, [tabId, index, dispatch, isActive]);
 
   let style = React.useMemo(() => {
     let baseStyle = props.style || defaultTabStyle;

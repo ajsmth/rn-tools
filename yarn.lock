@@ -2724,6 +2724,7 @@ __metadata:
     jest: "npm:^29.7.0"
     jest-expo: "npm:^51.0.2"
     lint-staged: "npm:^15.2.0"
+    path-to-regexp: "npm:^6.2.2"
     prettier: "npm:^3.2.1"
     typescript: "npm:~5.3.3"
     zustand: "npm:^4.5.2"
@@ -6053,9 +6054,11 @@ __metadata:
     "@types/react-native": "npm:^0.72.8"
     eslint: "npm:8.57.0"
     expo: "npm:^51.0.8"
+    expo-linking: "npm:~6.3.1"
     expo-status-bar: "npm:~1.12.1"
     immer: "npm:^10.1.1"
     nativewind: "npm:^2.0.11"
+    path-to-regexp: "npm:^6.2.2"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-native: "npm:0.74.1"
@@ -6063,6 +6066,7 @@ __metadata:
     react-native-reanimated: "npm:~3.10.1"
     react-native-safe-area-context: "npm:4.10.1"
     react-native-screens: "npm:3.31.1"
+    react-native-url-polyfill: "npm:^2.0.0"
     react-native-web: "npm:~0.19.10"
     tailwindcss: "npm:3.2.7"
     typescript: "npm:~5.3.3"
@@ -6208,6 +6212,16 @@ __metadata:
   peerDependencies:
     expo: "*"
   checksum: 10c0/8548e46991739f42456428141b574c9d83ef77f2a79f371b5c6c1b77364759d4a993af8d40c027a904b5870d41165c99e3e4a8fea93316853819ba16fac0d692
+  languageName: node
+  linkType: hard
+
+"expo-linking@npm:~6.3.1":
+  version: 6.3.1
+  resolution: "expo-linking@npm:6.3.1"
+  dependencies:
+    expo-constants: "npm:~16.0.0"
+    invariant: "npm:^2.2.4"
+  checksum: 10c0/a6550cacc3117dde92fe9758c3b97089dae8ce2d90a2d6dd4441571991c4c7e139beb9d5648f04eef2fccc52f00f1631f36717bcd070c62413c013a30ae7aa97
   languageName: node
   linkType: hard
 
@@ -10959,6 +10973,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"path-to-regexp@npm:^6.2.2":
+  version: 6.2.2
+  resolution: "path-to-regexp@npm:6.2.2"
+  checksum: 10c0/4b60852d3501fd05ca9dd08c70033d73844e5eca14e41f499f069afa8364f780f15c5098002f93bd42af8b3514de62ac6e82a53b5662de881d2b08c9ef21ea6b
+  languageName: node
+  linkType: hard
+
 "path-type@npm:^4.0.0":
   version: 4.0.0
   resolution: "path-type@npm:4.0.0"
@@ -11537,6 +11558,17 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10c0/899a02751ecbc6231ce3c869268fb510e5b53428c788135ae46f4bbd768efe78bf74f17fec5becc4c4c1e81a5f224a907dc890ba2406181ff9e21830dda95dec
+  languageName: node
+  linkType: hard
+
+"react-native-url-polyfill@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "react-native-url-polyfill@npm:2.0.0"
+  dependencies:
+    whatwg-url-without-unicode: "npm:8.0.0-3"
+  peerDependencies:
+    react-native: "*"
+  checksum: 10c0/a48e6978f5a2c9e225bb93cc5f9985a8ac0fe7d8122105bcd88ef8d8420a3b33a67ce5d2bda2b606bf5fa94af9f6d04efce354580b60900e7c967fd2ebdc42cf
   languageName: node
   linkType: hard
 
