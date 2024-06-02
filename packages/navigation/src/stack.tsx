@@ -6,7 +6,9 @@ import {
   StyleSheet,
   useWindowDimensions,
   View,
+  type ImageProps,
   type LayoutRectangle,
+  type ViewProps,
   type ViewStyle,
 } from "react-native";
 import {
@@ -14,7 +16,11 @@ import {
   Screen as RNScreen,
   ScreenProps as RNScreenProps,
   ScreenStackHeaderConfig as RNScreenStackHeaderConfig,
+  ScreenStackHeaderLeftView as RNScreenStackHeaderLeftView,
+  ScreenStackHeaderRightView as RNScreenStackHeaderRightView,
+  ScreenStackHeaderCenterView as RNScreenStackHeaderCenterView,
   ScreenStackHeaderConfigProps as RNScreenStackHeaderConfigProps,
+  ScreenStackHeaderBackButtonImage as RNScreenStackHeaderBackButtonImage,
 } from "react-native-screens";
 import ScreenStackNativeComponent from "react-native-screens/src/fabric/ScreenStackNativeComponent";
 
@@ -249,6 +255,30 @@ let StackScreenHeader = React.memo(function StackScreenHeader({
   );
 });
 
+let StackScreenHeaderLeft = React.memo(function StackScreenHeaderLeft({
+  ...props
+}: ViewProps) {
+  return <RNScreenStackHeaderLeftView {...props} />;
+});
+
+let StackScreenHeaderCenter = React.memo(function StackScreenHeaderCenter({
+  ...props
+}: ViewProps) {
+  return <RNScreenStackHeaderCenterView {...props} />;
+});
+
+let StackScreenHeaderRight = React.memo(function StackScreenHeaderRight({
+  ...props
+}: ViewProps) {
+  return <RNScreenStackHeaderRightView {...props} />;
+});
+
+let ScreenStackHeaderBackButtonImage = React.memo(
+  function ScreenStackHeaderBackButtonImage(props: ImageProps) {
+    return <RNScreenStackHeaderBackButtonImage {...props} />;
+  }
+);
+
 type StackNavigatorProps = Omit<StackRootProps, "children"> & {
   rootScreen: React.ReactElement<unknown>;
 };
@@ -272,6 +302,10 @@ export let Stack = {
   Screens: StackScreens,
   Screen: StackScreen,
   Header: StackScreenHeader,
+  HeaderLeft: StackScreenHeaderLeft,
+  HeaderCenter: StackScreenHeaderCenter,
+  HeaderRight: StackScreenHeaderRight,
+  HeaderBackImage: ScreenStackHeaderBackButtonImage,
   Slot: StackSlot,
   Navigator: StackNavigator,
 };

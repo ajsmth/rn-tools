@@ -8,6 +8,7 @@ import { BasicTabs } from "./basic-tabs";
 import { HeaderExample } from "./header";
 import { NestedStackTabs } from "./nested-stack-tabs";
 import { PushScreenOnce } from "./push-screen-once";
+import { PreventGoingBack } from "./prevent-going-back";
 
 export function NavigationExamples() {
   return (
@@ -22,6 +23,7 @@ export function NavigationExamples() {
         <NavLink label="Authentication" screen={<AuthenticationExample />} />
 
         <NavLink label="Header" screen={<HeaderExample />} />
+        <NavLink label="Prevent going back" screen={<PreventGoingBack />} />
       </View>
     </Stack.Screen>
   );
