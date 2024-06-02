@@ -9,7 +9,7 @@ export function DeepLinksExample() {
   // let { path } = Linking.parse(url)
 
   // But it's easier to test hardcoded strings for the sake of this example
-  let path = "/testing/home/item/4";
+  let path = "/testing/home/item/6";
 
   return (
     <DeepLinks

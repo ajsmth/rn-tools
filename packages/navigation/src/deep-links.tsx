@@ -27,12 +27,14 @@ export function DeepLinks<T>({ path, handlers, children }: DeepLinksProps<T>) {
   }, [handlers]);
 
   React.useEffect(() => {
-    matchers.current.forEach(({ fn, handler }) => {
+    for (let matcher of matchers.current) {
+      let { fn, handler } = matcher;
       let match = fn(path);
       if (match) {
-        return setImmediate(() => handler(match.params as T));
+        setImmediate(() => handler(match.params as T));
+        break;
       }
-    });
+    }
   }, [path]);
 
   return <>{children}</>;

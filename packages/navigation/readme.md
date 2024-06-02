@@ -534,8 +534,9 @@ This section will cover how to respond to deep links in your app. Deep links usu
 
 Once you are able to receive deep links, use the `DeepLinks` component exported from this library to handle them. In this example we will have a basic 3 tab view. We want to response to the link `home/items/:id` by navigating to the home tab and then pushing a detail screen with the corresponding id.
 
-The deep link component takes an array of handlers which are functions that will be invoked when their `path` matches the deep link that was opened. The handler function will receive the params from the deep link - these use the same token syntax as libraries like `react-router` and `express` for path params.
-
+The deep link component takes an array of handlers which are functions that will be invoked when their `path` matches the deep link that was opened. 
+  - Only the first matching handler will be invoked. 
+  - The handler function will receive the params from the deep link - these use the same token syntax as libraries like `react-router` and `express` for path params.
 
 ```tsx
 import { DeepLinks, navigation, Stack, Tabs } from "@rn-tools/navigation";
