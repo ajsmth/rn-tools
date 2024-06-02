@@ -530,13 +530,12 @@ let useUser = () => {
 
 ### Deep Links
 
-This section will cover how to respond to deep links in your app. Deep links usually have some extra setup required - use Expo's [Deep Linking Guide](https://docs.expo.dev/guides/deep-linking/) to get started.
+This section will cover how to respond to deep links in your app. Deep links usually have some extra setup required - use Expo's [Deep Linking Guide](https://docs.expo.dev/guides/deep-linking/) to get started. Once you are able to receive deep links, use the `DeepLinks` component exported from this library to handle them.
 
-Once you are able to receive deep links, use the `DeepLinks` component exported from this library to handle them. In this example we will have a basic 3 tab view. We want to response to the link `home/items/:id` by navigating to the home tab and then pushing a detail screen with the corresponding id.
+In this example we will have a basic 3 tab view. We want to repond to the link `home/items/:id` by navigating to the home tab and then pushing a detail screen with the corresponding item id. The deep link component takes an array of handlers which are functions that will be invoked when their `path` matches the deep link that was opened.
 
-The deep link component takes an array of handlers which are functions that will be invoked when their `path` matches the deep link that was opened. 
-  - Only the first matching handler will be invoked. 
-  - The handler function will receive the params from the deep link - these use the same token syntax as libraries like `react-router` and `express` for path params.
+- Only the first matching handler will be invoked.
+- The handler function will receive the params from the deep link - these use the same token syntax as libraries like `react-router` and `express` for path params.
 
 ```tsx
 import { DeepLinks, navigation, Stack, Tabs } from "@rn-tools/navigation";
@@ -550,14 +549,14 @@ export function DeepLinksExample() {
   // let { path } = Linking.parse(url)
 
   // But it's easier to test hardcoded strings for the sake of this example
-  let path = "/testing/home/item/4";
+  let path = "/home/item/4";
 
   return (
     <DeepLinks
       path={path}
       handlers={[
         {
-          path: "/testing/home/item/:itemId",
+          path: "/home/item/:itemId",
           handler: (params: { itemId: string }) => {
             let itemId = params.itemId;
 

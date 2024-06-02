@@ -20,14 +20,10 @@ type DeepLinksProps<T> = {
 };
 
 export function DeepLinks<T>({ path, handlers, children }: DeepLinksProps<T>) {
-  let matchers = React.useRef(buildMatchers(handlers));
-
-  React.useLayoutEffect(() => {
-    matchers.current = buildMatchers(handlers);
-  }, [handlers]);
-
   React.useEffect(() => {
-    for (let matcher of matchers.current) {
+    let matchers = buildMatchers(handlers);
+
+    for (let matcher of matchers) {
       let { fn, handler } = matcher;
       let match = fn(path);
       if (match) {
@@ -35,7 +31,7 @@ export function DeepLinks<T>({ path, handlers, children }: DeepLinksProps<T>) {
         break;
       }
     }
-  }, [path]);
+  }, [path, handlers]);
 
   return <>{children}</>;
 }
