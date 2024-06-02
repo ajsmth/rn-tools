@@ -550,7 +550,7 @@ export default function DeepLinksExample() {
   // let { path } = Linking.parse(url)
 
   // But it's easier to test hardcoded strings for the sake of this example
-  let path = "/testing/home/item/2";
+  let path = "/home/item/2";
 
   return (
     <Stack.Navigator
@@ -559,23 +559,7 @@ export default function DeepLinksExample() {
           path={path}
           handlers={[
             {
-              path: "/testing/home/item1/:itemId",
-              handler: (params: { itemId: string }) => {
-                let itemId = params.itemId;
-
-                // Go to home tab
-                navigation.setTabIndex(0);
-
-                // Push the screen we want
-                navigation.pushScreen(
-                  <Stack.Screen>
-                    <MyScreen title={`Item: ${itemId}`} />
-                  </Stack.Screen>
-                );
-              },
-            },
-            {
-              path: "/testing/home/item/:itemId",
+              path: "/home/item/:itemId",
               handler: (params: { itemId: string }) => {
                 let itemId = params.itemId;
 
