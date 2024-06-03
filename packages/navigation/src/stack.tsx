@@ -59,7 +59,7 @@ let RNScreenStack = React.memo(function RNScreenStack(
   );
 });
 
-type StackRootProps = {
+export type StackRootProps = {
   children: React.ReactNode;
   id?: string;
 };
@@ -129,7 +129,10 @@ function StackRoot({ children, id }: StackRootProps) {
   );
 }
 
-function StackScreens({ style: styleProp, ...props }: RNScreenStackProps) {
+
+export type StackScreensProps = RNScreenStackProps
+
+function StackScreens({ style: styleProp, ...props }: StackScreensProps) {
   let style = React.useMemo(
     () => styleProp || StyleSheet.absoluteFill,
     [styleProp]
@@ -233,9 +236,11 @@ let StackSlot = React.memo(function StackSlot({
   );
 });
 
+export type StackScreenHeaderProps = RNScreenStackHeaderConfigProps
+
 let StackScreenHeader = React.memo(function StackScreenHeader({
   ...props
-}: RNScreenStackHeaderConfigProps) {
+}: StackScreenHeaderProps) {
   let layout = useWindowDimensions();
   let insets = useSafeAreaInsetsSafe();
 
@@ -279,7 +284,7 @@ let ScreenStackHeaderBackButtonImage = React.memo(
   }
 );
 
-type StackNavigatorProps = Omit<StackRootProps, "children"> & {
+export type StackNavigatorProps = Omit<StackRootProps, "children"> & {
   rootScreen: React.ReactElement<unknown>;
 };
 

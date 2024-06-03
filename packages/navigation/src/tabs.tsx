@@ -28,7 +28,7 @@ import {
 } from "./navigation-store";
 import { generateTabId, useSafeAreaInsetsSafe } from "./utils";
 
-type TabsRootProps = {
+export type TabsRootProps = {
   children: React.ReactNode;
   id?: string;
 };
@@ -44,13 +44,7 @@ let useTabsInternal = (tabId = "") =>
     return tab;
   });
 
-let TabsRoot = React.memo(function TabsRoot({
-  children,
-  id,
-}: {
-  children: React.ReactNode;
-  id?: string;
-}) {
+let TabsRoot = React.memo(function TabsRoot({ children, id }: TabsRootProps) {
   let tabIdRef = React.useRef(id || generateTabId());
   let tabId = tabIdRef.current;
   let tabs = useTabsInternal(tabId);
@@ -99,10 +93,9 @@ let defaultScreenContainerStyle = {
   flex: 1,
 };
 
-function TabsScreens({
-  children,
-  ...props
-}: { children: React.ReactNode } & RNScreenContainerProps) {
+export type TabsScreensProps = RNScreenContainerProps;
+
+function TabsScreens({ children, ...props }: TabsScreensProps) {
   return (
     <RNScreenContainer style={defaultScreenContainerStyle} {...props}>
       {React.Children.map(children, (child, index) => {
@@ -116,11 +109,13 @@ function TabsScreens({
   );
 }
 
+export type TabsScreenProps = RNScreenProps;
+
 let TabsScreen = React.memo(function TabsScreen({
   children,
   style: styleProp,
   ...props
-}: { children: React.ReactNode } & RNScreenProps) {
+}: TabsScreenProps) {
   let dispatch = useNavigationDispatch();
 
   let tabId = React.useContext(TabIdContext);
@@ -176,6 +171,7 @@ export let defaultTabbarStyle: ViewStyle = {
   flexDirection: "row",
   backgroundColor: "white",
 };
+
 
 let TabsTabbar = React.memo(function TabsTabbar({
   children,
