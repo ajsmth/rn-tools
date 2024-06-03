@@ -13,8 +13,6 @@ import type { PushScreenOptions } from "./types";
 /**
  * Ideas:
  *  - lifecycles / screen tracking
- *  - testing guide
- *  - routing example -> fragments to ids
  */
 
 export function createNavigation() {
@@ -66,6 +64,15 @@ function getNavigationFns({ store, dispatch, renderCharts }: NavigationStore) {
       0
     );
     let tabIds = renderCharts.tabsByDepth[maxDepth];
+
+    if (!tabIds || tabIds?.length === 0) {
+      if (store.getState().debugModeEnabled) {
+        console.warn("No focused tabs found");
+      }
+
+      return;
+    }
+
     let topTabId = tabIds[tabIds.length - 1];
     return topTabId;
   }
