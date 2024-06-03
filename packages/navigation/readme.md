@@ -20,6 +20,7 @@ A set of useful navigation components for React Native. Built with `react-native
   - [Authentication](#authentication)
   - [Deep Links](#deep-links)
   - [Preventing going back](#preventing-going-back)
+  - [Testing](#testing)
 
 ## Installation
 
@@ -756,3 +757,13 @@ function MyScreen() {
   );
 }
 ```
+
+
+### Testing
+
+Recommended: 
+- Check out the getting started portion of [React Native Testing Library](https://callstack.github.io/react-native-testing-library/docs/start/quick-start)
+
+- Set up [Jest Expo](https://docs.expo.dev/develop/unit-testing/)
+
+- Reset the navigation state between each test by calling `navigation.reset()`

@@ -218,8 +218,6 @@ describe("reducer", () => {
     };
 
     let newState = reducer(initialStateWithStack, action, context);
-    console.log(newState);
-
     expect(newState.screens.ids).not.toContain("screen1");
     expect(newState.stacks.lookup.stack1.screens).not.toContain("screen1");
     expect(newState.screens.ids).toContain("screen2");

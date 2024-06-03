@@ -103,8 +103,6 @@ module.exports = {
       plugins: ["jest", "jest-dom", "testing-library"],
       extends: [
         "plugin:jest/recommended",
-        "plugin:jest-dom/recommended",
-        "plugin:testing-library/react",
         "prettier",
       ],
       env: {

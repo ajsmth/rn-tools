@@ -13,9 +13,11 @@
   },
   "devDependencies": {
     "@rn-tools/eslint-config": "*",
+    "@testing-library/react-native": "^12.5.1",
     "@types/jest": "^27.0.3",
     "@types/react": "~18.2.79",
     "@types/react-native": "^0.72.8",
+    "@types/react-test-renderer": "^18",
     "@typescript-eslint/eslint-plugin": "^6.8.0",
     "@typescript-eslint/parser": "^6.8.0",
     "babel-preset-expo": "~11.0.0",
@@ -25,6 +27,7 @@
     "jest-expo": "^51.0.2",
     "lint-staged": "^15.2.0",
     "prettier": "^3.2.1",
+    "react-test-renderer": "18.2.0",
     "typescript": "~5.3.3"
   },
   "peerDependencies": {
