@@ -1,13 +1,10 @@
 import * as React from "react";
 import {
   BackHandler,
-  PixelRatio,
   Platform,
   StyleSheet,
-  useWindowDimensions,
   View,
   type ImageProps,
-  type LayoutRectangle,
   type ViewProps,
   type ViewStyle,
 } from "react-native";
@@ -21,6 +18,7 @@ import {
   ScreenStackHeaderCenterView as RNScreenStackHeaderCenterView,
   ScreenStackHeaderConfigProps as RNScreenStackHeaderConfigProps,
   ScreenStackHeaderBackButtonImage as RNScreenStackHeaderBackButtonImage,
+  type ScreenProps,
 } from "react-native-screens";
 import ScreenStackNativeComponent from "react-native-screens/src/fabric/ScreenStackNativeComponent";
 
@@ -129,8 +127,7 @@ function StackRoot({ children, id }: StackRootProps) {
   );
 }
 
-
-export type StackScreensProps = RNScreenStackProps
+export type StackScreensProps = RNScreenStackProps;
 
 function StackScreens({ style: styleProp, ...props }: StackScreensProps) {
   let style = React.useMemo(
@@ -148,11 +145,14 @@ let defaultScreenStyle: ViewStyle = {
 
 export type StackScreenProps = RNScreenProps;
 
+let HeaderHeightContext = React.createContext<number>(0);
+
 let StackScreen = React.memo(function StackScreen({
   children,
   style: styleProp,
   gestureEnabled = true,
   onDismissed: onDismissedProp,
+  onHeaderHeightChange: onHeaderHeightChangeProp,
   ...props
 }: StackScreenProps) {
   let stackId = React.useContext(StackIdContext);
@@ -190,17 +190,31 @@ let StackScreen = React.memo(function StackScreen({
 
   let style = React.useMemo(() => styleProp || defaultScreenStyle, [styleProp]);
 
+  let [headerHeight, setHeaderHeight] = React.useState(0);
+
+  let onHeaderHeightChange: ScreenProps["onHeaderHeightChange"] =
+    React.useCallback(
+      (e) => {
+        Platform.OS === "ios" && setHeaderHeight(e.nativeEvent.headerHeight);
+        onHeaderHeightChangeProp?.(e);
+      },
+      [onHeaderHeightChangeProp]
+    );
+
   return (
-    // @ts-expect-error - Ref typings in RNScreens
-    <RNScreen
-      {...props}
-      style={style}
-      activityState={isActive ? 2 : 0}
-      gestureEnabled={gestureEnabled}
-      onDismissed={onDismissed}
-    >
-      {children}
-    </RNScreen>
+    <HeaderHeightContext.Provider value={headerHeight}>
+      {/* @ts-expect-error - Ref typings in RNScreens */}
+      <RNScreen
+        {...props}
+        style={style}
+        activityState={isActive ? 2 : 0}
+        gestureEnabled={gestureEnabled}
+        onDismissed={onDismissed}
+        onHeaderHeightChange={onHeaderHeightChange}
+      >
+        {children}
+      </RNScreen>
+    </HeaderHeightContext.Provider>
   );
 });
 
@@ -236,26 +250,23 @@ let StackSlot = React.memo(function StackSlot({
   );
 });
 
-export type StackScreenHeaderProps = RNScreenStackHeaderConfigProps
+export type StackScreenHeaderProps = RNScreenStackHeaderConfigProps;
 
 let StackScreenHeader = React.memo(function StackScreenHeader({
   ...props
 }: StackScreenHeaderProps) {
-  let layout = useWindowDimensions();
-  let insets = useSafeAreaInsetsSafe();
+  let headerHeight = React.useContext(HeaderHeightContext);
 
-  let headerHeight = React.useMemo(() => {
-    if (Platform.OS === "android") {
-      return 0;
-    }
-
-    return getDefaultHeaderHeight(layout, false, insets.top);
-  }, [layout, insets]);
+  let placeholderStyle = React.useMemo<ViewStyle>(() => {
+    return {
+      height: headerHeight,
+    };
+  }, [headerHeight]);
 
   return (
     <React.Fragment>
       <RNScreenStackHeaderConfig {...props} />
-      <View style={{ height: headerHeight }} />
+      <View style={placeholderStyle} />
     </React.Fragment>
   );
 });
@@ -314,47 +325,3 @@ export let Stack = {
   Slot: StackSlot,
   Navigator: StackNavigator,
 };
-
-// `onLayout` event does not return a value for the native header component
-// This function is copied from react-navigation to get the default header heights
-// Ref: https://github.com/react-navigation/react-navigation/blob/main/packages/elements/src/Header/getDefaultHeaderHeight.tsx#L5
-function getDefaultHeaderHeight(
-  layout: Pick<LayoutRectangle, "width" | "height">,
-  // TODO - handle modal headers and substacks
-  modalPresentation: boolean,
-  topInset: number
-): number {
-  let headerHeight;
-
-  // On models with Dynamic Island the status bar height is smaller than the safe area top inset.
-  let hasDynamicIsland = Platform.OS === "ios" && topInset > 50;
-  let statusBarHeight = hasDynamicIsland
-    ? topInset - (5 + 1 / PixelRatio.get())
-    : topInset;
-
-  let isLandscape = layout.width > layout.height;
-
-  if (Platform.OS === "ios") {
-    if (Platform.isPad || Platform.isTV) {
-      if (modalPresentation) {
-        headerHeight = 56;
-      } else {
-        headerHeight = 50;
-      }
-    } else {
-      if (isLandscape) {
-        headerHeight = 32;
-      } else {
-        if (modalPresentation) {
-          headerHeight = 56;
-        } else {
-          headerHeight = 44;
-        }
-      }
-    }
-  } else {
-    headerHeight = 64;
-  }
-
-  return headerHeight + statusBarHeight;
-}

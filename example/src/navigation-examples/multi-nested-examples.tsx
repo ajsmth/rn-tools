@@ -3,8 +3,9 @@ import * as React from "react";
 import { Text, View, TouchableOpacity } from "react-native";
 
 export function MultiNested() {
-  return <Stack.Navigator rootScreen={<MyTabs />} />;
+  return <MyTabs />
 }
+
 function MyTabs() {
   return (
     <Tabs.Navigator
@@ -60,7 +61,7 @@ function MyScreen({
   return (
     <View className={"flex-1" + " " + colorClassName}>
       {children || (
-        <View className="flex-1 items-center justify-center gap-4">
+        <View className="flex-1 gap-4">
           <TouchableOpacity
             onPress={() =>
               navigation.pushScreen(

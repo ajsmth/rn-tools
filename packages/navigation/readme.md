@@ -366,7 +366,7 @@ function MyScreenWithHeader() {
 
 ### Configuring screen props
 
-The `Stack.Screen` component is a wrapper around the `Screen` component from `react-native-screens. [Screen props reference](https://github.com/software-mansion/react-native-screens/blob/main/src/types.tsx#L101)
+The `Stack.Screen` component is a wrapper around the `Screen` component from `react-native-screens`. [Screen props reference](https://github.com/software-mansion/react-native-screens/blob/main/src/types.tsx#L101)
 
 Some notable props are `stackPresentation`, `stackAnimation`, and `gestureEnabled`, however there are many more available.
 
