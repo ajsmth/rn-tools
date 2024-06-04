@@ -12,7 +12,7 @@ function MyTabs() {
       screens={[
         {
           key: "1",
-          screen: <MyStack colorClassName="bg-red-500" />,
+          screen: <MyStack colorClassName="bg-teal-400" />,
           tab: ({ isActive }) => (
             <View className="flex-1 p-4 items-center">
               <Text className={isActive ? "font-bold" : "font-medium"}>1</Text>
@@ -65,44 +65,62 @@ function MyScreen({
             onPress={() =>
               navigation.pushScreen(
                 <Stack.Screen>
-                  <MyTabs />
-                </Stack.Screen>
-              )
-            }
-          >
-            <Text>Push Tabs</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.pushScreen(
-                <Stack.Screen>
                   <MyScreen />
                 </Stack.Screen>
               )
             }
           >
-            <Text>Push Screen</Text>
+            <Text className="font-medium text-lg">Push Screen</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() =>
+              navigation.pushScreen(
+                <Stack.Screen
+                  stackPresentation="modal"
+                  stackAnimation="slide_from_bottom"
+                  gestureEnabled={true}
+                >
+                  <Stack.Navigator rootScreen={<MyScreen />} />
+                </Stack.Screen>
+              )
+            }
+          >
+            <Text className="font-medium text-lg">Push Modal</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() =>
+              navigation.pushScreen(
+                <Stack.Screen>
+                  <MyTabs />
+                </Stack.Screen>
+              )
+            }
+          >
+            <Text className="font-medium text-lg">Push Tabs</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             onPress={() => {
-              navigation.popScreen(2);
+              navigation.popScreen();
             }}
           >
-            <Text>Pop</Text>
+            <Text className="font-medium text-lg">Pop</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
               navigation.setTabIndex(1);
             }}
           >
-            <Text>Set index</Text>
+            <Text className="font-medium text-lg">Set tab index</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
               navigation.reset();
             }}
           >
-            <Text>Reset</Text>
+            <Text className="font-medium text-lg">Reset</Text>
           </TouchableOpacity>
         </View>
       )}

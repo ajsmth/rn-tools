@@ -13,6 +13,7 @@ A set of useful navigation components for React Native. Built with `react-native
   - [Pushing a screen once](#pushing-a-screen-once)
   - [Targeting specific tabs](#targeting-specific-tabs)
   - [Rendering a header](#rendering-a-header)
+  - [Configuring screen props](#configuring-screen-props)
 - [Components](#components)
   - [Stack](#stack)
   - [Tabs](#tabs)
@@ -363,6 +364,27 @@ function MyScreenWithHeader() {
 }
 ```
 
+### Configuring screen props
+
+The `Stack.Screen` component is a wrapper around the `Screen` component from `react-native-screens. [Screen props reference](https://github.com/software-mansion/react-native-screens/blob/main/src/types.tsx#L101)
+
+Some notable props are `stackPresentation`, `stackAnimation`, and `gestureEnabled`, however there are many more available.
+
+```tsx
+function pushNativeModalScreen() {
+  navigation.pushScreen(
+    <Stack.Screen
+      stackPresentation="modal"
+      stackAnimation="slide_from_bottom"
+      gestureEnabled={true}
+    >
+      {/* If you want to push more screens inside of the modal, wrap it with a Stack */}
+      <Stack.Navigator rootScreen={<MyScreen title="Modal screen" />} />
+    </Stack.Screen>
+  );
+}
+```
+
 ## Components
 
 The `Navigator` components in the previous examples are fairly straightforward wrappers around other lower level `Stack` and `Tabs` components.
@@ -673,7 +695,6 @@ function MyScreen({
     </View>
   );
 }
-
 ```
 
 ### Preventing going back
@@ -758,10 +779,10 @@ function MyScreen() {
 }
 ```
 
-
 ### Testing
 
-Recommended: 
+Recommended:
+
 - Check out the getting started portion of [React Native Testing Library](https://callstack.github.io/react-native-testing-library/docs/start/quick-start)
 
 - Set up [Jest Expo](https://docs.expo.dev/develop/unit-testing/)
