@@ -3,7 +3,7 @@ import * as React from "react";
 import { Text, View, TouchableOpacity } from "react-native";
 
 export function MultiNested() {
-  return <MyTabs />
+  return <Stack.Navigator rootScreen={<MyTabs />} />;
 }
 
 function MyTabs() {

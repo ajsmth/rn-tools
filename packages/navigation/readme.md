@@ -301,15 +301,11 @@ function switchMainTabsToTab(tabIndex: number) {
 
 ### Rendering a header
 
-Use the `Stack.Header` component to render a native header in a screen.
+Use the `Stack.Header` component to render a native header in a screen by passing it as a prop to `Stack.Screen`.
 
 Under the hood this is using `react-native-screens` header - [here is a reference for the available props](https://github.com/software-mansion/react-native-screens/blob/main/guides/GUIDE_FOR_LIBRARY_AUTHORS.md#screenstackheaderconfig)
 
 You can provide custom left, center, and right views in the header by using the `Stack.HeaderLeft`, `Stack.HeaderCenter`, and `Stack.HeaderRight` view container components as children of `Stack.Header`.
-
-**Note:** Wrap your App in a `SafeAreaProvider` to ensure your screen components are rendered correctly with the header
-
-**Note:**: The header component **has to be the first child** of a `Stack.Screen` component.
 
 ```tsx
 import { navigation, Stack } from "@rn-tools/navigation";
@@ -331,20 +327,20 @@ function MyScreenWithHeader() {
   let [title, setTitle] = React.useState("");
 
   return (
-    <Stack.Screen>
-      {/* Header must be the first child */}
-      <Stack.Header
-        title={title}
-        // Some potentially useful props - see the reference posted above for all available props
-        backTitle="Custom back title"
-        backTitleFontSize={16}
-        hideBackButton={false}
-      >
-        <Stack.HeaderRight>
-          <Text>Custom right text!</Text>
-        </Stack.HeaderRight>
-      </Stack.Header>
-
+    <Stack.Screen
+      header={
+        <Stack.Header
+          title={title}
+          backTitle="Custom back title"
+          backTitleFontSize={16}
+          hideBackButton={false}
+        >
+          <Stack.HeaderRight>
+            <Text>Custom right text!</Text>
+          </Stack.HeaderRight>
+        </Stack.Header>
+      }
+    >
       <View
         style={{
           flex: 1,
@@ -751,17 +747,19 @@ function MyScreen() {
       preventNativeDismiss={!canGoBack}
       nativeBackButtonDismissalEnabled={!canGoBack}
       gestureEnabled={canGoBack}
+      header={
+        <Stack.Header title="Prevent going back">
+          <Stack.HeaderLeft>
+            <TouchableOpacity
+              onPress={onPressBackButton}
+              style={{ opacity: canGoBack ? 1 : 0.4 }}
+            >
+              <Text>Back</Text>
+            </TouchableOpacity>
+          </Stack.HeaderLeft>
+        </Stack.Header>
+      }
     >
-      <Stack.Header title="Prevent going back">
-        <Stack.HeaderLeft>
-          <TouchableOpacity
-            onPress={onPressBackButton}
-            style={{ opacity: canGoBack ? 1 : 0.4 }}
-          >
-            <Text>Back</Text>
-          </TouchableOpacity>
-        </Stack.HeaderLeft>
-      </Stack.Header>
       <View style={{ paddingVertical: 48, paddingHorizontal: 16, gap: 16 }}>
         <Text style={{ fontSize: 22, fontWeight: "medium" }}>
           Enter some text and try to go back

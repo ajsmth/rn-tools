@@ -143,7 +143,9 @@ let defaultScreenStyle: ViewStyle = {
   backgroundColor: "white",
 };
 
-export type StackScreenProps = RNScreenProps;
+export type StackScreenProps = RNScreenProps & {
+  header?: React.ReactElement<StackScreenHeaderProps>
+}
 
 let HeaderHeightContext = React.createContext<number>(0);
 
@@ -153,6 +155,7 @@ let StackScreen = React.memo(function StackScreen({
   gestureEnabled = true,
   onDismissed: onDismissedProp,
   onHeaderHeightChange: onHeaderHeightChangeProp,
+  header,
   ...props
 }: StackScreenProps) {
   let stackId = React.useContext(StackIdContext);
@@ -188,18 +191,28 @@ let StackScreen = React.memo(function StackScreen({
     };
   }, [gestureEnabled, stack, screenId, isActive, dispatch]);
 
-  let style = React.useMemo(() => styleProp || defaultScreenStyle, [styleProp]);
-
-  let [headerHeight, setHeaderHeight] = React.useState(0);
+  let parentHeaderHeight = React.useContext(HeaderHeightContext);
+  let [headerHeight, setHeaderHeight] = React.useState(parentHeaderHeight);
 
   let onHeaderHeightChange: ScreenProps["onHeaderHeightChange"] =
     React.useCallback(
       (e) => {
-        Platform.OS === "ios" && setHeaderHeight(e.nativeEvent.headerHeight);
+        Platform.OS === "ios" &&
+          e.nativeEvent.headerHeight > 0 &&
+          setHeaderHeight(e.nativeEvent.headerHeight);
         onHeaderHeightChangeProp?.(e);
       },
       [onHeaderHeightChangeProp]
     );
+
+  let style = React.useMemo(
+    () => [
+      defaultScreenStyle,
+      { paddingTop: headerHeight || parentHeaderHeight },
+      styleProp,
+    ],
+    [styleProp, headerHeight, parentHeaderHeight]
+  );
 
   return (
     <HeaderHeightContext.Provider value={headerHeight}>
@@ -212,6 +225,7 @@ let StackScreen = React.memo(function StackScreen({
         onDismissed={onDismissed}
         onHeaderHeightChange={onHeaderHeightChange}
       >
+        {header}
         {children}
       </RNScreen>
     </HeaderHeightContext.Provider>
@@ -255,20 +269,7 @@ export type StackScreenHeaderProps = RNScreenStackHeaderConfigProps;
 let StackScreenHeader = React.memo(function StackScreenHeader({
   ...props
 }: StackScreenHeaderProps) {
-  let headerHeight = React.useContext(HeaderHeightContext);
-
-  let placeholderStyle = React.useMemo<ViewStyle>(() => {
-    return {
-      height: headerHeight,
-    };
-  }, [headerHeight]);
-
-  return (
-    <React.Fragment>
-      <RNScreenStackHeaderConfig {...props} />
-      <View style={placeholderStyle} />
-    </React.Fragment>
-  );
+  return <RNScreenStackHeaderConfig {...props} />;
 });
 
 let StackScreenHeaderLeft = React.memo(function StackScreenHeaderLeft({

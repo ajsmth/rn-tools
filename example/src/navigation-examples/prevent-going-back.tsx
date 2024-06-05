@@ -45,17 +45,19 @@ function MyScreen() {
       preventNativeDismiss={!canGoBack}
       nativeBackButtonDismissalEnabled={!canGoBack}
       gestureEnabled={canGoBack}
+      header={
+        <Stack.Header title="Prevent going back">
+          <Stack.HeaderLeft>
+            <TouchableOpacity
+              onPress={onPressBackButton}
+              style={{ opacity: canGoBack ? 1 : 0.4 }}
+            >
+              <Text>Back</Text>
+            </TouchableOpacity>
+          </Stack.HeaderLeft>
+        </Stack.Header>
+      }
     >
-      <Stack.Header title="Prevent going back">
-        <Stack.HeaderLeft>
-          <TouchableOpacity
-            onPress={onPressBackButton}
-            style={{ opacity: canGoBack ? 1 : 0.4 }}
-          >
-            <Text>Back</Text>
-          </TouchableOpacity>
-        </Stack.HeaderLeft>
-      </Stack.Header>
       <View style={{ paddingVertical: 48, paddingHorizontal: 16, gap: 16 }}>
         <Text style={{ fontSize: 22, fontWeight: "medium" }}>
           Enter some text and try to go back

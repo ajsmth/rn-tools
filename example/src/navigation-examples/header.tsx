@@ -17,20 +17,20 @@ function MyScreenWithHeader() {
   let [title, setTitle] = React.useState("");
 
   return (
-    <Stack.Screen>
-      {/* Header must be the first child */}
-      <Stack.Header
-        title={title}
-        // Some potentially useful props - see the reference posted above for all available props
-        backTitle="Custom back title"
-        backTitleFontSize={16}
-        hideBackButton={false}
-      >
-        <Stack.HeaderRight>
-          <Text>Custom right text!</Text>
-        </Stack.HeaderRight>
-      </Stack.Header>
-
+    <Stack.Screen
+      header={
+        <Stack.Header
+          title={title}
+          backTitle="Custom back title"
+          backTitleFontSize={16}
+          hideBackButton={false}
+        >
+          <Stack.HeaderRight>
+            <Text>Custom right text!</Text>
+          </Stack.HeaderRight>
+        </Stack.Header>
+      }
+    >
       <View
         style={{
           flex: 1,
