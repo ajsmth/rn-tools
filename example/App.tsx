@@ -12,7 +12,6 @@ import {
 } from "react-native-safe-area-context";
 
 import { NavigationExamples } from "./src/navigation-examples";
-
 navigation.setDebugModeEnabled(true);
 
 export default function App() {
