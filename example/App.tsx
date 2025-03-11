@@ -4,8 +4,9 @@ import {
   defaultTabbarStyle,
   Tabs,
 } from "@rn-tools/navigation";
+import { NativeSheet } from "@rn-tools/sheets";
 import * as React from "react";
-import { Text, View, TouchableOpacity } from "react-native";
+import { Text, View, TouchableOpacity, Button, ScrollView } from "react-native";
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
@@ -15,10 +16,24 @@ import { NavigationExamples } from "./src/navigation-examples";
 navigation.setDebugModeEnabled(true);
 
 export default function App() {
+  const [isVisible, setIsVisible] = React.useState(false);
+
   return (
-    <SafeAreaProvider>
-      <Stack.Navigator rootScreen={<RootScreen />} />
-    </SafeAreaProvider>
+    <View className="flex-1 bg-red-500 pt-24">
+      <Button title="Show sheet" onPress={() => setIsVisible(true)} />
+
+      <NativeSheet isVisible={isVisible} onVisibleChange={setIsVisible}>
+        <Text>Header</Text>
+        <ScrollView>
+          <Text>Scroll down</Text>
+          <View style={{ height: 1500 }} />
+          <View className="h-[1000px] bg-blue-500" />
+          <Text>Hi there</Text>
+          <Button title="Dismiss" onPress={() => setIsVisible(false)} />
+          <View className="h-64" />
+        </ScrollView>
+      </NativeSheet>
+    </View>
   );
 }
 
