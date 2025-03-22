@@ -17,23 +17,18 @@ navigation.setDebugModeEnabled(true);
 
 export default function App() {
   const [isVisible, setIsVisible] = React.useState(false);
-
   return (
-    <View className="flex-1 bg-red-500 pt-24">
-      <Button title="Show sheet" onPress={() => setIsVisible(true)} />
+
+    <View className='flex-1'><View className="flex-1">
+      <Button title="Show sheet" onPress={() => setIsVisible(!isVisible)} />
+      <Text>{`Hi isVisible" ${isVisible ? 'true' : 'false'}`}</Text>
 
       <NativeSheet isVisible={isVisible} onVisibleChange={setIsVisible}>
-        <Text>Header</Text>
-        <ScrollView>
-          <Text>Scroll down</Text>
-          <View style={{ height: 1500 }} />
-          <View className="h-[1000px] bg-blue-500" />
-          <Text>Hi there</Text>
-          <Button title="Dismiss" onPress={() => setIsVisible(false)} />
-          <View className="h-64" />
-        </ScrollView>
+        <Text>Hi</Text>
+        <Button title="Show sheet" onPress={() => setIsVisible(!isVisible)} />
       </NativeSheet>
-    </View>
+
+    </View></View>
   );
 }
 

@@ -11,7 +11,8 @@
   },
   "android": {
     "modules": [
-      "expo.modules.sheets.RNToolsSheetsModule"
+      "expo.modules.sheets.RNToolsSheetsModule",
+      "expo.modules.sheets.RNToolsSheetContainerModule"
     ]
   }
 }

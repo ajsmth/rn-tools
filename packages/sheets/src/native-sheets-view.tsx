@@ -10,6 +10,8 @@ type NativeSheetProps = {
   children: React.ReactNode;
 };
 
+
+
 export function NativeSheet({
   children,
   isVisible = false,
@@ -17,11 +19,11 @@ export function NativeSheet({
 }: NativeSheetProps) {
   return (
     <NativeSheetsView
-      style={{ flex: 1 }}
+      style={{ backgroundColor: 'red' }}
       isVisible={isVisible}
       onDismiss={() => onVisibleChange?.(false)}
     >
-      <NativeSheetContainerView>{children}</NativeSheetContainerView>
+      {children}
     </NativeSheetsView>
   );
 }
