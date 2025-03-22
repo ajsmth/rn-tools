@@ -1,10 +1,8 @@
 package expo.modules.sheets
 
 import android.view.View
-import androidx.fragment.app.FragmentActivity
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import java.net.URL
 
 class RNToolsSheetsModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -14,8 +12,25 @@ class RNToolsSheetsModule : Module() {
 
       GroupView<RNToolsSheetsView> {
         AddChildView { parent, child: View, index ->
-          parent.addView(child, index)
+          parent.rootViewGroup.addView(child, index)
         }
+
+        GetChildCount { parent ->
+          return@GetChildCount parent.rootViewGroup.childCount
+        }
+
+        GetChildViewAt { parent, index ->
+          parent.rootViewGroup.getChildAt(index)
+        }
+
+        RemoveChildView { parent, child: View ->
+          parent.rootViewGroup.removeView(child)
+        }
+
+        RemoveChildViewAt { parent, index ->
+          parent.rootViewGroup.removeViewAt(index)
+        }
+
       }
 
       Events("onDismiss")

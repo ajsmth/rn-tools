@@ -21,11 +21,10 @@ export default function App() {
 
     <View className='flex-1'><View className="flex-1">
       <Button title="Show sheet" onPress={() => setIsVisible(!isVisible)} />
-      <Text>{`Hi isVisible" ${isVisible ? 'true' : 'false'}`}</Text>
+      <Text>{`isVisible" ${isVisible ? 'true' : 'false'}`}</Text>
 
       <NativeSheet isVisible={isVisible} onVisibleChange={setIsVisible}>
-        <Text>Hi</Text>
-        <Button title="Show sheet" onPress={() => setIsVisible(!isVisible)} />
+        <Button title="Hide sheet" onPress={() => setIsVisible(!isVisible)} />
       </NativeSheet>
 
     </View></View>
