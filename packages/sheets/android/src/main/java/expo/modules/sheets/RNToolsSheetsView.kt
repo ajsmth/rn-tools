@@ -21,37 +21,6 @@ class RNToolsSheetsView(context: Context, appContext: AppContext) : ExpoView(con
     rootViewGroup.id = id
   }
 
-//  override fun addView(child: View?) {
-//    rootViewGroup.addView(child)
-//  }
-//
-//  override fun addView(child: View?, index: Int) {
-//    rootViewGroup.addView(child, index)
-//  }
-//
-//  override fun getChildCount(): Int {
-//    return rootViewGroup.childCount
-//  }
-//
-//  override fun getChildAt(index: Int): View {
-//    return rootViewGroup.getChildAt(index)
-//  }
-//
-//  override fun removeView(child: View?) {
-//    if (child != null) {
-//      rootViewGroup.removeView(child)
-//    }
-//  }
-
-//  override fun removeViewAt(index: Int) {
-//    if (index < 0 || index >= rootViewGroup.childCount) {
-//      return
-//    }
-//
-//    val child = rootViewGroup.getChildAt(index)
-//    rootViewGroup.removeView(child)
-//  }
-
   private var bottomSheetDialog: BottomSheetDialog? = null
 
   fun hideSheet() {

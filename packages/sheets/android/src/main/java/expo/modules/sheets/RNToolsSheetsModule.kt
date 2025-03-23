@@ -30,7 +30,6 @@ class RNToolsSheetsModule : Module() {
         RemoveChildViewAt { parent, index ->
           parent.rootViewGroup.removeViewAt(index)
         }
-
       }
 
       Events("onDismiss")

@@ -3,10 +3,7 @@ package expo.modules.sheets
 import android.content.Context
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
-import android.widget.FrameLayout
 import com.facebook.infer.annotation.SuppressLint
-import com.facebook.react.bridge.UiThreadUtil
 import com.facebook.react.config.ReactFeatureFlags
 import com.facebook.react.uimanager.JSPointerDispatcher
 import com.facebook.react.uimanager.JSTouchDispatcher
@@ -15,9 +12,8 @@ import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.events.EventDispatcher
 import com.facebook.react.views.view.ReactViewGroup
-import com.google.android.material.bottomsheet.BottomSheetDialog
+
 import expo.modules.kotlin.AppContext
-import expo.modules.kotlin.views.ExpoView
 
 
 class SheetRootView internal constructor(context: Context, appContext: AppContext) : ReactViewGroup(context),

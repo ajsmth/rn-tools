@@ -25,6 +25,11 @@ export default function App() {
 
       <NativeSheet isVisible={isVisible} onVisibleChange={setIsVisible}>
         <Button title="Hide sheet" onPress={() => setIsVisible(!isVisible)} />
+        <ScrollView className='border h-[400px]' scrollEnabled={true}>
+          <Text>Hi</Text>
+          <View style={{ height: 1000, backgroundColor: 'yellow' }} />
+          <Text>Hey</Text>
+        </ScrollView>
       </NativeSheet>
 
     </View></View>
