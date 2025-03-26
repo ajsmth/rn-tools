@@ -1,29 +1,40 @@
 import * as React from "react";
+import { View, ViewStyle } from 'react-native'
 import { requireNativeViewManager } from "expo-modules-core";
 
 const NativeSheetsView = requireNativeViewManager("RNToolsSheets");
-const NativeSheetContainerView = requireNativeViewManager("RNToolsSheetContainer")
 
 type NativeSheetProps = {
+  children: React.ReactNode;
+  containerStyle?: ViewStyle
+  snapPoints: number[]
   isVisible?: boolean;
   onVisibleChange?: (isVisible: boolean) => void;
-  children: React.ReactNode;
+  onIsDraggingChange?: (isDragging: boolean) => void
 };
 
+export function BottomSheet(props: NativeSheetProps) {
+  const { isVisible, onVisibleChange, children, snapPoints, onIsDraggingChange, containerStyle } = props
 
+  const maxHeight = React.useMemo(() => Math.max(...snapPoints), [snapPoints])
+  const style = React.useMemo(() => {
+    return {
+      height: maxHeight,
+      ...containerStyle,
+    }
+  }, [maxHeight])
 
-export function NativeSheet({
-  children,
-  isVisible = false,
-  onVisibleChange,
-}: NativeSheetProps) {
   return (
     <NativeSheetsView
-      style={{ backgroundColor: 'red' }}
       isVisible={isVisible}
       onDismiss={() => onVisibleChange?.(false)}
+      snapPoints={snapPoints}
+      onDraggingChange={(isDragging) => onIsDraggingChange?.(isDragging)}
     >
-      {children}
+      <View style={style}>
+        {children}
+      </View>
+
     </NativeSheetsView>
   );
 }

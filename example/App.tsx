@@ -4,7 +4,7 @@ import {
   defaultTabbarStyle,
   Tabs,
 } from "@rn-tools/navigation";
-import { NativeSheet } from "@rn-tools/sheets";
+import { BottomSheet } from "@rn-tools/sheets";
 import * as React from "react";
 import { Text, View, TouchableOpacity, Button, ScrollView } from "react-native";
 import {
@@ -17,22 +17,39 @@ navigation.setDebugModeEnabled(true);
 
 export default function App() {
   const [isVisible, setIsVisible] = React.useState(false);
+  const [isSecondarySheetVisible, setIsSecondarySheetVisible] = React.useState(false)
+  const [isDragging, setIsDragging] = React.useState(false)
+
+
   return (
+    <View className="flex-1 pt-24">
+      <View className="flex-1">
+        <Button title="Show sheet" onPress={() => setIsVisible(!isVisible)} />
 
-    <View className='flex-1'><View className="flex-1">
-      <Button title="Show sheet" onPress={() => setIsVisible(!isVisible)} />
-      <Text>{`isVisible" ${isVisible ? 'true' : 'false'}`}</Text>
+        <Text>{`isVisible" ${isVisible ? "true" : "false"}`}</Text>
+        <Text>{`isDragging" ${isDragging ? "true" : "false"}`}</Text>
 
-      <NativeSheet isVisible={isVisible} onVisibleChange={setIsVisible}>
-        <Button title="Hide sheet" onPress={() => setIsVisible(!isVisible)} />
-        <ScrollView className='border h-[400px]' scrollEnabled={true}>
-          <Text>Hi</Text>
-          <View style={{ height: 1000, backgroundColor: 'yellow' }} />
-          <Text>Hey</Text>
-        </ScrollView>
-      </NativeSheet>
-
-    </View></View>
+        <BottomSheet isVisible={isVisible} onVisibleChange={setIsVisible} onIsDraggingChange={setIsDragging} snapPoints={[300, 400]}>
+            <Button title="Hide sheet" onPress={() => setIsVisible(!isVisible)} />
+            <Button title="Show sheet" onPress={() => setIsSecondarySheetVisible(true)} />
+            <ScrollView
+              scrollEnabled={true}
+              nestedScrollEnabled
+              style={{ flex: 1, borderWidth: 1  }}
+              contentContainerStyle={{ paddingBottom: 64 }}
+            >
+              <Text>Hi</Text>
+              <View style={{ height: 1000, backgroundColor: "yellow" }} />
+              <Text>Hey</Text>
+            </ScrollView>
+        </BottomSheet>
+        <BottomSheet isVisible={isSecondarySheetVisible} onVisibleChange={setIsSecondarySheetVisible} snapPoints={[500, 700]}>
+          <Button title="Hide sheet" onPress={() => setIsSecondarySheetVisible(false)} />
+          <View className='flex-1 bg-red-500'>
+          </View>
+        </BottomSheet>
+      </View>
+    </View >
   );
 }
 
@@ -44,7 +61,7 @@ function RootScreen() {
       <TouchableOpacity
         onPress={() => navigation.pushScreen(<NavigationExamples />)}
       >
-        <Text className="font-semibold text-lg underline">
+        <Text className="font-semibold t4xt-lg underline">
           Navigation Examples
         </Text>
       </TouchableOpacity>
