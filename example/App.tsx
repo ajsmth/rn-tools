@@ -29,7 +29,7 @@ export default function App() {
         <Text>{`isVisible" ${isVisible ? "true" : "false"}`}</Text>
         <Text>{`isDragging" ${isDragging ? "true" : "false"}`}</Text>
 
-        <BottomSheet isVisible={isVisible} onVisibleChange={setIsVisible} onIsDraggingChange={setIsDragging} snapPoints={[300, 400]}>
+        <BottomSheet isVisible={isVisible} onVisibleChange={setIsVisible} onIsDraggingChange={setIsDragging} snapPoints={[300, 400, 600]}>
             <Button title="Hide sheet" onPress={() => setIsVisible(!isVisible)} />
             <Button title="Show sheet" onPress={() => setIsSecondarySheetVisible(true)} />
             <ScrollView
