@@ -16,7 +16,6 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-    
       "bundleIdentifier": "com.andydevs123.example"
     },
     "android": {
