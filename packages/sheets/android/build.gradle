@@ -40,8 +40,38 @@ android {
   lintOptions {
     abortOnError false
   }
-}
-dependencies {
-  implementation 'com.facebook.react:react-native:+'
-  implementation 'com.google.android.material:material:1.12.0'
+
+
+  // Enables Compose functionality
+  buildFeatures {
+    compose true
+  }
+  composeOptions {
+    kotlinCompilerExtensionVersion = "1.5.15"
+  }
+
+  lintOptions {
+    abortOnError false
+  }
+
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+    implementation(platform("androidx.compose:compose-bom:2024.10.01"))
+    implementation "androidx.compose.material:material:1.7.5"
+    implementation "com.google.android.material:material:1.12.0"
+    // Possible view model props passer not used yet
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+
+    // OPTIONAL - Android Studio Preview support
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+
+    implementation "androidx.compose.ui:ui-text-google-fonts:1.7.5"
+    implementation "androidx.navigation:navigation-compose:2.8.5"
+    implementation 'com.facebook.react:react-native:+'
+    implementation("com.composables:core:1.20.1")
+  }
 }

@@ -1,10 +1,10 @@
 package expo.modules.sheets
 
-import android.view.View
-
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 class SheetProps {
-    val children: MutableList<View> = mutableListOf()  // List of child views
-    var isVisible: Boolean = false                     // Boolean to track visibility
-    var onDismiss: (() -> Unit)? = null                // Optional callback when dismissed
+    var isVisible by mutableStateOf(false)
+    lateinit var rootViewGroup: SheetRootView
 }

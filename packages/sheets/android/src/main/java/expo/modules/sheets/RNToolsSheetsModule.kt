@@ -35,15 +35,10 @@ class RNToolsSheetsModule : Module() {
       Events("onDismiss")
 
       Prop("snapPoints") { view: RNToolsSheetsView, snapPoints: List<Int> ->
-        view.setSnapPoints(snapPoints)
       }
 
       Prop("isVisible") { view: RNToolsSheetsView, isVisible: Boolean ->
-        if (isVisible) {
-          view.showSheet()
-        } else {
-          view.hideSheet()
-        }
+        view.props.isVisible = isVisible
       }
     }
   }
