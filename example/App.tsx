@@ -30,24 +30,26 @@ export default function App() {
         <Text>{`isDragging" ${isDragging ? "true" : "false"}`}</Text>
 
         <BottomSheet isVisible={isVisible} onVisibleChange={setIsVisible} onIsDraggingChange={setIsDragging} snapPoints={[500, 600, 800]}>
-            <Button title="Hide sheet" onPress={() => setIsVisible(!isVisible)} />
-            <Button title="Show sheet" onPress={() => setIsSecondarySheetVisible(true)} />
-            <ScrollView
-              scrollEnabled={true}
-              nestedScrollEnabled
-              style={{ flex: 1, borderWidth: 1  }}
-              contentContainerStyle={{ paddingBottom: 64 }}
-            >
-              <Text>Hi</Text>
-              <View style={{ height: 1000, backgroundColor: "yellow" }} />
-              <Text>Hey</Text>
-            </ScrollView>
+
+          <Button title="Hide sheet" onPress={() => setIsVisible(!isVisible)} />
+          <Button title="Show sheet" onPress={() => setIsSecondarySheetVisible(true)} />
+          <ScrollView
+            scrollEnabled={true}
+            nestedScrollEnabled
+            style={{ flex: 1, borderWidth: 1 }}
+            contentContainerStyle={{ paddingBottom: 64 }}
+          >
+            <Text>Hi</Text>
+            <View style={{ height: 4000, backgroundColor: "yellow" }} />
+            <Text>Whats up</Text>
+          </ScrollView>
         </BottomSheet>
-        <BottomSheet isVisible={isSecondarySheetVisible} onVisibleChange={setIsSecondarySheetVisible} snapPoints={[500, 700]}>
-          <Button title="Hide sheet" onPress={() => setIsSecondarySheetVisible(false)} />
-          <View className='flex-1 bg-red-500'>
-          </View>
-        </BottomSheet>
+        {/* <BottomSheet isVisible={isSecondarySheetVisible} onVisibleChange={setIsSecondarySheetVisible} snapPoints={[500, 700]}> */}
+        {/*   <Text>Nice</Text> */}
+        {/*   <Button title="Hide sheet" onPress={() => setIsSecondarySheetVisible(false)} /> */}
+        {/*   <View className='flex-1 bg-red-500'> */}
+        {/*   </View> */}
+        {/* </BottomSheet> */}
       </View>
     </View >
   );
