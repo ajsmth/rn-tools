@@ -317,38 +317,6 @@ public fun BottomSheet(
                             IntOffset(x = 0, y = containerHeight.roundToPx())
                         }
                     }
-//                    .then(
-//                        if (scope.enabled) {
-//                            Modifier.nestedScroll(
-//                                remember(state.anchoredDraggableState, Orientation.Vertical) {
-//                                    ConsumeSwipeWithinBottomSheetBoundsNestedScrollConnection(
-//                                        orientation = Orientation.Vertical,
-//                                        sheetState = state.anchoredDraggableState,
-//                                        onFling = {
-//                                            coroutineScope.launch { state.anchoredDraggableState.settle(it) }
-//                                        }
-//                                    )
-//                                })
-//                        } else Modifier
-//                    )
-//                    .unstyledAnchoredDraggable(
-//                        state = state.anchoredDraggableState,
-//                        orientation = Orientation.Vertical,
-//                        enabled = scope.enabled
-//                    )
-//                    .pointerInput(Unit) { detectTapGestures { } }
-
-                    // In your BottomSheet composable, replace this:
-//                    .nestedUnstyledAnchoredDraggable(
-//                        state = state.anchoredDraggableState,
-//                        orientation = Orientation.Vertical,
-//                        enabled = scope.enabled
-//                    )
-
-// With this:
-                    .pointerInput(Unit) {
-                        // This empty pointer input ensures we don't consume events
-                    }
                     .unstyledAnchoredDraggable(
                         state = state.anchoredDraggableState,
                         orientation = Orientation.Vertical,
