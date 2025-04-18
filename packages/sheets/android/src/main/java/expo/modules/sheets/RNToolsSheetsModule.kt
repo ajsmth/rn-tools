@@ -9,7 +9,6 @@ class RNToolsSheetsModule : Module() {
     Name("RNToolsSheets")
 
     View(RNToolsSheetsView::class) {
-
       GroupView<RNToolsSheetsView> {
         AddChildView { parent, child: View, index ->
           parent.rootViewGroup.addView(child, index)
@@ -32,13 +31,22 @@ class RNToolsSheetsModule : Module() {
         }
       }
 
-      Events("onDismiss")
+      Events("onDismiss", "onStateChange")
 
-      Prop("snapPoints") { view: RNToolsSheetsView, snapPoints: List<Int> ->
+      Prop("isOpen") { view: RNToolsSheetsView, isOpen: Boolean ->
+        view.props.isOpen = isOpen
       }
 
-      Prop("isVisible") { view: RNToolsSheetsView, isVisible: Boolean ->
-        view.props.isVisible = isVisible
+      Prop("openToIndex") { view: RNToolsSheetsView, openToIndex: Int ->
+        view.props.openToIndex = openToIndex
+      }
+
+      Prop("snapPoints") { view: RNToolsSheetsView, snapPoints: List<Int> ->
+        view.props.snapPoints = snapPoints.map { view.convertToPx(it) }
+      }
+
+      Prop("appearanceAndroid") { view: RNToolsSheetsView, appearance: SheetAppearance ->
+        view.props.dimAmount = appearance.dimAmount ?: 0.56f
       }
     }
   }
