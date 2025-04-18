@@ -6,20 +6,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.ComposeView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
-import androidx.core.graphics.toColorInt
 import android.graphics.Color
-import android.view.ContextThemeWrapper
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-
 
 class RNToolsSheetsView(context: Context, appContext: AppContext) : ExpoView(context, appContext) {
   val onDismiss by EventDispatcher()
@@ -91,7 +84,21 @@ class RNToolsSheetsView(context: Context, appContext: AppContext) : ExpoView(con
       window?.setDimAmount(props.dimAmount)
 
       window?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.let { bottomSheet ->
-        bottomSheet.setBackgroundColor(Color.TRANSPARENT)
+
+        val backgroundColor = props.backgroundColor?.let {
+          try {
+            Color.parseColor(it)  // Convert hex string to Color
+          } catch (e: IllegalArgumentException) {
+            Color.TRANSPARENT
+          }
+        } ?: Color.TRANSPARENT
+
+        val drawable = GradientDrawable().apply {
+          setColor(backgroundColor)
+          cornerRadius = props.cornerRadius ?: 0f
+        }
+
+        bottomSheet.background = drawable
       }
 
       val behavior = behavior

@@ -21,7 +21,8 @@ public class RNToolsSheetsModule: Module {
             
             Prop("appearanceIOS") { (view, appearance: SheetAppearance) in
                 view.props.grabberVisible = appearance.grabberVisible ?? true
-                view.props.scrimDim = appearance.scrimDim ?? 0.0
+                view.props.backgroundColor = appearance.backgroundColor
+                view.props.cornerRadius = appearance.cornerRadius
             }
         }
     }

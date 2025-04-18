@@ -15,9 +15,17 @@ class SheetProps {
 
     // Appearance props
     var dimAmount by mutableStateOf(0.56f)
+    var backgroundColor by mutableStateOf<String?>(null)
+    var cornerRadius by mutableStateOf<Float?>(null)
 }
 
 class SheetAppearance : Record {
     @Field
     var dimAmount: Float? = 0.56f
+
+    @Field
+    var backgroundColor: String? = null
+
+    @Field
+    var cornerRadius: Float? = null
 }

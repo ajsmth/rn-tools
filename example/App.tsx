@@ -38,10 +38,14 @@ export default function App() {
           onStateChange={(event) => console.log({ event })}
           snapPoints={[400, 600, 750]}
           appearanceAndroid={{
-            dimAmount: 0.4,
+            dimAmount: 0,
+            cornerRadius: 32.0,
+            backgroundColor: "#ffffff",
           }}
           appearanceIOS={{
+            cornerRadius: 16.0,
             grabberVisible: true,
+            backgroundColor: "#ffffff",
           }}
         >
           {isOpen && <MyContent />}
@@ -64,17 +68,6 @@ function MyContent() {
         )}
         data={data}
       />
-      {/* <ScrollView */}
-      {/*   scrollEnabled={true} */}
-      {/*   nestedScrollEnabled */}
-      {/*   style={{ height: 600, borderWidth: 1 }} */}
-      {/*   contentContainerStyle={{ paddingBottom: 64 }} */}
-      {/* > */}
-      {/*   <TextInput placeholder="Textinput" /> */}
-      {/*   <Text>Hi</Text> */}
-      {/*   <View style={{ height: 1000, backgroundColor: "yellow" }} /> */}
-      {/*   <Text>Hey</Text> */}
-      {/* </ScrollView> */}
     </View>
   );
 }

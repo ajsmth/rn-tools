@@ -47,6 +47,8 @@ class RNToolsSheetsModule : Module() {
 
       Prop("appearanceAndroid") { view: RNToolsSheetsView, appearance: SheetAppearance ->
         view.props.dimAmount = appearance.dimAmount ?: 0.56f
+        view.props.backgroundColor = appearance.backgroundColor
+        view.props.cornerRadius = appearance.cornerRadius?.toFloat()
       }
     }
   }

@@ -32,10 +32,12 @@ type NativeOnChangeEvent = NativeSyntheticEvent<SheetChangeEvent>;
 type AppearanceIOS = {
   grabberVisible?: boolean;
   backgroundColor?: string;
+  cornerRadius?: number;
 };
 
 type AppearanceAndroid = {
   dimAmount?: number;
+  cornerRadius?: number;
   backgroundColor?: string;
 };
 

@@ -9,7 +9,8 @@ public class SheetProps: ObservableObject {
 
     // Appearance props
     @Published var grabberVisible: Bool = true
-    @Published var scrimDim: Double = 0.0
+    @Published var backgroundColor: String? = nil
+    @Published var cornerRadius: Float? = nil
 
 }
 
@@ -18,7 +19,10 @@ struct SheetAppearance: Record {
     var grabberVisible: Bool?
 
     @Field
-    var scrimDim: Double?
+    var backgroundColor: String?
+    
+    @Field
+    var cornerRadius: Float?
 }
 
 public class RNToolsSheetsView: ExpoView {
@@ -157,7 +161,7 @@ struct ContentView: View {
                             }
                     }
                 )
-                .presentationBackground(Color.clear)
+                .presentationBackground(props.backgroundColor != nil ? Color(hex: props.backgroundColor!) : Color.white)
                 .presentationDragIndicator(
                     props.grabberVisible ? .visible : .hidden
                 )
@@ -165,6 +169,7 @@ struct ContentView: View {
                     Set(detents),
                     selection: $selectedDetent
                 )
+                .presentationCornerRadius(props.cornerRadius.map { CGFloat($0) })
                 .onAppear {
                     selectedDetent = detent(for: props.openToIndex)
                 }
@@ -194,4 +199,21 @@ struct RepresentableView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UIView, context: Context) {}
+}
+
+
+extension Color {
+    init(hex: String) {
+        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
+        
+        var rgb: UInt64 = 0
+        Scanner(string: hexSanitized).scanHexInt64(&rgb)
+        
+        let red = Double((rgb & 0xFF0000) >> 16) / 255.0
+        let green = Double((rgb & 0x00FF00) >> 8) / 255.0
+        let blue = Double(rgb & 0x0000FF) / 255.0
+        
+        self.init(red: red, green: green, blue: blue)
+    }
 }
