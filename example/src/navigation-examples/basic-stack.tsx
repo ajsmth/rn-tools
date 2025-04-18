@@ -2,14 +2,13 @@ import { Stack, navigation } from "@rn-tools/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
 
-
 export function BasicStack() {
   return <Stack.Navigator rootScreen={<MyScreen title="Root Screen" />} />;
 }
 
 function MyScreen({
   title,
-  children
+  children,
 }: {
   title: string;
   children?: React.ReactNode;

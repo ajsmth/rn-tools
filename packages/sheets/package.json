@@ -1,0 +1,41 @@
+{
+  "name": "@rn-tools/sheets",
+  "version": "0.1.1",
+  "description": "My new module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "expo-module build",
+    "clean": "expo-module clean",
+    "lint": "expo-module lint",
+    "test": "expo-module test",
+    "prepare": "expo-module prepare",
+    "prepublishOnly": "expo-module prepublishOnly",
+    "expo-module": "expo-module",
+    "open:ios": "xed example/ios",
+    "open:android": "open -a \"Android Studio\" example/android"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "sheets",
+    "RNToolsSheets"
+  ],
+  "repository": "https://github.com/ajsmth/rn-tools",
+  "bugs": {
+    "url": "https://github.com/ajsmth/rn-tools/issues"
+  },
+  "author": "andy <andydevs123@gmail.com> (ajsmth)",
+  "license": "MIT",
+  "homepage": "https://github.com/ajsmth/rn-tools#readme",
+  "devDependencies": {
+    "@types/react": "~18.3.12",
+    "expo": "~52.0.0",
+    "expo-module-scripts": "^4.0.3",
+    "react-native": "0.76.0"
+  },
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}
