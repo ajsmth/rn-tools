@@ -4,6 +4,10 @@ An expo module for rendering native bottom sheet components in iOS and Android.
 
 Uses SwiftUI's sheet API and Android's BottomSheetDialog component to render React Native children in a modal bottom sheet
 
+
+https://github.com/user-attachments/assets/426c77e6-74c6-4748-8010-477267fa9433
+
+
 ## Motivation
 
 - Better performance and responsiveness than JS based solutions
