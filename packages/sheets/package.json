@@ -1,6 +1,6 @@
 {
   "name": "@rn-tools/sheets",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "My new module",
   "main": "src/index.ts",
   "scripts": {
@@ -20,7 +20,7 @@
     "sheets",
     "RNToolsSheets"
   ],
-  "repository": "https://github.com/ajsmth/rn-tools",
+  "repository": "https://github.com/ajsmth/rn-tools/tree/main/packages/sheets",
   "bugs": {
     "url": "https://github.com/ajsmth/rn-tools/issues"
   },

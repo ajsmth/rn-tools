@@ -12,15 +12,31 @@ Uses SwiftUI's sheet API and Android's BottomSheetDialog component to render Rea
 
 ## Installation
 
-`yarn add @rntools/sheets`
+`yarn add @rntools/sheets expo-build-properties`
 
+Update your minimum iOS deployment target to 16 in `app.json`: 
+
+```json
+{
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+         "ios": {
+            "deploymentTarget": "16.4"
+          }
+        }
+      ]
+}
+
+```
 
 As with most non-core expo modules this requires a new native build
 
 
 ## Usage 
 
-```
+```tsx
 import { BottomSheet } from '@rn-tools/sheets'
 
 export default function App() {
@@ -28,17 +44,27 @@ export default function App() {
 
   return (
     <View className="flex-1">
-        <Button title="Show sheet" onPress={() => setIsOpen(!isOpen)} />
+       <Button title="Show sheet" onPress={() => setIsOpen(true)} />
 
-        <BottomSheet
+       <BottomSheet
           isOpen={isOpen}
           onOpenChange={setIsOpen}
           openToIndex={1}
           onStateChange={(event) => console.log({ event })}
-          snapPoints={[400, 600]}
+          snapPoints={[400, 600, 750]}
+          appearanceAndroid={{
+            dimAmount: 0,
+            cornerRadius: 32.0,
+            backgroundColor: "#ffffff",
+          }}
+          appearanceIOS={{
+            cornerRadius: 16.0,
+            grabberVisible: true,
+            backgroundColor: "#ffffff",
+          }}
         >
-          <MyContent />
-        </BottomSheet>
+          {isOpen && <MyContent />}
+        </BottomSheet>    
     </View>
   );
 }
