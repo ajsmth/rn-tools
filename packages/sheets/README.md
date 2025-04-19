@@ -20,7 +20,7 @@ As with most non-core expo modules this requires a new native build
 
 ## Usage 
 
-```
+```tsx
 import { BottomSheet } from '@rn-tools/sheets'
 
 export default function App() {
@@ -28,17 +28,27 @@ export default function App() {
 
   return (
     <View className="flex-1">
-        <Button title="Show sheet" onPress={() => setIsOpen(!isOpen)} />
+       <Button title="Show sheet" onPress={() => setIsOpen(!isOpen)} />
 
-        <BottomSheet
+       <BottomSheet
           isOpen={isOpen}
           onOpenChange={setIsOpen}
           openToIndex={1}
           onStateChange={(event) => console.log({ event })}
-          snapPoints={[400, 600]}
+          snapPoints={[400, 600, 750]}
+          appearanceAndroid={{
+            dimAmount: 0,
+            cornerRadius: 32.0,
+            backgroundColor: "#ffffff",
+          }}
+          appearanceIOS={{
+            cornerRadius: 16.0,
+            grabberVisible: true,
+            backgroundColor: "#ffffff",
+          }}
         >
-          <MyContent />
-        </BottomSheet>
+          {isOpen && <MyContent />}
+        </BottomSheet>    
     </View>
   );
 }
