@@ -89,9 +89,9 @@ class RNToolsSheetsView(context: Context, appContext: AppContext) : ExpoView(con
           try {
             Color.parseColor(it)  // Convert hex string to Color
           } catch (e: IllegalArgumentException) {
-            Color.TRANSPARENT
+            Color.WHITE
           }
-        } ?: Color.TRANSPARENT
+        } ?: Color.WHITE
 
         val drawable = GradientDrawable().apply {
           setColor(backgroundColor)

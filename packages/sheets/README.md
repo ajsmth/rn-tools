@@ -12,8 +12,24 @@ Uses SwiftUI's sheet API and Android's BottomSheetDialog component to render Rea
 
 ## Installation
 
-`yarn add @rntools/sheets`
+`yarn add @rntools/sheets expo-build-properties`
 
+Update your minimum iOS deployment target to 16 in `app.json`: 
+
+```json
+{
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+         "ios": {
+            "deploymentTarget": "16.4"
+          }
+        }
+      ]
+}
+
+```
 
 As with most non-core expo modules this requires a new native build
 
@@ -28,7 +44,7 @@ export default function App() {
 
   return (
     <View className="flex-1">
-       <Button title="Show sheet" onPress={() => setIsOpen(!isOpen)} />
+       <Button title="Show sheet" onPress={() => setIsOpen(true)} />
 
        <BottomSheet
           isOpen={isOpen}

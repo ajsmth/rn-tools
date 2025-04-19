@@ -1,6 +1,8 @@
 require 'json'
 
 package = JSON.parse(File.read(File.join(__dir__, '..', 'package.json')))
+new_arch_enabled = ENV['RCT_NEW_ARCH_ENABLED'] == '1'
+
 
 Pod::Spec.new do |s|
   s.name           = 'RNToolsSheets'
@@ -19,10 +21,12 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
+  s.public_header_files = 'Sources/RNTSurfaceTouchHandlerWrapper.h'
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
+    'OTHER_SWIFT_FLAGS' => new_arch_enabled ? '-DRCT_NEW_ARCH_ENABLED' : ''
   }
 
   s.source_files = "**/*.{h,m,mm,swift,hpp,cpp}"
