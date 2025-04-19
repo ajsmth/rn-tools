@@ -14,7 +14,7 @@
     "@rn-tools/entities": "*",
     "@rn-tools/eslint-config": "*",
     "@rn-tools/navigation": "*",
-    "@rn-tools/sheets": "0.1.2",
+    "@rn-tools/sheets": "*",
     "expo": "~52.0.0",
     "expo-linking": "~7.0.5",
     "expo-status-bar": "~2.0.1",

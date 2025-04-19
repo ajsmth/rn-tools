@@ -4236,7 +4236,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rn-tools/sheets@npm:0.1.2, @rn-tools/sheets@workspace:packages/sheets":
+"@rn-tools/sheets@npm:*, @rn-tools/sheets@workspace:packages/sheets":
   version: 0.0.0-use.local
   resolution: "@rn-tools/sheets@workspace:packages/sheets"
   dependencies:
@@ -8172,7 +8172,7 @@ __metadata:
     "@rn-tools/entities": "npm:*"
     "@rn-tools/eslint-config": "npm:*"
     "@rn-tools/navigation": "npm:*"
-    "@rn-tools/sheets": "npm:0.1.2"
+    "@rn-tools/sheets": "npm:*"
     "@types/react": "npm:~18.3.12"
     "@types/react-native": "npm:^0.72.8"
     eslint: "npm:8.57.0"
