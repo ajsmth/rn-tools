@@ -1,9 +1,4 @@
-import {
-  navigation,
-  Stack,
-  defaultTabbarStyle,
-  Tabs,
-} from "@rn-tools/navigation";
+import { navigation, Stack, defaultTabbarStyle } from "@rn-tools/navigation";
 import { BottomSheet } from "@rn-tools/sheets";
 import * as React from "react";
 import {
@@ -19,45 +14,49 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { Tabs } from "@rn-tools/tabs";
 
 import { NavigationExamples } from "./src/navigation-examples";
 // navigation.setDebugModeEnabled(true);
 
 export default function App() {
+  return <Tabs />;
+}
+
+function BottomSheetExample() {
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
     <View className="flex-1 pt-24">
-      <View className="flex-1">
-        <Button title="Show sheet" onPress={() => setIsOpen(!isOpen)} />
-
-        <BottomSheet
-          isOpen={isOpen}
-          onOpenChange={setIsOpen}
-          openToIndex={1}
-          onStateChange={(event) => console.log({ event })}
-          snapPoints={[400, 600, 900]}
-          appearanceAndroid={{
-            dimAmount: 0,
-            cornerRadius: 32.0,
-            backgroundColor: "#ffffff",
-          }}
-          appearanceIOS={{
-            cornerRadius: 16.0,
-            grabberVisible: true,
-            backgroundColor: "#ffffff",
-          }}
-        >
-          {isOpen && <MyContent setIsOpen={setIsOpen} />}
-        </BottomSheet>
-      </View>
+      <BottomSheet
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        openToIndex={1}
+        onStateChange={(event) => console.log({ event })}
+        snapPoints={[400, 600, 900]}
+        appearanceAndroid={{
+          dimAmount: 0,
+          cornerRadius: 32.0,
+          backgroundColor: "#ffffff",
+        }}
+        appearanceIOS={{
+          cornerRadius: 16.0,
+          grabberVisible: true,
+          backgroundColor: "#ffffff",
+        }}
+      >
+        {isOpen && <BottomSheetContent setIsOpen={setIsOpen} />}
+      </BottomSheet>
     </View>
   );
 }
-
 const data = Array.from({ length: 50 }).map((i, index) => `Item ${index}`);
 
-function MyContent({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
+function BottomSheetContent({
+  setIsOpen,
+}: {
+  setIsOpen: (isOpen: boolean) => void;
+}) {
   const handleClose = React.useCallback(() => {
     setIsOpen(false);
   }, []);

@@ -1,0 +1,17 @@
+{
+  "platforms": [
+    "apple",
+    "android",
+    "web"
+  ],
+  "apple": {
+    "modules": [
+      "RNToolsTabsModule"
+    ]
+  },
+  "android": {
+    "modules": [
+      "expo.modules.tabs.RNToolsTabsModule"
+    ]
+  }
+}
