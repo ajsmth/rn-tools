@@ -36,7 +36,7 @@ export default function App() {
           onOpenChange={setIsOpen}
           openToIndex={1}
           onStateChange={(event) => console.log({ event })}
-          snapPoints={[400, 600, 750]}
+          snapPoints={[400, 600, 900]}
           appearanceAndroid={{
             dimAmount: 0,
             cornerRadius: 32.0,
@@ -48,7 +48,7 @@ export default function App() {
             backgroundColor: "#ffffff",
           }}
         >
-          {isOpen && <MyContent />}
+          {isOpen && <MyContent setIsOpen={setIsOpen} />}
         </BottomSheet>
       </View>
     </View>
@@ -57,14 +57,23 @@ export default function App() {
 
 const data = Array.from({ length: 50 }).map((i, index) => `Item ${index}`);
 
-function MyContent() {
+function MyContent({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
+  const handleClose = React.useCallback(() => {
+    setIsOpen(false);
+  }, []);
   return (
-    <View className="bg-white flex-1 rounded-lg">
-      <TextInput placeholder="Wowow" />
+    <View className="bg-white flex-1 rounded-lg px-4">
+      <View className="py-4">
+        <Text style={{ fontWeight: "bold", fontSize: 24 }}>
+          Native bottom sheets!
+        </Text>
+        <Button onPress={() => handleClose()} title="Close" />
+      </View>
+
       <FlatList
         nestedScrollEnabled
         renderItem={({ item }) => (
-          <TextInput placeholder={`Placeholder item ${item}`} />
+          <TextInput placeholder={`Text input ${item}`} />
         )}
         data={data}
       />
