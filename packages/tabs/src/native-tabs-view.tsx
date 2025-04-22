@@ -6,6 +6,7 @@ type NativeTabViewProps = {};
 const NativeView: React.ComponentType<NativeTabViewProps> =
   requireNativeView("RNToolsTabs");
 
-export function Tabs(props: NativeTabViewProps) {
+export function Tabs2(props: NativeTabViewProps) {
+  console.log({ props });
   return <NativeView {...props} />;
 }

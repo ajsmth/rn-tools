@@ -1,4 +1,3 @@
-import { navigation, Stack, defaultTabbarStyle } from "@rn-tools/navigation";
 import { BottomSheet } from "@rn-tools/sheets";
 import * as React from "react";
 import {
@@ -14,13 +13,10 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { Tabs } from "@rn-tools/tabs";
-
-import { NavigationExamples } from "./src/navigation-examples";
 // navigation.setDebugModeEnabled(true);
-
 export default function App() {
-  return <Tabs />;
+  console.log("HI");
+  return <View className="flex-1 bg-red-500" />;
 }
 
 function BottomSheetExample() {
@@ -80,18 +76,18 @@ function BottomSheetContent({
   );
 }
 
-function RootScreen() {
-  let insets = useSafeAreaInsets();
-
-  return (
-    <View className="flex-1 px-4" style={{ paddingTop: insets.top + 64 }}>
-      <TouchableOpacity
-        onPress={() => navigation.pushScreen(<NavigationExamples />)}
-      >
-        <Text className="font-semibold t4xt-lg underline">
-          Navigation Examples
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
+// function RootScreen() {
+//   let insets = useSafeAreaInsets();
+//
+//   return (
+//     <View className="flex-1 px-4" style={{ paddingTop: insets.top + 64 }}>
+//       <TouchableOpacity
+//         onPress={() => navigation.pushScreen(<NavigationExamples />)}
+//       >
+//         <Text className="font-semibold t4xt-lg underline">
+//           Navigation Examples
+//         </Text>
+//       </TouchableOpacity>
+//     </View>
+//   );
+// }
