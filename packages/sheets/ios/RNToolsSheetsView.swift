@@ -192,9 +192,12 @@ struct ContentView: View {
                                 }
                         }
                     )
-                    .presentationBackground(
+                    .presentationBackground16_4(
                         props.backgroundColor != nil
                             ? Color(hex: props.backgroundColor!) : Color.white
+                    )
+                    .presentationCornerRadius16_4(
+                        props.cornerRadius.map { CGFloat($0) }
                     )
                     .presentationDragIndicator(
                         props.grabberVisible ? .visible : .hidden
@@ -203,9 +206,7 @@ struct ContentView: View {
                         Set(detents),
                         selection: $selectedDetent
                     )
-                    .presentationCornerRadius(
-                        props.cornerRadius.map { CGFloat($0) }
-                    )
+          
                     .onAppear {
                         selectedDetent = detent(for: props.openToIndex)
                     }
@@ -293,6 +294,27 @@ extension Color {
         let blue = Double(rgb & 0x0000FF) / 255.0
 
         self.init(red: red, green: green, blue: blue)
+    }
+}
+
+
+extension View {
+    @ViewBuilder
+    func presentationBackground16_4(_ color: Color?) -> some View {
+        if #available(iOS 16.4, *) {
+            self.presentationBackground(color ?? .white)
+        } else {
+            self
+        }
+    }
+
+    @ViewBuilder
+    func presentationCornerRadius16_4(_ radius: CGFloat?) -> some View {
+        if #available(iOS 16.4, *) {
+            self.presentationCornerRadius(radius)
+        } else {
+            self
+        }
     }
 }
 

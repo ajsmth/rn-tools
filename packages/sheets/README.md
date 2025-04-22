@@ -27,7 +27,7 @@ Update your minimum iOS deployment target to 16 in `app.json`:
         "expo-build-properties",
         {
          "ios": {
-            "deploymentTarget": "16.4"
+            "deploymentTarget": "16.0"
           }
         }
       ]
