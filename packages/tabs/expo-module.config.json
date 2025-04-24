@@ -11,7 +11,8 @@
   },
   "android": {
     "modules": [
-      "expo.modules.tabs.RNToolsTabsModule"
+      "expo.modules.tabs.RNToolsTabsModule",
+      "expo.modules.tabs.RNToolsTabModule"
     ]
   }
 }

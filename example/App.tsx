@@ -14,9 +14,11 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 // navigation.setDebugModeEnabled(true);
+import { Tabs2 } from "@rn-tools/tabs";
+
 export default function App() {
   console.log("HI");
-  return <View className="flex-1 bg-red-500" />;
+  return <Tabs2 />;
 }
 
 function BottomSheetExample() {

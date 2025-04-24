@@ -1,12 +1,18 @@
-import { requireNativeView } from "expo";
 import * as React from "react";
+import { requireNativeViewManager } from "expo-modules-core";
+import { View } from "react-native";
 
 type NativeTabViewProps = {};
 
 const NativeView: React.ComponentType<NativeTabViewProps> =
-  requireNativeView("RNToolsTabs");
+  requireNativeViewManager("RNToolsTabs");
 
 export function Tabs2(props: NativeTabViewProps) {
-  console.log({ props });
-  return <NativeView {...props} />;
+  return (
+    <NativeView style={{ flex: 1, backgroundColor: "blue" }}>
+      <View style={{ flex: 1, backgroundColor: "red" }} />
+      <View style={{ flex: 1, backgroundColor: "purple" }} />
+      <View style={{ flex: 1, backgroundColor: "yellow" }} />
+    </NativeView>
+  );
 }
