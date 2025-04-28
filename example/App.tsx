@@ -17,7 +17,6 @@ import {
 import { Tabs2 } from "@rn-tools/tabs";
 
 export default function App() {
-  console.log("HI");
   return <Tabs2 />;
 }
 

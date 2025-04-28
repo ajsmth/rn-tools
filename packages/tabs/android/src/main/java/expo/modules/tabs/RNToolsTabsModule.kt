@@ -1,7 +1,6 @@
 package expo.modules.tabs
 
 import android.view.View
-import android.view.ViewGroup
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
@@ -11,25 +10,30 @@ class RNToolsTabsModule : Module() {
 
     View(RNToolsTabsView::class) {
       GroupView<RNToolsTabsView> {
-        AddChildView { parent, child: View, index ->
-          parent.tabViews.add(index, child as ViewGroup)
-        }
+          AddChildView { parent, child: View, index ->
 
-        GetChildCount { parent ->
-          return@GetChildCount parent.tabViews.size
-        }
+              if (child is RNToolsTabScreen) {
+                  parent.tabViews.add(index, child)
+              } else {
+                  parent.rootViewGroup.addView(child, index)
+              }
+          }
 
-        GetChildViewAt { parent, index ->
-          parent.tabViews.get(index)
-        }
+          GetChildCount { parent ->
+              return@GetChildCount parent.tabViews.size + parent.rootViewGroup.childCount
+          }
 
-        RemoveChildView { parent, child: View ->
-          parent.tabViews.remove(child as ViewGroup)
-        }
+          GetChildViewAt { parent, index ->
+              parent.tabViews[index]
+          }
 
-        RemoveChildViewAt { parent, index ->
-          parent.tabViews.removeAt(index)
-        }
+          RemoveChildView { parent, child: View ->
+              parent.tabViews.remove(child)
+          }
+
+          RemoveChildViewAt { parent, index ->
+              parent.tabViews.removeAt(index)
+          }
       }
     }
   }
