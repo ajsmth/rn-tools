@@ -1,28 +1,45 @@
 import ExpoModulesCore
 
+struct SheetAppearance: Record {
+    @Field
+    var grabberVisible: Bool?
+
+    @Field
+    var backgroundColor: String?
+
+    @Field
+    var cornerRadius: Float?
+}
+
 public class RNToolsSheetsModule: Module {
     public func definition() -> ModuleDefinition {
         Name("RNToolsSheets")
 
         View(RNToolsSheetsView.self) {
-            Events("onDismiss", "onStateChange")
+            Events("onDismiss", "onStateChange", "onDismissPrevented")
 
             Prop("snapPoints") { (view, snapPoints: [Int]) in
-                view.props.snapPoints = snapPoints
+                view.updateSnapPoints(snapPoints.map { CGFloat($0) })
             }
 
             Prop("isOpen") { (view, isOpen: Bool) in
-                view.props.isOpen = isOpen
+                view.updateIsOpen(isOpen)
             }
 
-            Prop("openToIndex") { (view, openToIndex: Int) in
-                view.props.openToIndex = openToIndex
+            Prop("initialIndex") { (view, initialIndex: Int) in
+                view.updateInitialIndex(initialIndex)
             }
-            
+
             Prop("appearanceIOS") { (view, appearance: SheetAppearance) in
-                view.props.grabberVisible = appearance.grabberVisible ?? true
-                view.props.backgroundColor = appearance.backgroundColor
-                view.props.cornerRadius = appearance.cornerRadius
+                view.updateAppearance(
+                    grabberVisible: appearance.grabberVisible ?? true,
+                    backgroundColor: appearance.backgroundColor,
+                    cornerRadius: appearance.cornerRadius
+                )
+            }
+
+            Prop("canDismiss") { (view, canDismiss: Bool) in
+                view.updateCanDismiss(canDismiss)
             }
         }
     }

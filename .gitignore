@@ -54,5 +54,6 @@ xcuserdata
 # VSCode
 .history/
 
+dev-mobile
 example/ios
 example/android

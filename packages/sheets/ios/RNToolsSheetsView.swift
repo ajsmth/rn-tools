@@ -1,83 +1,106 @@
 import ExpoModulesCore
 import React
-import SwiftUI
+import UIKit
 
-public class SheetProps: ObservableObject {
-    @Published var children: [UIView] = []
-    @Published var isOpen: Bool = false
-    @Published var openToIndex: Int = 0
-    @Published var snapPoints: [Int] = []
+public class SheetProps {
+    var isOpen: Bool = false
+    var initialIndex: Int = 0
+    var snapPoints: [CGFloat] = []
+    var canDismiss: Bool = true
 
     // Appearance props
-    @Published var grabberVisible: Bool = true
-    @Published var backgroundColor: String? = nil
-    @Published var cornerRadius: Float? = nil
+    var grabberVisible: Bool = true
+    var backgroundColor: String? = nil
+    var cornerRadius: Float? = nil
 }
 
-struct SheetAppearance: Record {
-    @Field
-    var grabberVisible: Bool?
-
-    @Field
-    var backgroundColor: String?
-
-    @Field
-    var cornerRadius: Float?
+protocol RNToolsSheetsViewDelegate: AnyObject {
+    func handleSheetStateChange(index: Int)
+    func handleSheetDismissed()
+    func handleSheetCanDismiss() -> Bool
 }
 
-public class RNToolsSheetsView: ExpoView {
+public class RNToolsSheetsView: ExpoView, RNToolsSheetsViewDelegate {
     public var props = SheetProps()
+
     var onDismiss = EventDispatcher()
     var onStateChange = EventDispatcher()
+    var onDismissPrevented = EventDispatcher()
 
-    var touchHandler: RCTTouchHandler?
-
-    private lazy var sheetVC = SheetInternalViewController()
-
-    lazy var hostingController = UIHostingController(
-        rootView: ContentView(
-            props: props, sheetVC: sheetVC, onDismiss: onDismiss,
-            onStateChange: onStateChange))
+    private lazy var sheetVC = SheetViewController()
 
     required init(appContext: AppContext? = nil) {
         super.init(appContext: appContext)
 
-        if let bridge = appContext?.reactBridge {
-            sheetVC.bridge = bridge
-        }
-
-        hostingController.view.autoresizingMask = [
-            .flexibleWidth, .flexibleHeight,
-        ]
-        hostingController.view.backgroundColor = UIColor.clear
+        sheetVC.appContext = appContext
+        sheetVC.delegate = self
     }
 
-    public override func layoutSubviews() {
-        super.layoutSubviews()
-        hostingController.view.frame = bounds
+    deinit {
+        sheetVC.cleanup()
     }
 
-    public override func didMoveToSuperview() {
-        super.didMoveToSuperview()
-        let parentViewController = findParentViewControllerOrNil()
+    func updateSnapPoints(_ snapPoints: [CGFloat]) {
+        props.snapPoints = snapPoints
+    }
 
-        parentViewController.apply {
-            $0.addChild(hostingController)
+    func updateIsOpen(_ isOpen: Bool) {
+        props.isOpen = isOpen
+        if isOpen {
+            sheetVC.presentSheet(
+                openTo: props.initialIndex,
+                snapPoints: props.snapPoints,
+                grabberVisible: props.grabberVisible,
+                backgroundColor: props.backgroundColor,
+                cornerRadius: props.cornerRadius
+            )
+        } else {
+            sheetVC.dismissSheet()
         }
+    }
 
-        hostingController.view.layer.removeAllAnimations()
-        hostingController.view.frame = bounds
-        addSubview(hostingController.view)
-        parentViewController.apply {
-            hostingController.didMove(toParent: $0)
+    func updateInitialIndex(_ initialIndex: Int) {
+        props.initialIndex = initialIndex
+    }
+
+    func updateCanDismiss(_ canDismiss: Bool) {
+        props.canDismiss = canDismiss
+    }
+
+    func updateAppearance(
+        grabberVisible: Bool,
+        backgroundColor: String?,
+        cornerRadius: Float?
+    ) {
+        props.grabberVisible = grabberVisible
+        props.backgroundColor = backgroundColor
+        props.cornerRadius = cornerRadius
+    }
+
+    func handleSheetDismissed() {
+        onDismiss([:])
+        onStateChange(["type": "HIDDEN"])
+    }
+
+    func handleSheetStateChange(index: Int) {
+        onStateChange([
+            "type": "OPEN",
+            "payload": ["index": index],
+        ])
+    }
+
+    func handleSheetCanDismiss() -> Bool {
+        if !props.canDismiss {
+            onDismissPrevented([:])
         }
+        return props.canDismiss
     }
 
     public override func reactSubviews() -> [UIView]! {
         return []
     }
 
-    #if RCT_NEW_ARCH_ENABLED
+
         public override func mountChildComponentView(
             _ childComponentView: UIView,
             index: Int
@@ -91,163 +114,108 @@ public class RNToolsSheetsView: ExpoView {
         ) {
             childComponentView.removeFromSuperview()
         }
-
-    #else
-        public override func insertReactSubview(
-            _ subview: UIView!, at atIndex: Int
-        ) {
-            sheetVC.insertChild(subview, at: atIndex)
-        }
-
-        public override func removeReactSubview(_ subview: UIView!) {
-            sheetVC.removeChild(subview)
-        }
-
-    #endif
+//        public override func insertReactSubview(
+//            _ subview: UIView!, at atIndex: Int
+//        ) {
+//            sheetVC.insertChild(subview, at: atIndex)
+//        }
+//
+//        public override func removeReactSubview(_ subview: UIView!) {
+//            sheetVC.removeChild(subview)
+//        }
 
 }
 
-struct ContentView: View {
-    @ObservedObject var props: SheetProps
-    var sheetVC: SheetInternalViewController
-    var onDismiss: EventDispatcher
-    var onStateChange: EventDispatcher
+final class SheetViewController: UIViewController,
+    UISheetPresentationControllerDelegate
+{
+    weak var delegate: RNToolsSheetsViewDelegate?
 
-    @State private var selectedDetent: PresentationDetent = .height(400.0)
-    @State private var lastHeight: CGFloat = 0
-    @State private var isDragging = false
-    @State private var settleTimer: Timer?
-
-    private var detents: [PresentationDetent] {
-        props.snapPoints.map { .height(CGFloat($0)) }
-    }
-
-    private func detent(for index: Int?) -> PresentationDetent {
-        guard
-            let i = index,
-            detents.indices.contains(i)
-        else { return detents.first! }
-        return detents[i]
-    }
-
-    private func upperSnapIndex(
-        for height: CGFloat,
-        snapPoints: [Int]
-    ) -> Int {
-        guard !snapPoints.isEmpty else { return 0 }
-
-        let sorted = snapPoints.sorted()
-        if let i = sorted.firstIndex(where: { CGFloat($0) >= height }) {
-            return i
-        }
-        return sorted.count - 1
-    }
-
-    var body: some View {
-
-        Color.clear
-            .sheet(
-                isPresented: $props.isOpen,
-                onDismiss: {
-                    onDismiss([:])
-                    onStateChange(["type": "HIDDEN"])
-                }
-            ) {
-                SheetInternalVCRepresentable(controller: sheetVC)
-                    .background(
-                        GeometryReader { geometry in
-                            Color.clear
-                                .onChange(of: geometry.size.height) {
-                                    newHeight in
-                                    if abs(newHeight - lastHeight) > 2 {
-                                        if !isDragging {
-                                            isDragging = true
-                                            onStateChange(["type": "DRAGGING"])
-                                        }
-
-                                        settleTimer?.invalidate()
-                                        settleTimer = Timer.scheduledTimer(
-                                            withTimeInterval: 0.15,
-                                            repeats: false
-                                        ) { _ in
-                                            isDragging = false
-                                            onStateChange(["type": "SETTLING"])
-
-                                            DispatchQueue.main.asyncAfter(
-                                                deadline: .now() + 0.15
-                                            ) {
-                                                let idx = upperSnapIndex(
-                                                    for: newHeight,
-                                                    snapPoints: props.snapPoints
-                                                )
-                                                onStateChange([
-                                                    "type": "OPEN",
-                                                    "payload": ["index": idx],
-                                                ])
-                                            }
-                                        }
-                                    }
-
-                                    lastHeight = newHeight
-                                }
-                        }
-                    )
-                    .presentationBackground16_4(
-                        props.backgroundColor != nil
-                            ? Color(hex: props.backgroundColor!) : Color.white
-                    )
-                    .presentationCornerRadius16_4(
-                        props.cornerRadius.map { CGFloat($0) }
-                    )
-                    .presentationDragIndicator(
-                        props.grabberVisible ? .visible : .hidden
-                    )
-                    .presentationDetents(
-                        Set(detents),
-                        selection: $selectedDetent
-                    )
-          
-                    .onAppear {
-                        selectedDetent = detent(for: props.openToIndex)
-                    }
-            }
-    }
-}
-
-struct SheetInternalVCRepresentable: UIViewControllerRepresentable {
-    let controller: SheetInternalViewController
-
-    func makeUIViewController(context: Context) -> SheetInternalViewController {
-        controller
-    }
-    func updateUIViewController(
-        _ uiViewController: SheetInternalViewController,
-        context: Context
-    ) {}
-}
-
-final class SheetInternalViewController: UIViewController {
-    var bridge: RCTBridge? {
+    var appContext: AppContext? {
         didSet {
-            touchHandler = RCTTouchHandler(bridge: bridge)
-            self.touchHandler?.attach(to: self.view)
+            _ = view
         }
     }
-    var surfaceTouchHandler = RNTSurfaceTouchHandlerWrapper()
-    var touchHandler: RCTTouchHandler?
+
+    @available(*, unavailable) required init?(coder: NSCoder) { fatalError() }
 
     init() {
         super.init(nibName: nil, bundle: nil)
-        view.backgroundColor = .clear
+        view.backgroundColor = .white
     }
 
     override func loadView() {
         self.view = UIView()
+        RNToolsTouchHandlerHelper.createAndAttachTouchHandler(for: self.view)
+    }
+    
 
-        self.surfaceTouchHandler.attach(to: self.view)
+    deinit {
+        overlayWindow = nil
     }
 
-    @available(*, unavailable) required init?(coder: NSCoder) { fatalError() }
+    private let detentTag = UUID().uuidString
+
+    private var overlayWindow: UIWindow?
+
+    func presentSheet(
+        openTo index: Int = 0,
+        snapPoints: [CGFloat],
+        grabberVisible: Bool,
+        backgroundColor: String?,
+        cornerRadius: Float?
+    ) {
+        guard overlayWindow == nil else { return }
+
+        modalPresentationStyle = .pageSheet
+
+        if let sheet = sheetPresentationController {
+            sheet.delegate = self
+            sheet.prefersGrabberVisible = grabberVisible
+            sheet.detents = makeDetents(from: snapPoints)
+
+            if let radius = cornerRadius {
+                sheet.preferredCornerRadius = CGFloat(radius)
+            }
+
+            let detents = sheet.detents
+            if detents.indices.contains(index) {
+                sheet.selectedDetentIdentifier = detents[index].identifier
+            } else {
+                sheet.selectedDetentIdentifier = detents.first?.identifier
+            }
+        }
+
+        view.backgroundColor = UIColor(hex: backgroundColor) ?? .white
+
+        let w = UIWindow(frame: UIScreen.main.bounds)
+        w.windowLevel = .statusBar + 2
+        w.rootViewController = UIViewController()
+        w.makeKeyAndVisible()
+
+        overlayWindow = w
+
+        let host = UIViewController()
+        host.modalPresentationStyle = .overFullScreen
+        host.view.backgroundColor = .clear
+
+        w.rootViewController?.present(host, animated: false) {
+            host.present(self, animated: true)
+        }
+    }
+
+    func dismissSheet() {
+        dismiss(animated: true) { [weak self] in
+            self?.delegate?.handleSheetDismissed()
+            self?.overlayWindow?.isHidden = true
+            self?.overlayWindow = nil
+        }
+    }
+
+    func cleanup() {
+        overlayWindow?.isHidden = true
+        overlayWindow = nil
+    }
 
     func insertChild(_ child: UIView, at index: Int) {
         view.insertSubview(child, at: index)
@@ -257,64 +225,66 @@ final class SheetInternalViewController: UIViewController {
     func removeChild(_ child: UIView) {
         child.removeFromSuperview()
     }
-}
 
-extension Optional {
-    func apply(_ fn: (Wrapped) -> Void) {
-        if case let .some(val) = self {
-            fn(val)
+    func sheetPresentationControllerDidChangeSelectedDetentIdentifier(
+        _ sheetPresentationController: UISheetPresentationController
+    ) {
+        guard
+            let selectedID = sheetPresentationController
+                .selectedDetentIdentifier,
+            let index = sheetPresentationController.detents
+                .firstIndex(where: { $0.identifier == selectedID })
+        else { return }
+
+        delegate?.handleSheetStateChange(index: index)
+    }
+
+    func presentationControllerShouldDismiss(
+        _ presentationController: UIPresentationController
+    ) -> Bool {
+        if let d = delegate {
+            return d.handleSheetCanDismiss()
+        }
+
+        return true
+    }
+
+    func presentationControllerDidDismiss(
+        _ presentationController: UIPresentationController
+    ) {
+        delegate?.handleSheetDismissed()
+        cleanup()
+    }
+
+    private func makeDetents(from points: [CGFloat])
+        -> [UISheetPresentationController.Detent]
+    {
+        guard !points.isEmpty else { return [.large()] }
+
+        return points.enumerated().map { idx, raw in
+            .custom(identifier: .init("\(detentTag)_\(idx)")) { _ in
+                raw
+            }
         }
     }
 }
 
-extension UIView {
-    // Walks the responder chain to find the parent UIViewController
-    // or null if not in a heirarchy yet
-    func findParentViewControllerOrNil() -> UIViewController? {
-        var nextResponder: UIResponder? = next
-        while nextResponder != nil && nextResponder as? UIViewController == nil
-        {
-            nextResponder = nextResponder?.next
-        }
+extension UIColor {
+    convenience init?(hex: String?) {
+        guard let hex, !hex.isEmpty else { return nil }
 
-        return nextResponder as? UIViewController
-    }
-}
-
-extension Color {
-    init(hex: String) {
         var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
         hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
 
+        guard hexSanitized.count == 6 else { return nil }
+
         var rgb: UInt64 = 0
-        Scanner(string: hexSanitized).scanHexInt64(&rgb)
+        guard Scanner(string: hexSanitized).scanHexInt64(&rgb) else { return nil }
 
-        let red = Double((rgb & 0xFF0000) >> 16) / 255.0
-        let green = Double((rgb & 0x00FF00) >> 8) / 255.0
-        let blue = Double(rgb & 0x0000FF) / 255.0
+        let red = CGFloat((rgb & 0xFF0000) >> 16) / 255.0
+        let green = CGFloat((rgb & 0x00FF00) >> 8) / 255.0
+        let blue = CGFloat(rgb & 0x0000FF) / 255.0
 
-        self.init(red: red, green: green, blue: blue)
+        self.init(red: red, green: green, blue: blue, alpha: 1.0)
     }
 }
-
-
-extension View {
-    @ViewBuilder
-    func presentationBackground16_4(_ color: Color?) -> some View {
-        if #available(iOS 16.4, *) {
-            self.presentationBackground(color ?? .white)
-        } else {
-            self
-        }
-    }
-
-    @ViewBuilder
-    func presentationCornerRadius16_4(_ radius: CGFloat?) -> some View {
-        if #available(iOS 16.4, *) {
-            self.presentationCornerRadius(radius)
-        } else {
-            self
-        }
-    }
-}
-

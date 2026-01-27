@@ -9,9 +9,10 @@ import expo.modules.kotlin.records.Record
 
 class SheetProps {
     var isOpen by mutableStateOf(false)
-    var openToIndex by mutableIntStateOf(0)
+    var initialIndex by mutableIntStateOf(0)
     var snapPoints by mutableStateOf<List<Int>>(emptyList())
     lateinit var rootViewGroup: SheetRootView
+    var canDismiss by mutableStateOf(true)
 
     // Appearance props
     var dimAmount by mutableStateOf(0.56f)

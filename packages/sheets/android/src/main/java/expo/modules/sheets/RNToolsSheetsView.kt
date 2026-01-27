@@ -13,10 +13,12 @@ import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
 import android.graphics.Color
+import com.facebook.react.bridge.UiThreadUtil
 
 class RNToolsSheetsView(context: Context, appContext: AppContext) : ExpoView(context, appContext) {
   val onDismiss by EventDispatcher()
   val onStateChange by EventDispatcher()
+  val onDismissPrevented by EventDispatcher()
 
   var rootViewGroup = SheetRootView(context, appContext)
   private var composeView: ComposeView
@@ -42,6 +44,15 @@ class RNToolsSheetsView(context: Context, appContext: AppContext) : ExpoView(con
             hideSheet()
           }
         }
+
+        LaunchedEffect(props.canDismiss) {
+          UiThreadUtil.runOnUiThread {
+            bottomSheetDialog?.apply {
+              setCancelable(true)
+              behavior.isHideable = props.canDismiss
+            }
+          }
+        }
       }
     }
 
@@ -54,91 +65,112 @@ class RNToolsSheetsView(context: Context, appContext: AppContext) : ExpoView(con
   }
 
   private fun hideSheet() {
-    bottomSheetDialog?.dismiss()
-    bottomSheetDialog = null
+    UiThreadUtil.runOnUiThread {
+      bottomSheetDialog?.dismiss()
+      bottomSheetDialog = null
+    }
   }
 
   private fun showSheet() {
-    (rootViewGroup.parent as? ViewGroup)?.removeView(rootViewGroup)
+    UiThreadUtil.runOnUiThread {
+      (rootViewGroup.parent as? ViewGroup)?.removeView(rootViewGroup)
 
-    val frameLayout = FrameLayout(context).apply {
-      layoutParams = LayoutParams(
-        ViewGroup.LayoutParams.MATCH_PARENT,
-        ViewGroup.LayoutParams.WRAP_CONTENT
-      )
+      val frameLayout = FrameLayout(context).apply {
+        layoutParams = LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.WRAP_CONTENT
+        )
 
-      addView(rootViewGroup)
-    }
+        addView(rootViewGroup)
+      }
 
-    val snapPoints = props.snapPoints
-    val initialIndex = props.openToIndex
+      val snapPoints = props.snapPoints
+      val initialIndex = props.initialIndex
 
-    val hasTwoSnapPoints = snapPoints.size >= 2
-    val peekHeight = if (hasTwoSnapPoints) snapPoints[0] else -1
-    val expandedHeight = if (snapPoints.isNotEmpty()) snapPoints.getOrNull(1) ?: snapPoints[0] else -1
-    val initialHeight = snapPoints.getOrNull(initialIndex) ?: peekHeight
+      val hasTwoSnapPoints = snapPoints.size >= 2
+      val peekHeight = if (hasTwoSnapPoints) snapPoints[0] else -1
+      val expandedHeight = if (snapPoints.isNotEmpty()) snapPoints.getOrNull(1) ?: snapPoints[0] else -1
+      val initialHeight = snapPoints.getOrNull(initialIndex) ?: peekHeight
 
-    bottomSheetDialog = BottomSheetDialog(context).apply {
-      setContentView(frameLayout)
+      bottomSheetDialog = PreventDismissBottomSheetDialog(
+        context = context,
+        canDismiss = { props.canDismiss },
+        onDismissPrevented = { onDismissPrevented(mapOf()) }
+      ).apply {
+        setCancelable(true)
+        setContentView(frameLayout)
 
-      window?.setDimAmount(props.dimAmount)
+        window?.setDimAmount(props.dimAmount)
 
-      window?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.let { bottomSheet ->
+        behavior.isHideable = props.canDismiss
 
-        val backgroundColor = props.backgroundColor?.let {
-          try {
-            Color.parseColor(it)  // Convert hex string to Color
-          } catch (e: IllegalArgumentException) {
-            Color.WHITE
+        window?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.let { bottomSheet ->
+          val backgroundColor = props.backgroundColor?.let {
+            try {
+              Color.parseColor(it)
+            } catch (e: IllegalArgumentException) {
+              Color.WHITE
+            }
+          } ?: Color.WHITE
+
+          val radius = props.cornerRadius ?: 32f
+
+          val drawable = GradientDrawable().apply {
+            setColor(backgroundColor)
+            cornerRadii = floatArrayOf(
+              radius, radius,
+              radius, radius,
+              0f, 0f,
+              0f, 0f
+            )
           }
-        } ?: Color.WHITE
 
-        val drawable = GradientDrawable().apply {
-          setColor(backgroundColor)
-          cornerRadius = props.cornerRadius ?: 0f
+          bottomSheet.background = drawable
         }
 
-        bottomSheet.background = drawable
-      }
+        val behavior = behavior
 
-      val behavior = behavior
-
-      setOnDismissListener {
-        onDismiss(mapOf())
-        if (behavior.state != BottomSheetBehavior.STATE_HIDDEN) {
-          onStateChange(mapOf(
-            "type" to "HIDDEN",
-          ))
-        }
-      }
-
-      if (peekHeight > 0) {
-        behavior.peekHeight = peekHeight
-      }
-
-      if (expandedHeight > 0) {
-        frameLayout.layoutParams.height = expandedHeight
-        frameLayout.requestLayout()
-      }
-
-      behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-        override fun onStateChanged(bottomSheet: android.view.View, newState: Int) {
-          handleSheetStateChange(newState)
+        setOnDismissListener {
+          onDismiss(mapOf())
+          if (behavior.state != BottomSheetBehavior.STATE_HIDDEN) {
+            onStateChange(mapOf(
+              "type" to "HIDDEN",
+            ))
+          }
         }
 
-        override fun onSlide(bottomSheet: android.view.View, slideOffset: Float) {
+        if (peekHeight > 0) {
+          behavior.peekHeight = peekHeight
         }
-      })
 
-      show()
+        if (expandedHeight > 0) {
+          frameLayout.layoutParams.height = expandedHeight
+          frameLayout.requestLayout()
+        }
 
-      if (initialHeight == peekHeight) {
-        behavior.state = BottomSheetBehavior.STATE_COLLAPSED
-      } else {
-        behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+          override fun onStateChanged(bottomSheet: android.view.View, newState: Int) {
+            if (!props.canDismiss && newState == BottomSheetBehavior.STATE_HIDDEN) {
+              onDismissPrevented(mapOf())
+            }
+
+            handleSheetStateChange(newState)
+          }
+
+          override fun onSlide(bottomSheet: android.view.View, slideOffset: Float) {
+          }
+        })
+
+        show()
+
+        if (initialHeight == peekHeight) {
+          behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        } else {
+          behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        }
+
+        handleSheetStateChange(behavior.state)
       }
-
-      handleSheetStateChange(behavior.state)
     }
   }
 
@@ -155,12 +187,6 @@ class RNToolsSheetsView(context: Context, appContext: AppContext) : ExpoView(con
         ))
 
       }
-      BottomSheetBehavior.STATE_SETTLING -> {
-        onStateChange(mapOf(
-          "type" to "SETTLING",
-        ))
-      }
-
       BottomSheetBehavior.STATE_COLLAPSED -> {
         onStateChange(mapOf(
           "type" to "OPEN",
@@ -188,12 +214,20 @@ class RNToolsSheetsView(context: Context, appContext: AppContext) : ExpoView(con
         ))
       }
 
-      BottomSheetBehavior.STATE_DRAGGING -> {
-        onStateChange(mapOf(
-          "type" to "DRAGGING",
-        ))
-      }
     }
   }
 }
 
+class PreventDismissBottomSheetDialog(
+  context: Context,
+  private val canDismiss: () -> Boolean,
+  private val onDismissPrevented: () -> Unit
+) : BottomSheetDialog(context) {
+  override fun cancel() {
+    if (canDismiss()) super.cancel() else onDismissPrevented()
+  }
+
+  override fun onBackPressed() {
+    if (canDismiss()) super.onBackPressed() else onDismissPrevented()
+  }
+}

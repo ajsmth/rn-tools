@@ -2,8 +2,9 @@
 
 An expo module for rendering native bottom sheet components in iOS and Android. 
 
-Uses SwiftUI's sheet API and Android's BottomSheetDialog to render React Native children in a modal bottom sheet
+Uses native iOS sheet presentation and Android's BottomSheetDialog to render React Native children in a modal bottom sheet.
 
+Supports stacking multiple sheets on top of each other
 
 https://github.com/user-attachments/assets/426c77e6-74c6-4748-8010-477267fa9433
 
@@ -52,9 +53,11 @@ export default function App() {
 
        <BottomSheet
           isOpen={isOpen}
-          onOpenChange={setIsOpen}
-          openToIndex={1}
+          setIsOpen={setIsOpen}
+          initialIndex={1}
           onStateChange={(event) => console.log({ event })}
+          canDismiss={true}
+          onDismissPrevented={() => console.log("dismiss prevented")}
           snapPoints={[400, 600, 750]}
           appearanceAndroid={{
             dimAmount: 0,
@@ -76,16 +79,18 @@ export default function App() {
 
 ## Props 
 
-- `isOpen / onOpenChange` - Controller props for toggling the sheet open and closed - this is required 
+- `isOpen / setIsOpen` - Controller props for toggling the sheet open and closed - this is required 
 
-- `openToIndex` - will open the bottom sheet to the defined snapPoint index 
+- `initialIndex` - will open the bottom sheet to the defined snapPoint index 
 
 - `onStateChange` - callback to track the internal state of the sheet. The following events are emitted:
 
     - { type: "HIDDEN" } 
     - { type: "OPEN", payload: { index: number }}
-    - { type: "SETTLING" }
-    - { type: "DRAGGING" }
+
+- `canDismiss` - controls whether the user can dismiss the sheet via swipe/back/gesture (default: true)
+
+- `onDismissPrevented` - called when a dismiss gesture is blocked by `canDismiss={false}`
 
 - `snapPoints` - a list of sizes that the sheet will "snap" to 
 
@@ -96,6 +101,12 @@ export default function App() {
 
 
 ## Caveats
+
+- iOS uses an overlay window to present the sheet.
+
+- Default appearance values if not provided:
+  - iOS: grabber visible, white background, system default corner radius unless set
+  - Android: white background, 32dp top corner radius, dim amount 0.56
 
 - (Android) can have a maximum of 2 snap points
 

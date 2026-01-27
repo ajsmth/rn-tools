@@ -31,14 +31,18 @@ class RNToolsSheetsModule : Module() {
         }
       }
 
-      Events("onDismiss", "onStateChange")
+      Events("onDismiss", "onStateChange", "onDismissPrevented")
 
       Prop("isOpen") { view: RNToolsSheetsView, isOpen: Boolean ->
         view.props.isOpen = isOpen
       }
 
-      Prop("openToIndex") { view: RNToolsSheetsView, openToIndex: Int ->
-        view.props.openToIndex = openToIndex
+      Prop("initialIndex") { view: RNToolsSheetsView, initialIndex: Int ->
+        view.props.initialIndex = initialIndex
+      }
+
+      Prop("canDismiss") { view: RNToolsSheetsView, canDismiss: Boolean ->
+        view.props.canDismiss = canDismiss
       }
 
       Prop("snapPoints") { view: RNToolsSheetsView, snapPoints: List<Int> ->

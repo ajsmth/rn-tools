@@ -6,6 +6,8 @@ import {
   ViewStyle,
   Platform,
   LayoutChangeEvent,
+  StyleSheet,
+  useWindowDimensions,
 } from "react-native";
 import { requireNativeViewManager } from "expo-modules-core";
 
@@ -45,8 +47,10 @@ type NativeSheetViewProps = {
   children: React.ReactNode;
   snapPoints?: number[];
   isOpen: boolean;
-  openToIndex: number;
+  initialIndex: number;
   onDismiss: () => void;
+  canDismiss?: boolean;
+  onDismissPrevented: () => void;
   onStateChange: (event: NativeOnChangeEvent) => void;
   appearanceAndroid?: AppearanceAndroid;
   appearanceIOS?: AppearanceIOS;
@@ -60,16 +64,14 @@ export type BottomSheetProps = {
   containerStyle?: ViewStyle;
   snapPoints?: number[];
   isOpen: boolean;
-  openToIndex?: number;
-  onOpenChange: (isOpen: boolean) => void;
+  initialIndex?: number;
+  setIsOpen: (isOpen: boolean) => void;
+  canDismiss?: boolean;
+  onDismissPrevented?: () => void;
   onStateChange?: (event: SheetChangeEvent) => void;
   appearanceAndroid?: AppearanceAndroid;
   appearanceIOS?: AppearanceIOS;
 };
-
-// TODO:
-// - get sheet container height from native side and clamp maxHeight to that value
-//
 
 export function BottomSheet(props: BottomSheetProps) {
   const {
@@ -78,11 +80,15 @@ export function BottomSheet(props: BottomSheetProps) {
     snapPoints = [],
     containerStyle,
     isOpen,
-    openToIndex = 0,
-    onOpenChange: setIsOpen,
+    initialIndex = 0,
+    setIsOpen,
     appearanceAndroid,
     appearanceIOS,
+    canDismiss = true,
+    onDismissPrevented,
   } = props;
+
+  const { height: windowHeight } = useWindowDimensions();
 
   const [layout, setLayout] = React.useState<LayoutRectangle>({
     height: 0,
@@ -92,12 +98,30 @@ export function BottomSheet(props: BottomSheetProps) {
   });
 
   const computedSnapPoints = React.useMemo(() => {
-    if (snapPoints.length === 0 && layout.height > 0) {
+    if (snapPoints.length === 0) {
+      if (layout.height === 0) {
+        return [];
+      }
+
       return [layout.height];
     }
 
-    return Platform.OS === "android" ? snapPoints.slice(0, 2) : [...snapPoints];
-  }, [snapPoints, layout]);
+    let effectiveSnapPoints =
+      Platform.OS === "android" ? snapPoints.slice(0, 2) : [...snapPoints];
+
+    const snapPointsExceedingMaxHeight = snapPoints.filter(
+      (snapPoint) => snapPoint >= windowHeight,
+    );
+
+    if (snapPointsExceedingMaxHeight.length > 0) {
+      effectiveSnapPoints = [
+        ...effectiveSnapPoints.filter((snapPoint) => snapPoint < windowHeight),
+        windowHeight,
+      ];
+    }
+
+    return effectiveSnapPoints;
+  }, [layout.height, windowHeight, snapPoints]);
 
   const maxHeight = React.useMemo(
     () =>
@@ -110,9 +134,12 @@ export function BottomSheet(props: BottomSheetProps) {
   const style = React.useMemo(() => {
     return {
       height: maxHeight,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      backgroundColor: "white",
       ...containerStyle,
     };
-  }, [maxHeight]);
+  }, [maxHeight, containerStyle]);
 
   const handleOnDismiss = React.useCallback(() => {
     setIsOpen(false);
@@ -129,19 +156,48 @@ export function BottomSheet(props: BottomSheetProps) {
     setLayout(event.nativeEvent.layout);
   }, []);
 
+  const handleDismissWithChanges = React.useCallback(() => {
+    onDismissPrevented?.();
+  }, [onDismissPrevented]);
+
+  const isAutosized = React.useMemo(
+    () => snapPoints.length === 0,
+    [snapPoints],
+  );
+
+  const pointerEvents = React.useMemo(() => {
+    return isOpen ? "box-none" : "none";
+  }, [isOpen]);
+
+  const computedIsOpen = React.useMemo(
+    () => isOpen && computedSnapPoints.length > 0,
+    [isOpen, computedSnapPoints],
+  );
+
+  const innerStyle = React.useMemo(
+    () => (isAutosized ? undefined : StyleSheet.absoluteFill),
+    [isAutosized],
+  );
+
   return (
-    <NativeSheetsView
-      isOpen={isOpen}
-      openToIndex={openToIndex}
-      onDismiss={handleOnDismiss}
-      onStateChange={handleStateChange}
-      snapPoints={computedSnapPoints}
-      appearanceAndroid={appearanceAndroid}
-      appearanceIOS={appearanceIOS}
-    >
-      <View style={style} onLayout={handleLayout}>
-        {children}
-      </View>
-    </NativeSheetsView>
+    <View style={StyleSheet.absoluteFill} pointerEvents={pointerEvents}>
+      <NativeSheetsView
+        isOpen={computedIsOpen}
+        canDismiss={canDismiss}
+        initialIndex={initialIndex}
+        onDismiss={handleOnDismiss}
+        onStateChange={handleStateChange}
+        onDismissPrevented={handleDismissWithChanges}
+        snapPoints={computedSnapPoints}
+        appearanceAndroid={appearanceAndroid}
+        appearanceIOS={appearanceIOS}
+      >
+        <View style={style} collapsable={false}>
+          <View onLayout={handleLayout} style={innerStyle} collapsable={false}>
+            {children}
+          </View>
+        </View>
+      </NativeSheetsView>
+    </View>
   );
 }
