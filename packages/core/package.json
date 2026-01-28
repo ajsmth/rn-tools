@@ -1,7 +1,7 @@
 {
-  "name": "@rn-tools/sheets",
-  "version": "0.2.0",
-  "description": "My new module",
+  "name": "@rn-tools/core",
+  "version": "0.1.0",
+  "description": "Core utilities for rn-tools",
   "main": "src/index.ts",
   "scripts": {
     "build": "expo-module build",
@@ -10,17 +10,15 @@
     "test": "expo-module test",
     "prepare": "expo-module prepare",
     "prepublishOnly": "expo-module prepublishOnly",
-    "expo-module": "expo-module",
-    "open:ios": "xed example/ios",
-    "open:android": "open -a \"Android Studio\" example/android"
+    "expo-module": "expo-module"
   },
   "keywords": [
     "react-native",
     "expo",
-    "sheets",
-    "RNToolsSheets"
+    "core",
+    "RNToolsCore"
   ],
-  "repository": "https://github.com/ajsmth/rn-tools/tree/main/packages/sheets",
+  "repository": "https://github.com/ajsmth/rn-tools/tree/main/packages/core",
   "bugs": {
     "url": "https://github.com/ajsmth/rn-tools/issues"
   },
@@ -31,7 +29,7 @@
     "@types/react": "18.3.12"
   },
   "dependencies": {
-    "@rn-tools/core": "*"
+    "use-sync-external-store": "^1.2.2"
   },
   "peerDependencies": {
     "expo": "*",

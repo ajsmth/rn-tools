@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { requireNativeViewManager } from "expo-modules-core";
+import { safeAreaStore, useStoreSelector } from "@rn-tools/core";
 
 type SheetState = "DRAGGING" | "OPEN" | "SETTLING" | "HIDDEN";
 
@@ -19,15 +20,9 @@ type ChangeEvent<T extends SheetState, P = unknown> = {
 };
 
 type OpenChangeEvent = ChangeEvent<"OPEN", { index: number }>;
-type DraggingChangeEvent = ChangeEvent<"DRAGGING">;
-type SettlingChangeEvent = ChangeEvent<"SETTLING">;
 type HiddenChangeEvent = ChangeEvent<"HIDDEN">;
 
-type SheetChangeEvent =
-  | OpenChangeEvent
-  | DraggingChangeEvent
-  | SettlingChangeEvent
-  | HiddenChangeEvent;
+type SheetChangeEvent = OpenChangeEvent | HiddenChangeEvent;
 
 type NativeOnChangeEvent = NativeSyntheticEvent<SheetChangeEvent>;
 
@@ -89,6 +84,11 @@ export function BottomSheet(props: BottomSheetProps) {
   } = props;
 
   const { height: windowHeight } = useWindowDimensions();
+  const insets = useStoreSelector(safeAreaStore, (state) => state.insets);
+  const maxSheetHeight = React.useMemo(
+    () => Math.max(0, windowHeight - insets.top - insets.bottom),
+    [windowHeight, insets.top, insets.bottom],
+  );
 
   const [layout, setLayout] = React.useState<LayoutRectangle>({
     height: 0,
@@ -103,25 +103,27 @@ export function BottomSheet(props: BottomSheetProps) {
         return [];
       }
 
-      return [layout.height];
+      return [Math.min(layout.height, maxSheetHeight)];
     }
 
     let effectiveSnapPoints =
       Platform.OS === "android" ? snapPoints.slice(0, 2) : [...snapPoints];
 
     const snapPointsExceedingMaxHeight = snapPoints.filter(
-      (snapPoint) => snapPoint >= windowHeight,
+      (snapPoint) => snapPoint >= maxSheetHeight,
     );
 
     if (snapPointsExceedingMaxHeight.length > 0) {
       effectiveSnapPoints = [
-        ...effectiveSnapPoints.filter((snapPoint) => snapPoint < windowHeight),
-        windowHeight,
+        ...effectiveSnapPoints.filter(
+          (snapPoint) => snapPoint < maxSheetHeight,
+        ),
+        maxSheetHeight,
       ];
     }
 
     return effectiveSnapPoints;
-  }, [layout.height, windowHeight, snapPoints]);
+  }, [layout.height, maxSheetHeight, snapPoints]);
 
   const maxHeight = React.useMemo(
     () =>

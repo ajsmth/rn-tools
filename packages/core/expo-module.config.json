@@ -1,0 +1,17 @@
+{
+  "platforms": [
+    "apple",
+    "android",
+    "web"
+  ],
+  "apple": {
+    "modules": [
+      "RNToolsCoreModule"
+    ]
+  },
+  "android": {
+    "modules": [
+      "expo.modules.rntoolscore.RNToolsCoreModule"
+    ]
+  }
+}

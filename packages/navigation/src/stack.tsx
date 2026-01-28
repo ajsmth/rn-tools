@@ -31,7 +31,7 @@ import {
 import { DEFAULT_SLOT_NAME } from "./navigation-reducer";
 import { useNavigationDispatch, useNavigationState } from "./navigation-store";
 import type { StackItem } from "./types";
-import { generateStackId, useSafeAreaInsetsSafe } from "./utils";
+import { generateStackId } from "./utils";
 
 let StackIdContext = React.createContext<string>("");
 let ScreenIdContext = React.createContext<string>("");
@@ -39,7 +39,7 @@ let ScreenIdContext = React.createContext<string>("");
 // Component returned from `react-native-screens` references `react-navigation` data structures in recent updates
 // This is a workaround to make it work with our custom navigation
 let RNScreenStack = React.memo(function RNScreenStack(
-  props: RNScreenStackProps
+  props: RNScreenStackProps,
 ) {
   let { children, gestureDetectorBridge, ...rest } = props;
   let ref = React.useRef(null);
@@ -64,7 +64,7 @@ export type StackRootProps = {
 
 let useStackInternal = (stackId = "") => {
   let stack: StackItem | undefined = useNavigationState(
-    (state) => state.stacks.lookup[stackId]
+    (state) => state.stacks.lookup[stackId],
   );
   return stack;
 };
@@ -132,7 +132,7 @@ export type StackScreensProps = RNScreenStackProps;
 function StackScreens({ style: styleProp, ...props }: StackScreensProps) {
   let style = React.useMemo(
     () => styleProp || StyleSheet.absoluteFill,
-    [styleProp]
+    [styleProp],
   );
 
   return <RNScreenStack {...props} style={style} />;
@@ -144,8 +144,8 @@ let defaultScreenStyle: ViewStyle = {
 };
 
 export type StackScreenProps = RNScreenProps & {
-  header?: React.ReactElement<StackScreenHeaderProps>
-}
+  header?: React.ReactElement<StackScreenHeaderProps>;
+};
 
 let HeaderHeightContext = React.createContext<number>(0);
 
@@ -171,7 +171,7 @@ let StackScreen = React.memo(function StackScreen({
       dispatch({ type: "POP_SCREEN_BY_KEY", key: screenId });
       onDismissedProp?.(e);
     },
-    [onDismissedProp, dispatch, screenId]
+    [onDismissedProp, dispatch, screenId],
   );
 
   React.useEffect(() => {
@@ -202,7 +202,7 @@ let StackScreen = React.memo(function StackScreen({
           setHeaderHeight(e.nativeEvent.headerHeight);
         onHeaderHeightChangeProp?.(e);
       },
-      [onHeaderHeightChangeProp]
+      [onHeaderHeightChangeProp],
     );
 
   let style = React.useMemo(
@@ -211,12 +211,11 @@ let StackScreen = React.memo(function StackScreen({
       { paddingTop: headerHeight || parentHeaderHeight },
       styleProp,
     ],
-    [styleProp, headerHeight, parentHeaderHeight]
+    [styleProp, headerHeight, parentHeaderHeight],
   );
 
   return (
     <HeaderHeightContext.Provider value={headerHeight}>
-      {/* @ts-expect-error - Ref typings in RNScreens */}
       <RNScreen
         {...props}
         style={style}
@@ -293,7 +292,7 @@ let StackScreenHeaderRight = React.memo(function StackScreenHeaderRight({
 let ScreenStackHeaderBackButtonImage = React.memo(
   function ScreenStackHeaderBackButtonImage(props: ImageProps) {
     return <RNScreenStackHeaderBackButtonImage {...props} />;
-  }
+  },
 );
 
 export type StackNavigatorProps = Omit<StackRootProps, "children"> & {

@@ -15,11 +15,6 @@ import {
   TextInput,
   FlatList,
 } from "react-native";
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
-
 import { NavigationExamples } from "./src/navigation-examples";
 // navigation.setDebugModeEnabled(true);
 
@@ -37,7 +32,7 @@ export default function App() {
           initialIndex={1}
           canDismiss
           onStateChange={(event) => console.log({ event })}
-          snapPoints={[400, 600, 950]}
+          snapPoints={[400, 600, 1200]}
           appearanceAndroid={{
             dimAmount: 0,
             cornerRadius: 32.0,
@@ -86,10 +81,8 @@ function MyContent({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
 }
 
 function RootScreen() {
-  let insets = useSafeAreaInsets();
-
   return (
-    <View className="flex-1 px-4" style={{ paddingTop: insets.top + 64 }}>
+    <View className="flex-1 px-4" style={{ paddingTop: 64 }}>
       <TouchableOpacity
         onPress={() => navigation.pushScreen(<NavigationExamples />)}
       >

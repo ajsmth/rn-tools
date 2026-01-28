@@ -1,5 +1,4 @@
 import { Platform } from 'react-native';
-import { useSafeAreaInsets, type EdgeInsets } from 'react-native-safe-area-context'
 
 export let generateStackId = createIdGenerator("stack");
 export let generateScreenId = createIdGenerator("screen");
@@ -32,9 +31,9 @@ export function useSafeAreaInsetsSafe() {
   try {
     // Linter thinks this is conditional but it seems fine
     // eslint-disable-next-line
-    insets = useSafeAreaInsets();
+    insets = baseInsets;
   } catch (error) {
-    console.warn("`react-native-safe-area-context` missing - Please install and wrap your app in a SafeAreaProvider" );
+    console.warn("`react-native-safe-area-context` missing - Please install and wrap your app in a SafeAreaProvider");
   }
 
   return insets;

@@ -1,14 +1,9 @@
 import { Tabs, navigation, Stack } from "@rn-tools/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export function BasicTabs() {
-  return (
-    <SafeAreaProvider>
-      <Stack.Navigator rootScreen={<MyTabs />} />
-    </SafeAreaProvider>
-  );
+  return <Stack.Navigator rootScreen={<MyTabs />} />;
 }
 
 function MyTabs() {
@@ -70,7 +65,7 @@ function MyScreen({
         <MyScreen title="Pushed screen" bg={bg}>
           <Button title="Pop screen" onPress={popScreen} />
         </MyScreen>
-      </Stack.Screen>
+      </Stack.Screen>,
     );
   }
 

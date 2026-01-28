@@ -3719,6 +3719,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rn-tools/core@npm:*, @rn-tools/core@workspace:packages/core":
+  version: 0.0.0-use.local
+  resolution: "@rn-tools/core@workspace:packages/core"
+  dependencies:
+    "@types/react": "npm:18.3.12"
+    use-sync-external-store: "npm:^1.2.2"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  languageName: unknown
+  linkType: soft
+
 "@rn-tools/eslint-config@npm:*, @rn-tools/eslint-config@workspace:packages/eslint-config":
   version: 0.0.0-use.local
   resolution: "@rn-tools/eslint-config@workspace:packages/eslint-config"
@@ -3764,7 +3777,6 @@ __metadata:
   peerDependencies:
     react: "*"
     react-native: "*"
-    react-native-safe-area-context: "*"
     react-native-screens: "*"
   languageName: unknown
   linkType: soft
@@ -3773,6 +3785,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rn-tools/sheets@workspace:packages/sheets"
   dependencies:
+    "@rn-tools/core": "npm:*"
     "@types/react": "npm:18.3.12"
   peerDependencies:
     expo: "*"
@@ -7132,7 +7145,6 @@ __metadata:
     react-native: "npm:0.76.9"
     react-native-gesture-handler: "npm:~2.20.2"
     react-native-reanimated: "npm:~3.16.1"
-    react-native-safe-area-context: "npm:4.12.0"
     react-native-screens: "npm:~4.4.0"
     react-native-url-polyfill: "npm:^2.0.0"
     react-native-web: "npm:~0.19.13"
@@ -12576,16 +12588,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-safe-area-context@npm:4.12.0":
-  version: 4.12.0
-  resolution: "react-native-safe-area-context@npm:4.12.0"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10c0/122e7e24de39371b107fcac7ecd6b62d41301a46c945c7a6b3a07c8b65d4cb9ebf58bf163bfecfd430b1bd8fdf61d4f319dac1812edd7986c00b7d2cc16da24c
-  languageName: node
-  linkType: hard
-
 "react-native-screens@npm:~4.4.0":
   version: 4.4.0
   resolution: "react-native-screens@npm:4.4.0"
@@ -14667,6 +14669,15 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
   checksum: 10c0/23b1597c10adf15b26ade9e8c318d8cc0abc9ec0ab5fc7ca7338da92e89c2536abd150a5891bf076836c352fdfa104fc7231fb48f806fd9960e0cbe03601abaf
+  languageName: node
+  linkType: hard
+
+"use-sync-external-store@npm:^1.2.2":
+  version: 1.6.0
+  resolution: "use-sync-external-store@npm:1.6.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/35e1179f872a53227bdf8a827f7911da4c37c0f4091c29b76b1e32473d1670ebe7bcd880b808b7549ba9a5605c233350f800ffab963ee4a4ee346ee983b6019b
   languageName: node
   linkType: hard
 

@@ -29,12 +29,6 @@ A set of useful navigation components for React Native. Built with `react-native
 yarn expo install @rn-tools/navigation react-native-screens
 ```
 
-**Note:** It's recommended that you install and wrap your app in a `SafeAreaProvider` to ensure components are rendered correctly based on the device's insets:
-
-```bash
-yarn expo install react-native-safe-area-context
-```
-
 ## Basic Usage
 
 For basic usage, the exported `Stack.Navigator` and `Tabs.Navigator` will get you up and running quickly.
@@ -117,14 +111,10 @@ import { Tabs, navigation, Stack } from "@rn-tools/navigation";
 import * as React from "react";
 import { View, Text, Button } from "react-native";
 
-// It's recommended to wrap your App in a SafeAreaProvider once
-import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export function BasicTabs() {
   return (
-    <SafeAreaProvider>
       <Stack.Navigator rootScreen={<MyTabs />} />
-    </SafeAreaProvider>
   );
 }
 
