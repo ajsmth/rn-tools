@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.16.7",
+    "@rn-tools/core": "*",
     "@rn-tools/eslint-config": "*",
     "@rn-tools/navigation": "*",
     "@rn-tools/sheets": "*",

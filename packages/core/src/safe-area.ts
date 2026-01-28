@@ -1,6 +1,6 @@
 import { requireNativeModule } from "expo-modules-core";
 import type { EventSubscription } from "expo-modules-core";
-import { createStore } from "./store";
+import { createManagedStore, useStoreSelector } from "./store";
 
 export type EdgeInsets = {
   top: number;
@@ -51,60 +51,42 @@ function areInsetsEqual(left: EdgeInsets, right: EdgeInsets) {
   );
 }
 
-const baseSafeAreaStore = createStore<SafeAreaState>({
-  insets: getSafeAreaInsets(),
-});
+export const safeAreaStore = createManagedStore<SafeAreaState>(
+  {
+    insets: getSafeAreaInsets(),
+  },
+  {
+    start(store) {
+      if (!nativeCoreModule) {
+        return;
+      }
 
-let listenerCount = 0;
-let nativeSubscription: EventSubscription | null = null;
+      const subscription = nativeCoreModule.addListener(
+        "onSafeAreaInsetsChange",
+        (event: SafeAreaInsetsChangeEvent) => {
+          const nextInsets = event?.insets ?? getSafeAreaInsets();
+          store.setState((state) => {
+            if (areInsetsEqual(state.insets, nextInsets)) {
+              return state;
+            }
+            return { ...state, insets: nextInsets };
+          });
+        },
+      );
 
-function ensureNativeSubscription() {
-  if (!nativeCoreModule || nativeSubscription) {
-    return;
-  }
-
-  nativeSubscription = nativeCoreModule.addListener(
-    "onSafeAreaInsetsChange",
-    (event: SafeAreaInsetsChangeEvent) => {
-      const nextInsets = event?.insets ?? getSafeAreaInsets();
-      baseSafeAreaStore.setState((state) => {
-        if (areInsetsEqual(state.insets, nextInsets)) {
+      const initialInsets = getSafeAreaInsets();
+      store.setState((state) => {
+        if (areInsetsEqual(state.insets, initialInsets)) {
           return state;
         }
-        return { ...state, insets: nextInsets };
+        return { ...state, insets: initialInsets };
       });
+
+      return () => subscription.remove();
     },
-  );
-
-  const initialInsets = getSafeAreaInsets();
-  baseSafeAreaStore.setState((state) => {
-    if (areInsetsEqual(state.insets, initialInsets)) {
-      return state;
-    }
-    return { ...state, insets: initialInsets };
-  });
-}
-
-function releaseNativeSubscription() {
-  if (listenerCount > 0) {
-    return;
-  }
-
-  nativeSubscription?.remove();
-  nativeSubscription = null;
-}
-
-export const safeAreaStore = {
-  getState: baseSafeAreaStore.getState,
-  setState: baseSafeAreaStore.setState,
-  subscribe(listener: () => void) {
-    listenerCount += 1;
-    ensureNativeSubscription();
-    const unsubscribe = baseSafeAreaStore.subscribe(listener);
-    return () => {
-      unsubscribe();
-      listenerCount = Math.max(0, listenerCount - 1);
-      releaseNativeSubscription();
-    };
   },
+);
+
+export const useSafeAreaInsets = (): EdgeInsets => {
+  return useStoreSelector(safeAreaStore, (state) => state.insets);
 };

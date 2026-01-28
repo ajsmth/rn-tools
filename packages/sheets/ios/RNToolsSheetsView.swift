@@ -263,10 +263,11 @@ final class SheetViewController: UIViewController,
 
         return points.enumerated().map { idx, raw in
             .custom(identifier: .init("\(detentTag)_\(idx)")) { _ in
-                raw
+                return raw
             }
         }
     }
+
 }
 
 extension UIColor {

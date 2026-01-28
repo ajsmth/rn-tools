@@ -10,7 +10,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { requireNativeViewManager } from "expo-modules-core";
-import { safeAreaStore, useStoreSelector } from "@rn-tools/core";
+import { useSafeAreaInsets } from "@rn-tools/core";
 
 type SheetState = "DRAGGING" | "OPEN" | "SETTLING" | "HIDDEN";
 
@@ -84,7 +84,7 @@ export function BottomSheet(props: BottomSheetProps) {
   } = props;
 
   const { height: windowHeight } = useWindowDimensions();
-  const insets = useStoreSelector(safeAreaStore, (state) => state.insets);
+  const insets = useSafeAreaInsets();
   const maxSheetHeight = React.useMemo(
     () => Math.max(0, windowHeight - insets.top - insets.bottom),
     [windowHeight, insets.top, insets.bottom],
@@ -180,6 +180,8 @@ export function BottomSheet(props: BottomSheetProps) {
     () => (isAutosized ? undefined : StyleSheet.absoluteFill),
     [isAutosized],
   );
+
+  console.log({ computedSnapPoints, isAutosized, isOpen, computedIsOpen });
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={pointerEvents}>

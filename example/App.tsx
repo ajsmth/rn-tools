@@ -14,8 +14,10 @@ import {
   ScrollView,
   TextInput,
   FlatList,
+  KeyboardAvoidingView,
 } from "react-native";
 import { NavigationExamples } from "./src/navigation-examples";
+import { useKeyboardHeight } from "@rn-tools/core";
 // navigation.setDebugModeEnabled(true);
 
 export default function App() {
@@ -55,26 +57,28 @@ const data = Array.from({ length: 50 }).map((i, index) => `Item ${index}`);
 
 function MyContent({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
   const handleClose = React.useCallback(() => {
-    console.log("HI");
     setIsOpen(false);
   }, []);
+
+  const keyboardHeight = useKeyboardHeight();
 
   return (
     <View className="bg-white absolute inset-0 border rounded-lg px-4">
       <View className="py-4 border">
         <Text style={{ fontWeight: "bold", fontSize: 24 }}>
-          Native bottom sheets!
+          Native bottom sheets! Wahoo
         </Text>
         <Button onPress={() => handleClose()} title="Close" />
       </View>
 
       <FlatList
         nestedScrollEnabled
-        className="border flex-1"
+        className="flex-1"
         renderItem={({ item }) => (
           <TextInput placeholder={`Text input ${item}`} />
         )}
         data={data}
+        contentContainerStyle={{ paddingBottom: keyboardHeight }}
       />
     </View>
   );

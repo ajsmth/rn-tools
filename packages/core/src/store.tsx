@@ -10,6 +10,8 @@ export type Store<T> = {
   subscribe: (listener: () => void) => () => void;
 };
 
+export type StoreApi<T> = Store<T>;
+
 export function createStore<T>(initialState: T): Store<T> {
   let state = initialState;
   const initial = initialState;
@@ -38,6 +40,38 @@ export function createStore<T>(initialState: T): Store<T> {
   };
 
   return { getState, getInitialState, setState, subscribe };
+}
+
+type ManagedStoreOptions<T> = {
+  start: (store: StoreApi<T>) => void | (() => void);
+};
+
+export function createManagedStore<T>(
+  initialState: T,
+  options: ManagedStoreOptions<T>,
+): StoreApi<T> {
+  const baseStore = createStore(initialState);
+  let listenerCount = 0;
+  let stop: (() => void) | null = null;
+
+  const subscribe = (listener: () => void) => {
+    listenerCount += 1;
+    if (listenerCount === 1) {
+      stop = options.start(baseStore) || null;
+    }
+
+    const unsubscribe = baseStore.subscribe(listener);
+    return () => {
+      unsubscribe();
+      listenerCount = Math.max(0, listenerCount - 1);
+      if (listenerCount === 0) {
+        stop?.();
+        stop = null;
+      }
+    };
+  };
+
+  return { ...baseStore, subscribe };
 }
 
 export function useStoreSelector<T, S>(
