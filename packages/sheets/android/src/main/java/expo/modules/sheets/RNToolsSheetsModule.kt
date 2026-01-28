@@ -45,7 +45,7 @@ class RNToolsSheetsModule : Module() {
         view.props.canDismiss = canDismiss
       }
 
-      Prop("snapPoints") { view: RNToolsSheetsView, snapPoints: List<Int> ->
+      Prop("snapPoints") { view: RNToolsSheetsView, snapPoints: List<Double> ->
         view.props.snapPoints = snapPoints.map { view.convertToPx(it) }
       }
 

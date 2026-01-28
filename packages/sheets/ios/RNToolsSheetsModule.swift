@@ -18,8 +18,8 @@ public class RNToolsSheetsModule: Module {
         View(RNToolsSheetsView.self) {
             Events("onDismiss", "onStateChange", "onDismissPrevented")
 
-            Prop("snapPoints") { (view, snapPoints: [Int]) in
-                view.updateSnapPoints(snapPoints.map { CGFloat($0) })
+            Prop("snapPoints") { (view, snapPoints: [CGFloat]) in
+                view.updateSnapPoints(snapPoints)
             }
 
             Prop("isOpen") { (view, isOpen: Bool) in

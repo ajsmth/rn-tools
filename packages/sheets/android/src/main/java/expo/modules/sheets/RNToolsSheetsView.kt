@@ -174,7 +174,7 @@ class RNToolsSheetsView(context: Context, appContext: AppContext) : ExpoView(con
     }
   }
 
-  fun convertToPx(height: Int): Int {
+  fun convertToPx(height: Double): Int {
     val density = context.resources.displayMetrics.density
     return (height * density).toInt()
   }
