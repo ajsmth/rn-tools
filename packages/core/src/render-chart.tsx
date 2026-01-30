@@ -82,12 +82,51 @@ function createRenderChart(nodes?: Map<string, RenderChartNode>): RenderChart {
   return { nodes: nodes ?? new Map() };
 }
 
+const pendingNodesByStore = new WeakMap<
+  Store<RenderChart>,
+  Map<string, RenderChartNode>
+>();
+
+function getPendingNodes(store: Store<RenderChart>) {
+  let pending = pendingNodesByStore.get(store);
+  if (!pending) {
+    pending = new Map();
+    pendingNodesByStore.set(store, pending);
+  }
+  return pending;
+}
+
+function getMergedNodes(
+  store: Store<RenderChart>,
+  state: RenderChart = store.getState(),
+) {
+  const pending = pendingNodesByStore.get(store);
+  if (!pending || pending.size === 0) {
+    return state.nodes;
+  }
+  const merged = new Map(state.nodes);
+  pending.forEach((node, id) => {
+    merged.set(id, node);
+  });
+  return merged;
+}
+
 function getRenderChartNode(
   chart: RenderChart,
   instanceId: string,
 ): RenderChartNodeView | null {
   const node = chart.nodes.get(instanceId);
   return node ? buildRenderChartNodeView(chart, node) : null;
+}
+
+function getRenderChartNodeWithPending(
+  store: Store<RenderChart>,
+  state: RenderChart,
+  instanceId: string,
+) {
+  const nodes = getMergedNodes(store, state);
+  const node = nodes.get(instanceId);
+  return node ? buildRenderChartNodeView({ nodes }, node) : null;
 }
 
 function buildRenderChartNodeView(
@@ -197,57 +236,83 @@ function registerRenderChartNode(
   options: RenderChartOptions,
   parentId: string | null,
 ) {
-  store.setState((chart) => {
-    const existing = chart.nodes.get(instanceId);
-    const nextNode: RenderChartNode = {
-      instanceId,
-      id: options.id,
-      type: options.type,
-      parentId,
-      activeSelf: options.active ?? true,
-      active: existing?.active ?? true,
-      depth: existing?.depth ?? 1,
-      children: existing ? existing.children : [],
-    };
+  const pending = getPendingNodes(store);
+  const nodes = new Map(getMergedNodes(store));
+  const existing = nodes.get(instanceId);
+  const nextNode: RenderChartNode = {
+    instanceId,
+    id: options.id,
+    type: options.type,
+    parentId,
+    activeSelf: options.active ?? true,
+    active: existing?.active ?? true,
+    depth: existing?.depth ?? 1,
+    children: existing ? existing.children : [],
+  };
 
-    const shouldUpdateParent = existing?.parentId !== parentId;
-    const isSameNode = existing && areNodesEqual(existing, nextNode);
-    if (isSameNode && !shouldUpdateParent) {
-      return chart;
+  const shouldUpdateParent = existing?.parentId !== parentId;
+  const isSameNode = existing && areNodesEqual(existing, nextNode);
+  if (isSameNode && !shouldUpdateParent) {
+    return;
+  }
+
+  const updatedParents: string[] = [];
+  if (existing && existing.parentId && existing.parentId !== parentId) {
+    const prevParent = nodes.get(existing.parentId);
+    if (prevParent) {
+      const nextChildren = prevParent.children.filter(
+        (childId) => childId !== instanceId,
+      );
+      nodes.set(existing.parentId, { ...prevParent, children: nextChildren });
+      updatedParents.push(existing.parentId);
     }
+  }
 
-    const nodes = new Map(chart.nodes);
-    if (existing && existing.parentId && existing.parentId !== parentId) {
-      const prevParent = nodes.get(existing.parentId);
-      if (prevParent) {
-        const nextChildren = prevParent.children.filter(
-          (childId) => childId !== instanceId,
-        );
-        nodes.set(existing.parentId, { ...prevParent, children: nextChildren });
-      }
+  if (parentId) {
+    const parent = nodes.get(parentId);
+    if (parent && !parent.children.includes(instanceId)) {
+      nodes.set(parentId, {
+        ...parent,
+        children: [...parent.children, instanceId],
+      });
+      updatedParents.push(parentId);
     }
+  }
 
-    if (parentId) {
-      const parent = nodes.get(parentId);
-      if (parent && !parent.children.includes(instanceId)) {
-        nodes.set(parentId, {
-          ...parent,
-          children: [...parent.children, instanceId],
-        });
-      }
+  nodes.set(instanceId, nextNode);
+  const affectedIds = collectSubtreeIds(nodes, instanceId);
+  const nextNodes = recomputeDerivedForIds(nodes, affectedIds);
+  affectedIds.forEach((id) => {
+    const node = nextNodes.get(id);
+    if (node) {
+      pending.set(id, node);
     }
-
-    nodes.set(instanceId, nextNode);
-    const affectedIds = collectSubtreeIds(nodes, instanceId);
-    const nextNodes = recomputeDerivedForIds(nodes, affectedIds);
-    return createRenderChart(nextNodes);
   });
+  updatedParents.forEach((id) => {
+    const node = nextNodes.get(id);
+    if (node) {
+      pending.set(id, node);
+    }
+  });
+}
+
+function flushPendingRenderChartNodes(store: Store<RenderChart>) {
+  const pending = pendingNodesByStore.get(store);
+  if (!pending || pending.size === 0) {
+    return;
+  }
+  const mergedNodes = getMergedNodes(store);
+  pending.clear();
+  store.setState(() => createRenderChart(new Map(mergedNodes)));
 }
 
 function unregisterRenderChartNode(
   store: Store<RenderChart>,
   instanceId: string,
 ) {
+  const pending = pendingNodesByStore.get(store);
+  pending?.delete(instanceId);
+
   store.setState((chart) => {
     if (!chart.nodes.has(instanceId)) {
       return chart;
@@ -315,8 +380,10 @@ export function RenderChartNode(
     throw new Error("RenderChartRoot is missing from the component tree.");
   }
 
+  registerRenderChartNode(store, instanceIdRef.current, props, parentId);
+
   React.useLayoutEffect(() => {
-    registerRenderChartNode(store, instanceIdRef.current, props, parentId);
+    flushPendingRenderChartNodes(store);
   }, [store, props.type, props.id, props.active, parentId]);
 
   React.useEffect(
@@ -326,7 +393,7 @@ export function RenderChartNode(
 
   const chart = useStore(
     store,
-    (state) => getRenderChartNode(state, instanceIdRef.current),
+    (state) => getRenderChartNodeWithPending(store, state, instanceIdRef.current),
     areRenderChartsEqual,
   );
 
@@ -357,7 +424,7 @@ export function useRenderChart() {
   }
   const chart = useStore(
     store,
-    (state) => getRenderChartNode(state, instanceId),
+    (state) => getRenderChartNodeWithPending(store, state, instanceId),
     areRenderChartsEqual,
   );
   if (!chart) {
@@ -387,7 +454,7 @@ export function useRenderChartSelector<S>(
   return useStore(
     store,
     (state) => {
-      const chart = getRenderChartNode(state, instanceId);
+      const chart = getRenderChartNodeWithPending(store, state, instanceId);
       if (!chart) {
         throw new Error("RenderChartNode is missing from the component tree.");
       }

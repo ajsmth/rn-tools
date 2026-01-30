@@ -13,45 +13,36 @@ function captureChart(ref: React.MutableRefObject<unknown>) {
   return null;
 }
 
-async function renderWithFlush(element: React.ReactElement) {
-  let root: ReturnType<typeof create>;
-  await act(async () => {
-    root = create(element);
-  });
-  await act(async () => {
-    await Promise.resolve();
-  });
-  return root!;
-}
-
-it("computes depth scoped by type", async () => {
+it("computes depth scoped by type", () => {
   const stackRef = { current: null as unknown };
   const nestedStackRef = { current: null as unknown };
   const screenRef = { current: null as unknown };
 
-  await renderWithFlush(
-    <RenderChartRoot>
-      <RenderChartNode type="stack">
-        <Capture refObject={stackRef} />
+  act(() => {
+    create(
+      <RenderChartRoot>
         <RenderChartNode type="stack">
-          <Capture refObject={nestedStackRef} />
-          <RenderChartNode type="screen">
-            <Capture refObject={screenRef} />
+          <Capture refObject={stackRef} />
+          <RenderChartNode type="stack">
+            <Capture refObject={nestedStackRef} />
+            <RenderChartNode type="screen">
+              <Capture refObject={screenRef} />
+            </RenderChartNode>
           </RenderChartNode>
         </RenderChartNode>
-      </RenderChartNode>
-    </RenderChartRoot>,
-  );
+      </RenderChartRoot>,
+    );
+  });
 
   expect((stackRef.current as any).depth).toBe(1);
   expect((nestedStackRef.current as any).depth).toBe(2);
   expect((screenRef.current as any).depth).toBe(1);
 });
 
-it("propagates active state through parents", async () => {
+it("propagates active state through parents", () => {
   const screenRef = { current: null as unknown };
 
-  const tree = await renderWithFlush(
+  const tree = create(
     <RenderChartRoot>
       <RenderChartNode type="tabs" active>
         <RenderChartNode type="stack" active>
@@ -65,7 +56,7 @@ it("propagates active state through parents", async () => {
 
   expect((screenRef.current as any).active).toBe(true);
 
-  await act(async () => {
+  act(() => {
     tree.update(
       <RenderChartRoot>
         <RenderChartNode type="tabs" active={false}>
@@ -78,27 +69,26 @@ it("propagates active state through parents", async () => {
       </RenderChartRoot>,
     );
   });
-  await act(async () => {
-    await Promise.resolve();
-  });
 
   expect((screenRef.current as any).active).toBe(false);
 });
 
-it("tracks children by instance id", async () => {
+it("tracks children by instance id", () => {
   const stackRef = { current: null as unknown };
   const screenRef = { current: null as unknown };
 
-  await renderWithFlush(
-    <RenderChartRoot>
-      <RenderChartNode type="stack">
-        <Capture refObject={stackRef} />
-        <RenderChartNode type="screen">
-          <Capture refObject={screenRef} />
+  act(() => {
+    create(
+      <RenderChartRoot>
+        <RenderChartNode type="stack">
+          <Capture refObject={stackRef} />
+          <RenderChartNode type="screen">
+            <Capture refObject={screenRef} />
+          </RenderChartNode>
         </RenderChartNode>
-      </RenderChartNode>
-    </RenderChartRoot>,
-  );
+      </RenderChartRoot>,
+    );
+  });
 
   const stack = stackRef.current as any;
   const screen = screenRef.current as any;
