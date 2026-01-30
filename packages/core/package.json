@@ -7,7 +7,7 @@
     "build": "expo-module build",
     "clean": "expo-module clean",
     "lint": "expo-module lint",
-    "test": "expo-module test",
+    "test": "vitest",
     "prepare": "expo-module prepare",
     "prepublishOnly": "expo-module prepublishOnly",
     "expo-module": "expo-module"
@@ -26,7 +26,10 @@
   "license": "MIT",
   "homepage": "https://github.com/ajsmth/rn-tools#readme",
   "devDependencies": {
-    "@types/react": "18.3.12"
+    "@types/react": "18.3.12",
+    "@types/react-test-renderer": "^18.0.0",
+    "react-test-renderer": "^18.2.0",
+    "vitest": "^1.6.0"
   },
   "dependencies": {
     "use-sync-external-store": "^1.2.2"
