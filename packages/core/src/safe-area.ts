@@ -1,6 +1,5 @@
 import { requireNativeModule } from "expo-modules-core";
-import type { EventSubscription } from "expo-modules-core";
-import { createManagedStore, useStoreSelector } from "./store";
+import { Store, useStore } from "./store";
 
 export type EdgeInsets = {
   top: number;
@@ -21,7 +20,7 @@ type NativeCoreModule = {
   addListener: (
     eventName: "onSafeAreaInsetsChange",
     listener: (event: SafeAreaInsetsChangeEvent) => void,
-  ) => EventSubscription;
+  ) => { remove: () => void };
   getSafeAreaInsets?: () => EdgeInsets;
 };
 
@@ -51,42 +50,34 @@ function areInsetsEqual(left: EdgeInsets, right: EdgeInsets) {
   );
 }
 
-export const safeAreaStore = createManagedStore<SafeAreaState>(
-  {
-    insets: getSafeAreaInsets(),
-  },
-  {
-    start(store) {
-      if (!nativeCoreModule) {
-        return;
+export const safeAreaStore = new Store<SafeAreaState>({
+  insets: getSafeAreaInsets(),
+});
+
+nativeCoreModule.addListener(
+  "onSafeAreaInsetsChange",
+  (event: SafeAreaInsetsChangeEvent) => {
+    const nextInsets = event?.insets ?? getSafeAreaInsets();
+    safeAreaStore.setState((state) => {
+      if (areInsetsEqual(state.insets, nextInsets)) {
+        return state;
       }
-
-      const subscription = nativeCoreModule.addListener(
-        "onSafeAreaInsetsChange",
-        (event: SafeAreaInsetsChangeEvent) => {
-          const nextInsets = event?.insets ?? getSafeAreaInsets();
-          store.setState((state) => {
-            if (areInsetsEqual(state.insets, nextInsets)) {
-              return state;
-            }
-            return { ...state, insets: nextInsets };
-          });
-        },
-      );
-
-      const initialInsets = getSafeAreaInsets();
-      store.setState((state) => {
-        if (areInsetsEqual(state.insets, initialInsets)) {
-          return state;
-        }
-        return { ...state, insets: initialInsets };
-      });
-
-      return () => subscription.remove();
-    },
+      return { ...state, insets: nextInsets };
+    });
   },
 );
 
+const initialInsets = getSafeAreaInsets();
+
+safeAreaStore.setState((state) => {
+  if (areInsetsEqual(state.insets, initialInsets)) {
+    return state;
+  }
+  return { ...state, insets: initialInsets };
+});
+
+const insetsSelector = (state: SafeAreaState) => state.insets;
+
 export const useSafeAreaInsets = (): EdgeInsets => {
-  return useStoreSelector(safeAreaStore, (state) => state.insets);
+  return useStore(safeAreaStore, insetsSelector);
 };

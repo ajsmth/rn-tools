@@ -3,80 +3,44 @@ import useSyncExternalStoreExports from "use-sync-external-store/shim/with-selec
 
 const { useSyncExternalStoreWithSelector } = useSyncExternalStoreExports;
 
-export type Store<T> = {
-  getState: () => T;
-  getInitialState: () => T;
-  setState: (nextState: T | ((prevState: T) => T)) => void;
-  subscribe: (listener: () => void) => () => void;
-};
+export class Store<T> {
+  private readonly listeners = new Set<() => void>();
+  private state: T;
+  private readonly initialState: T;
 
-export type StoreApi<T> = Store<T>;
+  constructor(initialState: T) {
+    this.state = initialState;
+    this.initialState = initialState;
+  }
 
-export function createStore<T>(initialState: T): Store<T> {
-  let state = initialState;
-  const initial = initialState;
-  const listeners = new Set<() => void>();
+  getState = () => this.state;
+  getInitialState = () => this.initialState;
 
-  const getState = () => state;
-  const getInitialState = () => initial;
-
-  const setState = (nextState: T | ((prevState: T) => T)) => {
+  setState = (nextState: T | ((prevState: T) => T)) => {
     const resolved =
       typeof nextState === "function"
-        ? (nextState as (prevState: T) => T)(state)
+        ? (nextState as (prevState: T) => T)(this.state)
         : nextState;
 
-    if (Object.is(resolved, state)) {
+    if (Object.is(resolved, this.state)) {
       return;
     }
 
-    state = resolved;
-    listeners.forEach((listener) => listener());
+    this.state = resolved;
+    this.listeners.forEach((listener) => listener());
   };
 
-  const subscribe = (listener: () => void) => {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
+  subscribe = (listener: () => void) => {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
   };
-
-  return { getState, getInitialState, setState, subscribe };
 }
 
-type ManagedStoreOptions<T> = {
-  start: (store: StoreApi<T>) => void | (() => void);
-};
+export type StoreApi<T> = Store<T>;
 
-export function createManagedStore<T>(
-  initialState: T,
-  options: ManagedStoreOptions<T>,
-): StoreApi<T> {
-  const baseStore = createStore(initialState);
-  let listenerCount = 0;
-  let stop: (() => void) | null = null;
-
-  const subscribe = (listener: () => void) => {
-    listenerCount += 1;
-    if (listenerCount === 1) {
-      stop = options.start(baseStore) || null;
-    }
-
-    const unsubscribe = baseStore.subscribe(listener);
-    return () => {
-      unsubscribe();
-      listenerCount = Math.max(0, listenerCount - 1);
-      if (listenerCount === 0) {
-        stop?.();
-        stop = null;
-      }
-    };
-  };
-
-  return { ...baseStore, subscribe };
-}
-
-export function useStoreSelector<T, S>(
+export function useStore<T, S = T>(
   store: Store<T>,
-  selector: (state: T) => S,
+  selector: (state: T) => S = (state) => state as S,
   isEqual: (left: S, right: S) => boolean = Object.is,
 ): S {
   const slice = useSyncExternalStoreWithSelector(
@@ -90,31 +54,26 @@ export function useStoreSelector<T, S>(
   return slice;
 }
 
-export function createStoreContext<T>() {
-  const StoreContext = React.createContext<Store<T> | null>(null);
+export const StoreContext = React.createContext<Store<unknown> | null>(null);
 
-  function StoreProvider(props: { store: Store<T>; children: React.ReactNode }) {
-    return (
-      <StoreContext.Provider value={props.store}>
-        {props.children}
-      </StoreContext.Provider>
-    );
+export function StoreProvider<T>(props: {
+  store: Store<T>;
+  children: React.ReactNode;
+}) {
+  return (
+    <StoreContext.Provider value={props.store as Store<unknown>}>
+      {props.children}
+    </StoreContext.Provider>
+  );
+}
+
+export function useStoreContext<T, S = T>(
+  selector?: (state: T) => S,
+  isEqual?: (left: S, right: S) => boolean,
+) {
+  const store = React.useContext(StoreContext) as Store<T> | null;
+  if (!store) {
+    throw new Error("StoreProvider is missing from the component tree.");
   }
-
-  function useStore() {
-    const store = React.useContext(StoreContext);
-    if (!store) {
-      throw new Error("StoreProvider is missing from the component tree.");
-    }
-    return store;
-  }
-
-  function useStoreSelectorFromContext<S>(
-    selector: (state: T) => S,
-    isEqual?: (left: S, right: S) => boolean,
-  ) {
-    return useStoreSelector(useStore(), selector, isEqual);
-  }
-
-  return { StoreProvider, useStore, useStoreSelector: useStoreSelectorFromContext };
+  return useStore(store, selector, isEqual);
 }

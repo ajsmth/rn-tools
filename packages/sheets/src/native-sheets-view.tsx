@@ -181,8 +181,6 @@ export function BottomSheet(props: BottomSheetProps) {
     [isAutosized],
   );
 
-  console.log({ computedSnapPoints, isAutosized, isOpen, computedIsOpen });
-
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={pointerEvents}>
       <NativeSheetsView

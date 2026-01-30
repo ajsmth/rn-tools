@@ -1,5 +1,5 @@
 import { Keyboard, KeyboardEvent } from "react-native";
-import { createManagedStore, useStoreSelector } from "./store";
+import { Store, useStore } from "./store";
 
 export type KeyboardState = {
   height: number;
@@ -11,45 +11,33 @@ export function getKeyboardHeight(): number {
   return fallbackHeight;
 }
 
-export const keyboardHeightStore = createManagedStore<KeyboardState>(
-  {
-    height: getKeyboardHeight(),
-  },
-  {
-    start(store) {
-      const updateHeight = (height: number) => {
-        store.setState((state) => {
-          if (state.height === height) {
-            return state;
-          }
-          return { ...state, height };
-        });
-      };
+export const keyboardHeightStore = new Store<KeyboardState>({
+  height: getKeyboardHeight(),
+});
 
-      const handleShow = (event: KeyboardEvent) => {
-        const nextHeight = event.endCoordinates?.height ?? 0;
-        updateHeight(nextHeight);
-      };
+const updateHeight = (height: number) => {
+  keyboardHeightStore.setState((state) => {
+    if (state.height === height) {
+      return state;
+    }
+    return { ...state, height };
+  });
+};
 
-      const handleHide = () => {
-        updateHeight(0);
-      };
+const handleShow = (event: KeyboardEvent) => {
+  const nextHeight = event.endCoordinates?.height ?? 0;
+  updateHeight(nextHeight);
+};
 
-      const willShow = Keyboard.addListener("keyboardWillShow", handleShow);
-      const willHide = Keyboard.addListener("keyboardWillHide", handleHide);
-      const didShow = Keyboard.addListener("keyboardDidShow", handleShow);
-      const didHide = Keyboard.addListener("keyboardDidHide", handleHide);
+const handleHide = () => {
+  updateHeight(0);
+};
 
-      return () => {
-        willShow.remove();
-        willHide.remove();
-        didShow.remove();
-        didHide.remove();
-      };
-    },
-  },
-);
+Keyboard.addListener("keyboardWillShow", handleShow);
+Keyboard.addListener("keyboardWillHide", handleHide);
+Keyboard.addListener("keyboardDidShow", handleShow);
+Keyboard.addListener("keyboardDidHide", handleHide);
 
 export const useKeyboardHeight = (): number => {
-  return useStoreSelector(keyboardHeightStore, (state) => state.height);
+  return useStore(keyboardHeightStore, (state) => state.height);
 };
