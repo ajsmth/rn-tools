@@ -6,7 +6,7 @@ import { Store, useStore } from "./store";
  * Nodes register themselves in that store keyed by instance id.
  * Nodes know their parent (instance id), type, and active flag.
  *
- * Depth and active are derived:
+ * Depth and active are derived on demand:
  * - depth counts how many ancestors share the same type (stack within stack, etc)
  * - active is shared across types and becomes false if any parent is inactive
  *
@@ -36,9 +36,7 @@ type RenderChartNode = {
   id?: string;
   type: RenderChartType;
   parentId: string | null;
-  activeSelf: boolean;
   active: boolean;
-  depth: number;
   children: string[];
 };
 
@@ -55,20 +53,18 @@ export function createRenderChartId(type: RenderChartType) {
   return nextRenderChartIdForType(type);
 }
 
-export type RenderChartNodeView = {
+export type RenderChart = {
+  nodes: Map<string, RenderChartNode>;
+};
+
+export type RenderChartDebugNode = {
   instanceId: string;
   id?: string;
   type: RenderChartType;
-  depth: number;
-  active: boolean;
   parentId: string | null;
-  children: string[];
-  getParent: () => RenderChartNodeView | null;
-  getChildren: () => RenderChartNodeView[];
-};
-
-export type RenderChart = {
-  nodes: Map<string, RenderChartNode>;
+  active: boolean;
+  depth: number;
+  children: RenderChartDebugNode[];
 };
 
 export const RENDER_CHART_ROOT_ID = "render-chart-root";
@@ -78,9 +74,7 @@ function createRootNode(): RenderChartNode {
     instanceId: RENDER_CHART_ROOT_ID,
     type: "root",
     parentId: null,
-    activeSelf: true,
     active: true,
-    depth: 1,
     children: [],
   };
 }
@@ -93,37 +87,129 @@ function createRenderChart(nodes?: Map<string, RenderChartNode>): RenderChart {
   return { nodes: nextNodes };
 }
 
-function getRenderChartNode(
+export function getRenderChartNode(
   chart: RenderChart,
   instanceId: string,
-): RenderChartNodeView | null {
-  const node = chart.nodes.get(instanceId);
-  return node ? buildRenderChartNodeView(chart, node) : null;
+): RenderChartNode | null {
+  return chart.nodes.get(instanceId) ?? null;
 }
 
-function buildRenderChartNodeView(
+export function getRenderChartNodeParent(
   chart: RenderChart,
-  node: RenderChartNode,
-): RenderChartNodeView {
-  return {
-    instanceId: node.instanceId,
-    id: node.id,
-    type: node.type,
-    parentId: node.parentId,
-    children: node.children,
-    depth: node.depth,
-    active: node.active,
-    getParent: () => {
-      if (!node.parentId) {
-        return null;
-      }
-      return getRenderChartNode(chart, node.parentId);
-    },
-    getChildren: () =>
-      node.children
-        .map((childId) => getRenderChartNode(chart, childId))
-        .filter((child): child is RenderChartNodeView => Boolean(child)),
+  instanceId: string,
+): RenderChartNode | null {
+  const node = chart.nodes.get(instanceId);
+  if (!node?.parentId) {
+    return null;
+  }
+  return chart.nodes.get(node.parentId) ?? null;
+}
+
+export function getRenderChartNodeChildren(
+  chart: RenderChart,
+  instanceId: string,
+): RenderChartNode[] {
+  const node = chart.nodes.get(instanceId);
+  if (!node) {
+    return [];
+  }
+  return node.children
+    .map((childId) => chart.nodes.get(childId))
+    .filter((child): child is RenderChartNode => Boolean(child));
+}
+
+export function getRenderChartNodeDepth(
+  chart: RenderChart,
+  instanceId: string,
+  type?: RenderChartType,
+) {
+  const node = chart.nodes.get(instanceId);
+  if (!node) {
+    return 0;
+  }
+  const targetType = type ?? node.type;
+  let depth = 0;
+  let current: RenderChartNode | undefined = node;
+  while (current) {
+    if (current.type === targetType) {
+      depth += 1;
+    }
+    current = current.parentId ? chart.nodes.get(current.parentId) : undefined;
+  }
+  return depth;
+}
+
+export function getRenderChartNodeActive(
+  chart: RenderChart,
+  instanceId: string,
+) {
+  const node = chart.nodes.get(instanceId);
+  if (!node) {
+    return false;
+  }
+  let active = node.active;
+  let currentId = node.parentId;
+  while (currentId) {
+    const current = chart.nodes.get(currentId);
+    if (!current) {
+      break;
+    }
+    active = active && current.active;
+    currentId = current.parentId;
+  }
+  return active;
+}
+
+export function buildRenderChartDebugTree(
+  chart: RenderChart,
+): RenderChartDebugNode | null {
+  const root = chart.nodes.get(RENDER_CHART_ROOT_ID);
+  if (!root) {
+    return null;
+  }
+
+  const visited = new Set<string>();
+
+  const buildNode = (node: RenderChartNode): RenderChartDebugNode => {
+    if (visited.has(node.instanceId)) {
+      return {
+        instanceId: node.instanceId,
+        id: node.id,
+        type: node.type,
+        parentId: node.parentId,
+        active: getRenderChartNodeActive(chart, node.instanceId),
+        depth: getRenderChartNodeDepth(chart, node.instanceId),
+        children: [],
+      };
+    }
+    visited.add(node.instanceId);
+
+    return {
+      instanceId: node.instanceId,
+      id: node.id,
+      type: node.type,
+      parentId: node.parentId,
+      active: getRenderChartNodeActive(chart, node.instanceId),
+      depth: getRenderChartNodeDepth(chart, node.instanceId),
+      children: node.children
+        .map((childId) => chart.nodes.get(childId))
+        .filter((child): child is RenderChartNode => Boolean(child))
+        .map((child) => buildNode(child)),
+    };
   };
+
+  return buildNode(root);
+}
+
+export function logRenderChartDebugTree(
+  chart: RenderChart,
+  label = "RenderChartDebugTree",
+) {
+  const tree = buildRenderChartDebugTree(chart);
+  if (!tree) {
+    return;
+  }
+  console.log(label, tree);
 }
 
 export const RenderChartStoreContext =
@@ -131,85 +217,7 @@ export const RenderChartStoreContext =
 
 export const RenderChartNodeInstanceIdContext = React.createContext<
   string | null
->(
-  null,
-);
-
-export const RenderChartNodeViewContext =
-  React.createContext<RenderChartNodeView | null>(null);
-
-function countDepthFromParent(
-  parent: RenderChartNodeView | null,
-  type: RenderChartType,
-) {
-  let depth = 0;
-  let current = parent;
-  while (current) {
-    if (current.type === type) {
-      depth += 1;
-    }
-    current = current.getParent();
-  }
-  return depth;
-}
-
-function buildOptimisticNodeView(
-  input: {
-    instanceId: string;
-    id?: string;
-    type: RenderChartType;
-    activeSelf: boolean;
-    parentId: string | null;
-  },
-  parentView: RenderChartNodeView | null,
-): RenderChartNodeView {
-  const depth = countDepthFromParent(parentView, input.type) + 1;
-  const active = input.activeSelf && (parentView?.active ?? true);
-
-  return {
-    instanceId: input.instanceId,
-    id: input.id,
-    type: input.type,
-    parentId: input.parentId,
-    children: [],
-    depth,
-    active,
-    getParent: () => parentView,
-    getChildren: () => [],
-  };
-}
-
-function countDepthForType(
-  nodes: Map<string, RenderChartNode>,
-  node: RenderChartNode,
-) {
-  let depth = 0;
-  let current: RenderChartNode | undefined = node;
-  while (current) {
-    if (current.type === node.type) {
-      depth += 1;
-    }
-    current = current.parentId ? nodes.get(current.parentId) : undefined;
-  }
-  return depth;
-}
-
-function computeActive(
-  nodes: Map<string, RenderChartNode>,
-  node: RenderChartNode,
-) {
-  let active = node.activeSelf;
-  let currentId = node.parentId;
-  while (currentId) {
-    const current = nodes.get(currentId);
-    if (!current) {
-      break;
-    }
-    active = active && current.activeSelf;
-    currentId = current.parentId;
-  }
-  return active;
-}
+>(null);
 
 function registerRenderChartNode(
   store: Store<RenderChart>,
@@ -224,9 +232,7 @@ function registerRenderChartNode(
       id: options.id,
       type: options.type,
       parentId,
-      activeSelf: options.active ?? true,
-      active: existing?.active ?? true,
-      depth: existing?.depth ?? 1,
+      active: options.active ?? true,
       children: existing ? existing.children : [],
     };
 
@@ -240,16 +246,14 @@ function registerRenderChartNode(
     const previousParentId = existing?.parentId ?? null;
 
     nodes.set(instanceId, nextNode);
+    ensureChildrenForParent(nodes, instanceId);
     if (previousParentId && previousParentId !== parentId) {
-      refreshChildrenForParent(nodes, previousParentId);
+      removeChildFromParent(nodes, previousParentId, instanceId);
     }
     if (parentId) {
-      refreshChildrenForParent(nodes, parentId);
+      addChildToParent(nodes, parentId, instanceId);
     }
-    refreshChildrenForParent(nodes, instanceId);
-    const affectedIds = collectSubtreeIds(nodes, instanceId);
-    const nextNodes = recomputeDerivedForIds(nodes, affectedIds);
-    return createRenderChart(nextNodes);
+    return createRenderChart(nodes);
   });
 }
 
@@ -263,20 +267,17 @@ function unregisterRenderChartNode(
     }
     const nodes = new Map(chart.nodes);
     const node = nodes.get(instanceId);
-    const affectedRoots = node ? node.children.slice() : [];
-    nodes.delete(instanceId);
-    if (node?.parentId) {
-      const parent = nodes.get(node.parentId);
-      if (parent) {
-        nodes.set(node.parentId, {
-          ...parent,
-          children: parent.children.filter((childId) => childId !== instanceId),
-        });
-      }
+    if (!node) {
+      return chart;
     }
-    const affectedIds = collectSubtreeIdsFromRoots(nodes, affectedRoots);
-    const nextNodes = recomputeDerivedForIds(nodes, affectedIds);
-    return createRenderChart(nextNodes);
+    const subtreeIds = collectSubtreeIds(nodes, instanceId);
+    subtreeIds.forEach((id) => {
+      nodes.delete(id);
+    });
+    if (node.parentId) {
+      removeChildFromParent(nodes, node.parentId, instanceId);
+    }
+    return createRenderChart(nodes);
   });
 }
 
@@ -331,27 +332,11 @@ export function RenderChartNode(
 ) {
   const store = React.useContext(RenderChartStoreContext);
   const parentId = React.useContext(RenderChartNodeInstanceIdContext);
-  const parentView = React.useContext(RenderChartNodeViewContext);
   const instanceIdRef = React.useRef(nextRenderChartIdForType(props.type));
 
   if (!store) {
     throw new Error("RenderChartRoot is missing from the component tree.");
   }
-
-  const optimisticView = React.useMemo(
-    () =>
-      buildOptimisticNodeView(
-        {
-          instanceId: instanceIdRef.current,
-          type: props.type,
-          id: props.id,
-          activeSelf: props.active ?? true,
-          parentId,
-        },
-        parentView,
-      ),
-    [props.type, props.id, props.active, parentId, parentView],
-  );
 
   React.useLayoutEffect(() => {
     registerRenderChartNode(store, instanceIdRef.current, props, parentId);
@@ -362,30 +347,16 @@ export function RenderChartNode(
     [store],
   );
 
-  const chart = useStore(
-    store,
-    (state) => getRenderChartNode(state, instanceIdRef.current),
-    areRenderChartsEqual,
-  );
-
-  const resolvedChart =
-    chart && areRenderChartsEqual(chart, optimisticView)
-      ? optimisticView
-      : chart ?? optimisticView;
-
   return (
     <RenderChartNodeInstanceIdContext.Provider value={instanceIdRef.current}>
-      <RenderChartNodeViewContext.Provider value={resolvedChart}>
-        {props.children}
-      </RenderChartNodeViewContext.Provider>
+      {props.children}
     </RenderChartNodeInstanceIdContext.Provider>
   );
 }
 
-export function useRenderChartNode() {
+export function useRenderChartNode(): RenderChartNode | null {
   const store = React.useContext(RenderChartStoreContext);
   const instanceId = React.useContext(RenderChartNodeInstanceIdContext);
-  const fallback = React.useContext(RenderChartNodeViewContext);
   if (!store) {
     throw new Error("RenderChartRoot is missing from the component tree.");
   }
@@ -395,30 +366,25 @@ export function useRenderChartNode() {
   const node = useStore(
     store,
     (state) => getRenderChartNode(state, instanceId),
-    areRenderChartsEqual,
+    areRenderChartNodesEqual,
   );
-  if (node) {
-    return node;
-  }
-  if (fallback && fallback.instanceId === instanceId) {
-    return fallback;
-  }
-  throw new Error("RenderChartNode is missing from the component tree.");
+  return node;
 }
 
 /**
  * Select a slice of the current node's render chart.
  *
  * Usage:
- * const depth = useRenderChartSelector((chart) => chart.depth);
+ * const depth = useRenderChartSelector((chart, id) =>
+ *   getRenderChartNodeDepth(chart, id),
+ * );
  */
 export function useRenderChartSelector<S>(
-  selector: (chart: RenderChartNodeView) => S,
+  selector: (chart: RenderChart, instanceId: string) => S,
   isEqual?: (left: S, right: S) => boolean,
-) {
+): S | null {
   const store = React.useContext(RenderChartStoreContext);
   const instanceId = React.useContext(RenderChartNodeInstanceIdContext);
-  const fallback = React.useContext(RenderChartNodeViewContext);
   if (!store) {
     throw new Error("RenderChartRoot is missing from the component tree.");
   }
@@ -428,22 +394,18 @@ export function useRenderChartSelector<S>(
   return useStore(
     store,
     (state) => {
-      const chart = getRenderChartNode(state, instanceId);
-      if (chart) {
-        return selector(chart);
+      if (!state.nodes.has(instanceId)) {
+        return null;
       }
-      if (fallback && fallback.instanceId === instanceId) {
-        return selector(fallback);
-      }
-      throw new Error("RenderChartNode is missing from the component tree.");
+      return selector(state, instanceId);
     },
-    isEqual,
+    isEqual as typeof isEqual,
   );
 }
 
-function areRenderChartsEqual(
-  left: RenderChartNodeView | null,
-  right: RenderChartNodeView | null,
+function areRenderChartNodesEqual(
+  left: RenderChartNode | null,
+  right: RenderChartNode | null,
 ) {
   if (left === right) {
     return true;
@@ -451,15 +413,7 @@ function areRenderChartsEqual(
   if (!left || !right) {
     return false;
   }
-  return (
-    left.instanceId === right.instanceId &&
-    left.id === right.id &&
-    left.type === right.type &&
-    left.depth === right.depth &&
-    left.active === right.active &&
-    left.parentId === right.parentId &&
-    areStringArraysEqual(left.children, right.children)
-  );
+  return areNodesEqual(left, right);
 }
 
 function areNodesEqual(left: RenderChartNode, right: RenderChartNode) {
@@ -468,7 +422,7 @@ function areNodesEqual(left: RenderChartNode, right: RenderChartNode) {
     left.id === right.id &&
     left.type === right.type &&
     left.parentId === right.parentId &&
-    left.activeSelf === right.activeSelf &&
+    left.active === right.active &&
     areStringArraysEqual(left.children, right.children)
   );
 }
@@ -488,7 +442,43 @@ function areStringArraysEqual(left: string[], right: string[]) {
   return true;
 }
 
-function refreshChildrenForParent(
+function addChildToParent(
+  nodes: Map<string, RenderChartNode>,
+  parentId: string,
+  childId: string,
+) {
+  const parent = nodes.get(parentId);
+  if (!parent) {
+    return;
+  }
+  if (parent.children.includes(childId)) {
+    return;
+  }
+  nodes.set(parentId, {
+    ...parent,
+    children: [...parent.children, childId],
+  });
+}
+
+function removeChildFromParent(
+  nodes: Map<string, RenderChartNode>,
+  parentId: string,
+  childId: string,
+) {
+  const parent = nodes.get(parentId);
+  if (!parent) {
+    return;
+  }
+  if (!parent.children.includes(childId)) {
+    return;
+  }
+  nodes.set(parentId, {
+    ...parent,
+    children: parent.children.filter((id) => id !== childId),
+  });
+}
+
+function ensureChildrenForParent(
   nodes: Map<string, RenderChartNode>,
   parentId: string,
 ) {
@@ -496,38 +486,17 @@ function refreshChildrenForParent(
   if (!parent) {
     return;
   }
-  const nextChildren: string[] = [];
+  const existing = new Set(parent.children);
+  const nextChildren = parent.children.slice();
   nodes.forEach((node) => {
-    if (node.parentId === parentId) {
+    if (node.parentId === parentId && !existing.has(node.instanceId)) {
       nextChildren.push(node.instanceId);
+      existing.add(node.instanceId);
     }
   });
   if (!areStringArraysEqual(parent.children, nextChildren)) {
     nodes.set(parentId, { ...parent, children: nextChildren });
   }
-}
-
-function recomputeDerivedForIds(
-  nodes: Map<string, RenderChartNode>,
-  ids: string[],
-) {
-  if (ids.length === 0) {
-    return nodes;
-  }
-  const nextNodes = new Map(nodes);
-  ids.forEach((id) => {
-    const node = nextNodes.get(id);
-    if (!node) {
-      return;
-    }
-    const depth = countDepthForType(nextNodes, node);
-    const active = computeActive(nextNodes, node);
-    if (node.depth === depth && node.active === active) {
-      return;
-    }
-    nextNodes.set(id, { ...node, depth, active });
-  });
-  return nextNodes;
 }
 
 function collectSubtreeIds(

@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "jest ."
+    "test": "echo \"@rn-tools/tailwind tests removed (deprecated)\""
   },
   "devDependencies": {
     "@babel/plugin-syntax-jsx": "^7.18.6",

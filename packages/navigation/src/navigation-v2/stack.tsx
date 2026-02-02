@@ -2,7 +2,9 @@ import * as React from "react";
 import {
   RenderChartNodeInstanceIdContext,
   RenderChartNode,
+  getRenderChartNodeParent,
   useRenderChartNode,
+  useRenderChartSelector,
 } from "@rn-tools/core";
 
 const StackContext = React.createContext<string | null>(null);
@@ -28,6 +30,9 @@ export type StackScreenProps = {
 
 function StackBody(props: { children: React.ReactNode }) {
   const node = useRenderChartNode();
+  if (!node) {
+    return null;
+  }
   return (
     <StackContext.Provider value={node.instanceId}>
       {props.children}
@@ -38,12 +43,18 @@ function StackBody(props: { children: React.ReactNode }) {
 function StackScreenBody(props: { children: React.ReactNode }) {
   const node = useRenderChartNode();
   const stackInstanceId = React.useContext(StackContext);
+  const parentInstanceId = useRenderChartSelector(
+    (chart, id) => getRenderChartNodeParent(chart, id)?.instanceId,
+  );
 
+  if (!node) {
+    return null;
+  }
   if (!stackInstanceId) {
     return null;
   }
 
-  if (node.getParent()?.instanceId !== stackInstanceId) {
+  if (parentInstanceId !== stackInstanceId) {
     return null;
   }
 
