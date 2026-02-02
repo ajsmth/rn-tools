@@ -4,13 +4,13 @@ import { expect, it } from "vitest";
 import {
   RenderChartNode,
   RenderChartRoot,
-  useRenderChart,
+  useRenderChartNode,
   useRenderChartSelector,
 } from "../render-chart";
 
 function captureChart(ref: React.MutableRefObject<unknown>) {
-  const chart = useRenderChart();
-  ref.current = chart;
+  const node = useRenderChartNode();
+  ref.current = node;
   return null;
 }
 
@@ -107,8 +107,10 @@ it("tracks children by instance id", async () => {
 
   const stack = stackRef.current as any;
   const screen = screenRef.current as any;
-  expect(stack.getChildInstanceIds()).toContain(screen.instanceId);
-  expect(screen.getParentInstanceId("stack")).toBe(stack.instanceId);
+  expect(stack.getChildren().map((child: any) => child.instanceId)).toContain(
+    screen.instanceId,
+  );
+  expect(screen.getParent()?.instanceId).toBe(stack.instanceId);
 });
 
 it("updates depth when a stack is reparented", async () => {
@@ -155,8 +157,10 @@ it("updates parent/children relationships on unmount", async () => {
 
   const stack = stackRef.current as any;
   const screen = screenRef.current as any;
-  expect(stack.getChildIds()).toContain("screen-a");
-  expect(screen.getParentId("stack")).toBeNull();
+  expect(stack.getChildren().map((child: any) => child.id)).toContain(
+    "screen-a",
+  );
+  expect(screen.getParent()?.id).toBeUndefined();
 
   await updateAndFlush(
     tree,
@@ -168,7 +172,9 @@ it("updates parent/children relationships on unmount", async () => {
   );
 
   const updatedStack = stackRef.current as any;
-  expect(updatedStack.getChildIds()).not.toContain("screen-a");
+  expect(updatedStack.getChildren().map((child: any) => child.id)).not.toContain(
+    "screen-a",
+  );
 });
 
 it("respects local activeSelf overrides", async () => {

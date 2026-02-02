@@ -2,9 +2,6 @@ import * as React from "react";
 import { Store, useStore } from "./store";
 
 /**
- * Render chart model
- * ==================
- *
  * Each RenderChartRoot creates a store that holds a RenderChart object.
  * Nodes register themselves in that store keyed by instance id.
  * Nodes know their parent (instance id), type, and active flag.
@@ -66,13 +63,8 @@ export type RenderChartNodeView = {
   active: boolean;
   parentId: string | null;
   children: string[];
-  getParentId: (type: RenderChartType) => string | null;
-  getParentInstanceId: (type: RenderChartType) => string | null;
   getParent: () => RenderChartNodeView | null;
-  getChildIds: () => string[];
-  getChildInstanceIds: () => string[];
   getChildren: () => RenderChartNodeView[];
-  getChildrenWithIds: () => RenderChartNodeView[];
 };
 
 export type RenderChart = {
@@ -121,43 +113,27 @@ function buildRenderChartNodeView(
     children: node.children,
     depth: node.depth,
     active: node.active,
-    getParentId: (type: RenderChartType) => {
-      const parent = findParentOfType(chart.nodes, node.parentId, type);
-      return parent ? parent.id ?? null : null;
-    },
-    getParentInstanceId: (type: RenderChartType) => {
-      const parent = findParentOfType(chart.nodes, node.parentId, type);
-      return parent ? parent.instanceId : null;
-    },
     getParent: () => {
       if (!node.parentId) {
         return null;
       }
       return getRenderChartNode(chart, node.parentId);
     },
-    getChildIds: () =>
-      node.children
-        .map((childId) => chart.nodes.get(childId)?.id)
-        .filter((childId): childId is string => typeof childId === "string"),
-    getChildInstanceIds: () => node.children.slice(),
     getChildren: () =>
       node.children
         .map((childId) => getRenderChartNode(chart, childId))
         .filter((child): child is RenderChartNodeView => Boolean(child)),
-    getChildrenWithIds: () =>
-      node.children
-        .map((childId) => getRenderChartNode(chart, childId))
-        .filter(
-          (child): child is RenderChartNodeView => Boolean(child && child.id),
-        ),
   };
 }
 
 export const RenderChartStoreContext =
   React.createContext<Store<RenderChart> | null>(null);
 
-export const RenderChartInstanceIdContext =
-  React.createContext<string | null>(null);
+export const RenderChartNodeInstanceIdContext = React.createContext<
+  string | null
+>(
+  null,
+);
 
 export const RenderChartNodeViewContext =
   React.createContext<RenderChartNodeView | null>(null);
@@ -175,20 +151,6 @@ function countDepthFromParent(
     current = current.getParent();
   }
   return depth;
-}
-
-function findParentFromView(
-  parent: RenderChartNodeView | null,
-  type: RenderChartType,
-) {
-  let current = parent;
-  while (current) {
-    if (current.type === type) {
-      return current;
-    }
-    current = current.getParent();
-  }
-  return null;
 }
 
 function buildOptimisticNodeView(
@@ -212,19 +174,8 @@ function buildOptimisticNodeView(
     children: [],
     depth,
     active,
-    getParentId: (type: RenderChartType) => {
-      const parent = findParentFromView(parentView, type);
-      return parent?.id ?? null;
-    },
-    getParentInstanceId: (type: RenderChartType) => {
-      const parent = findParentFromView(parentView, type);
-      return parent?.instanceId ?? null;
-    },
     getParent: () => parentView,
-    getChildIds: () => [],
-    getChildInstanceIds: () => [],
     getChildren: () => [],
-    getChildrenWithIds: () => [],
   };
 }
 
@@ -241,25 +192,6 @@ function countDepthForType(
     current = current.parentId ? nodes.get(current.parentId) : undefined;
   }
   return depth;
-}
-
-function findParentOfType(
-  nodes: Map<string, RenderChartNode>,
-  parentId: string | null,
-  type: RenderChartType,
-) {
-  let currentId = parentId;
-  while (currentId) {
-    const current = nodes.get(currentId);
-    if (!current) {
-      return null;
-    }
-    if (current.type === type) {
-      return current;
-    }
-    currentId = current.parentId;
-  }
-  return null;
 }
 
 function computeActive(
@@ -362,7 +294,9 @@ export type RenderChartRootProps = {
 };
 
 export function createRenderChartStore(initial?: RenderChart) {
-  const chart = initial ? createRenderChart(initial.nodes) : createRenderChart();
+  const chart = initial
+    ? createRenderChart(initial.nodes)
+    : createRenderChart();
   return new Store(chart);
 }
 
@@ -372,9 +306,9 @@ export function RenderChartRoot(props: RenderChartRootProps) {
 
   return (
     <RenderChartStoreContext.Provider value={store}>
-      <RenderChartInstanceIdContext.Provider value={RENDER_CHART_ROOT_ID}>
+      <RenderChartNodeInstanceIdContext.Provider value={RENDER_CHART_ROOT_ID}>
         {props.children}
-      </RenderChartInstanceIdContext.Provider>
+      </RenderChartNodeInstanceIdContext.Provider>
     </RenderChartStoreContext.Provider>
   );
 }
@@ -396,9 +330,9 @@ export function RenderChartNode(
   },
 ) {
   const store = React.useContext(RenderChartStoreContext);
-  const parentId = React.useContext(RenderChartInstanceIdContext);
+  const parentId = React.useContext(RenderChartNodeInstanceIdContext);
   const parentView = React.useContext(RenderChartNodeViewContext);
-  const instanceIdRef = React.useRef(createRenderChartId(props.type));
+  const instanceIdRef = React.useRef(nextRenderChartIdForType(props.type));
 
   if (!store) {
     throw new Error("RenderChartRoot is missing from the component tree.");
@@ -440,17 +374,17 @@ export function RenderChartNode(
       : chart ?? optimisticView;
 
   return (
-    <RenderChartInstanceIdContext.Provider value={instanceIdRef.current}>
+    <RenderChartNodeInstanceIdContext.Provider value={instanceIdRef.current}>
       <RenderChartNodeViewContext.Provider value={resolvedChart}>
         {props.children}
       </RenderChartNodeViewContext.Provider>
-    </RenderChartInstanceIdContext.Provider>
+    </RenderChartNodeInstanceIdContext.Provider>
   );
 }
 
-export function useRenderChart() {
+export function useRenderChartNode() {
   const store = React.useContext(RenderChartStoreContext);
-  const instanceId = React.useContext(RenderChartInstanceIdContext);
+  const instanceId = React.useContext(RenderChartNodeInstanceIdContext);
   const fallback = React.useContext(RenderChartNodeViewContext);
   if (!store) {
     throw new Error("RenderChartRoot is missing from the component tree.");
@@ -458,13 +392,13 @@ export function useRenderChart() {
   if (!instanceId) {
     throw new Error("RenderChartNode is missing from the component tree.");
   }
-  const chart = useStore(
+  const node = useStore(
     store,
     (state) => getRenderChartNode(state, instanceId),
     areRenderChartsEqual,
   );
-  if (chart) {
-    return chart;
+  if (node) {
+    return node;
   }
   if (fallback && fallback.instanceId === instanceId) {
     return fallback;
@@ -483,7 +417,7 @@ export function useRenderChartSelector<S>(
   isEqual?: (left: S, right: S) => boolean,
 ) {
   const store = React.useContext(RenderChartStoreContext);
-  const instanceId = React.useContext(RenderChartInstanceIdContext);
+  const instanceId = React.useContext(RenderChartNodeInstanceIdContext);
   const fallback = React.useContext(RenderChartNodeViewContext);
   if (!store) {
     throw new Error("RenderChartRoot is missing from the component tree.");
