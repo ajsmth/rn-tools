@@ -185,10 +185,6 @@ let StackScreen = React.memo(function StackScreen({
     }
 
     BackHandler.addEventListener("hardwareBackPress", backHandler);
-
-    return () => {
-      BackHandler.removeEventListener("hardwareBackPress", backHandler);
-    };
   }, [gestureEnabled, stack, screenId, isActive, dispatch]);
 
   let parentHeaderHeight = React.useContext(HeaderHeightContext);
@@ -219,7 +215,6 @@ let StackScreen = React.memo(function StackScreen({
       <RNScreen
         {...props}
         style={style}
-        activityState={isActive ? 2 : 0}
         gestureEnabled={gestureEnabled}
         onDismissed={onDismissed}
         onHeaderHeightChange={onHeaderHeightChange}

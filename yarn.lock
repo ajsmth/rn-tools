@@ -3926,7 +3926,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rn-tools/navigation@workspace:packages/navigation"
   dependencies:
-    "@rn-tools/core": "npm:*"
     "@rn-tools/eslint-config": "npm:*"
     "@testing-library/react-native": "npm:^12.5.1"
     "@types/jest": "npm:^27.0.3"

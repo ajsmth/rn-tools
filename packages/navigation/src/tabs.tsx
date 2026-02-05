@@ -141,10 +141,6 @@ let TabsScreen = React.memo(function TabsScreen({
     }
 
     BackHandler.addEventListener("hardwareBackPress", backHandler);
-
-    return () => {
-      BackHandler.removeEventListener("hardwareBackPress", backHandler);
-    };
   }, [tabId, dispatch, getNavigationStore]);
 
   let style = React.useMemo(
@@ -153,7 +149,6 @@ let TabsScreen = React.memo(function TabsScreen({
   );
 
   return (
-    // @ts-expect-error - Ref typings in RNScreens
     <RNScreen
       active={isActive ? 1 : 0}
       activityState={isActive ? 2 : 0}

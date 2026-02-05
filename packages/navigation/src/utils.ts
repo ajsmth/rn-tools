@@ -18,7 +18,7 @@ export let serializeTabIndexKey = (tabId: string, index: number) =>
 
 
 
-let baseInsets: EdgeInsets = {
+let baseInsets = {
   top: Platform.OS === "ios" ? 59 : 49,
   bottom: Platform.OS === "ios" ? 34 : 0,
   right: 0,
