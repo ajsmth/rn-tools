@@ -2,6 +2,9 @@
 
 A set of useful navigation components for React Native. Built with `react-native-screens` and designed with flexibility in mind.
 
+## Attention: 
+This package will be making big changes in an upcoming release. Please check back later for updates!
+
 ## Table of Contents
 
 - [Installation](#installation)
