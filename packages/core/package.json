@@ -26,6 +26,7 @@
   "license": "MIT",
   "homepage": "https://github.com/ajsmth/rn-tools#readme",
   "devDependencies": {
+    "@testing-library/react": "^14.2.1",
     "@types/react": "18.3.12",
     "@types/react-test-renderer": "^18.0.0",
     "react-test-renderer": "^18.2.0",

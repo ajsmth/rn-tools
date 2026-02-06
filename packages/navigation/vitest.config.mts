@@ -7,15 +7,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   resolve: {
     alias: {
+      "expo-modules-core": path.resolve(
+        __dirname,
+        "mocks/expo-modules-core.mock.ts",
+      ),
       "react-native": path.resolve(
         __dirname,
-        "src/__tests__/react-native.mock.ts",
+        "mocks/react-native.mock.ts",
       ),
     },
   },
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: ["src/__tests__/setup.ts"],
+    setupFiles: ["mocks/setup.ts"],
   },
 });

@@ -1,149 +1,120 @@
 import * as React from "react";
+import { Store, useStore, RenderTreeRoot } from "@rn-tools/core"
 
-import {
-  createNavigationStore,
-  NavigationDispatchContext,
-  NavigationStateContext,
-  rootStore,
-  type NavigationStore,
-} from "./navigation-store";
-import type { StackScreenProps } from "./stack";
-import type { PushScreenOptions } from "./types";
+export type PushScreenOptions = {
+  id?: string;
+  stackId?: string;
+};
 
-/**
- * Ideas:
- *  - lifecycles / screen tracking
- */
+export type NavigationScreenEntry = {
+  element: React.ReactElement;
+  id?: string;
+  options?: PushScreenOptions;
+};
 
-export function createNavigation() {
-  let store = createNavigationStore();
-  let navigation = getNavigationFns(store);
+export type NavigationState = {
+  stacks: Map<string, NavigationScreenEntry[]>;
+};
 
-  let NavigationContainer = ({ children }: { children: React.ReactNode }) => {
-    return (
-      <NavigationStateContext.Provider value={store.store}>
-        <NavigationDispatchContext.Provider value={store.dispatch}>
-          {children}
-        </NavigationDispatchContext.Provider>
-      </NavigationStateContext.Provider>
-    );
-  };
+export type NavigationStore = Store<NavigationState>;
 
-  return {
-    navigation,
-    NavigationContainer,
-  };
+const NavigationStoreContext = React.createContext<NavigationStore | null>(
+  null,
+);
+
+export function createNavigationStore(
+  initialState: NavigationState | NavigationStateInput = { stacks: new Map() },
+): NavigationStore {
+  return new Store(normalizeNavigationState(initialState));
 }
 
-function getNavigationFns({ store, dispatch, renderCharts }: NavigationStore) {
-  function getFocusedStackId() {
-    let maxDepth = Math.max(
-      ...Object.keys(renderCharts.stacksByDepth)
-        .filter((key) => renderCharts.stacksByDepth[key].length > 0)
-        .map(Number)
-    );
-    let stackIds = renderCharts.stacksByDepth[maxDepth];
+export type NavigationStateInput = {
+  stacks?:
+    | Map<string, NavigationScreenEntry[]>
+    | Record<string, NavigationScreenEntry[]>;
+};
 
-    if (!stackIds || stackIds?.length === 0) {
-      if (store.getState().debugModeEnabled) {
-        console.warn("No focused stack found");
-      }
-
-      return;
-    }
-
-    let topStackId = stackIds[stackIds.length - 1];
-    return topStackId;
-  }
-
-  function getFocusedTabsId() {
-    let maxDepth = Math.max(
-      ...Object.keys(renderCharts.tabsByDepth)
-        .filter((key) => renderCharts.tabsByDepth[key].length > 0)
-        .map(Number),
-      0
-    );
-    let tabIds = renderCharts.tabsByDepth[maxDepth];
-
-    if (!tabIds || tabIds?.length === 0) {
-      if (store.getState().debugModeEnabled) {
-        console.warn("No focused tabs found");
-      }
-
-      return;
-    }
-
-    let topTabId = tabIds[tabIds.length - 1];
-    return topTabId;
-  }
-
-  function pushScreen(
-    element: React.ReactElement<StackScreenProps>,
-    options?: PushScreenOptions
-  ) {
-    let stackId = options?.stackId || getFocusedStackId();
-    let screenId = options?.screenId;
-
-    dispatch({
-      type: "PUSH_SCREEN",
-      stackId,
-      screenId,
-      element,
-    });
-
-    return screenId;
-  }
-
-  function popScreen(count = 1) {
-    let stackId = getFocusedStackId();
-    let stack = store.getState().stacks.lookup[stackId];
-    let numScreens = stack?.screens.length || 0;
-
-    let screensToPop = Math.max(Math.min(numScreens, count), 0);
-
-    dispatch({ type: "POP_SCREEN_BY_COUNT", count: screensToPop, stackId });
-    let remainingScreens = count - screensToPop;
-
-    let parentStackId = renderCharts.stackParentsById[stackId];
-    let parentStack = store.getState().stacks.lookup[parentStackId];
-
-    while (remainingScreens > 0 && parentStackId && parentStack) {
-      let screensToPop = Math.min(parentStack.screens.length, remainingScreens);
-      dispatch({
-        type: "POP_SCREEN_BY_COUNT",
-        count: screensToPop,
-        stackId: parentStackId,
-      });
-
-      remainingScreens = remainingScreens - screensToPop;
-      let nextParentStack = renderCharts.stackParentsById[parentStack.id];
-
-      parentStackId = nextParentStack;
-      parentStack = store.getState().stacks.lookup[parentStackId];
-    }
-  }
-
-  function setTabIndex(index: number, options?: { tabId?: string }) {
-    let focusedTabsId = options?.tabId || getFocusedTabsId();
-    dispatch({ type: "SET_TAB_INDEX", index, tabId: focusedTabsId });
-  }
-
-  function reset() {
-    dispatch({ type: "RESET_NAVIGATION" });
-  }
-
-  function setDebugModeEnabled(enabled: boolean) {
-    dispatch({ type: "SET_DEBUG_MODE", enabled });
-  }
-
-  return {
-    pushScreen,
-    popScreen,
-    setTabIndex,
-    reset,
-    setDebugModeEnabled,
-  };
+export function createNavigationState(
+  input: NavigationStateInput = {},
+): NavigationState {
+  return normalizeNavigationState(input);
 }
 
-let rootNavigation = getNavigationFns(rootStore);
-export { rootNavigation as navigation };
+export function loadNavigationState(
+  store: NavigationStore,
+  input: NavigationState | NavigationStateInput,
+) {
+  store.setState(normalizeNavigationState(input));
+}
+
+export type NavigationProviderProps = {
+  store?: NavigationStore;
+  children: React.ReactNode;
+};
+
+const rootStore = createNavigationStore();
+export { rootStore as navigation };
+
+export function NavigationProvider(props: NavigationProviderProps) {
+  return (
+    <RenderTreeRoot>
+      <NavigationStoreContext.Provider value={props.store ?? rootStore}>
+        {props.children}
+      </NavigationStoreContext.Provider>
+    </RenderTreeRoot>
+  );
+}
+
+export function useNavigationStore(): NavigationStore {
+  const store = React.useContext(NavigationStoreContext);
+  if (!store) {
+    throw new Error("NavigationProvider is missing from the component tree.");
+  }
+  return store;
+}
+
+export function pushScreen(
+  store: NavigationStore,
+  element: React.ReactElement,
+  options?: PushScreenOptions,
+) {
+  const stackKey = options?.stackId;
+  if (!stackKey) {
+    throw new Error("pushScreen requires options.stackId.");
+  }
+
+  store.setState((prev) => {
+    const stacks = new Map(prev.stacks);
+    const nextScreens = [
+      ...(stacks.get(stackKey) ?? []),
+      { element, key: options?.id, options },
+    ];
+    stacks.set(stackKey, nextScreens);
+    return { stacks };
+  });
+}
+
+export function useStackScreens(
+  stackKey: string | null,
+): NavigationScreenEntry[] {
+  const store = useNavigationStore();
+  return useStore(store, (state) =>
+    stackKey ? state.stacks.get(stackKey) ?? [] : [],
+  );
+}
+
+function normalizeNavigationState(
+  input: NavigationState | NavigationStateInput,
+): NavigationState {
+  const stacksInput =
+    (input as NavigationState).stacks ??
+    (input as NavigationStateInput).stacks ??
+    new Map();
+
+  const stacks =
+    stacksInput instanceof Map
+      ? new Map(stacksInput)
+      : new Map(Object.entries(stacksInput));
+
+  return { stacks };
+}
