@@ -9,13 +9,13 @@ export default defineConfig({
     alias: {
       "react-native": path.resolve(
         __dirname,
-        "src/__tests__/react-native.mock.ts",
+        "mocks/react-native.mock.ts",
       ),
     },
   },
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: ["src/__tests__/setup.ts"],
+    setupFiles: ["mocks/setup.ts"],
   },
 });

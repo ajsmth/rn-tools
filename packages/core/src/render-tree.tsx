@@ -29,7 +29,7 @@ export type RenderTreeOptions = {
   active?: boolean;
 };
 
-type RenderNode = {
+export type RenderNode = {
   id: string;
   type: RenderTreeType;
   parentId: string | null;
@@ -312,7 +312,7 @@ export function RenderTreeRoot(props: RenderTreeRootProps) {
  * `active` defaults to true. Passing `active={false}` disables the subtree.
  * `id` is optional; if omitted, a stable id is generated.
  */
-export function RenderNode(
+export function RenderTreeNode(
   props: RenderTreeOptions & {
     children: React.ReactNode;
   },

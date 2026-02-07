@@ -13,13 +13,13 @@ export default defineConfig({
       ),
       "react-native": path.resolve(
         __dirname,
-        "mocks/react-native.mock.ts",
+        "../core/mocks/react-native.mock.ts",
       ),
     },
   },
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: ["mocks/setup.ts"],
+    setupFiles: ["../core/mocks/setup.ts"],
   },
 });

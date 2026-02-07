@@ -2,37 +2,55 @@ import * as React from "react";
 import { render, waitFor } from "@testing-library/react/pure";
 import { expect, it } from "vitest";
 import {
-  RenderNode,
+  type RenderNode,
+  RenderTreeNode,
   RenderTreeRoot,
   getRenderNodeActive,
   getRenderNodeChildren,
   getRenderNodeDepth,
   getRenderNodeParent,
-  useRenderNode,
   useRenderTreeSelector,
-} from "../render-tree";
+  getRenderNode,
+} from "./render-tree";
 
-function captureChart(ref: React.MutableRefObject<unknown>) {
-  const node = useRenderNode();
-  ref.current = node;
-  return null;
-}
+type RenderNodeProbeData = {
+  node: RenderNode;
+  type: RenderNode["type"];
+  active: boolean;
+  depth: number;
+  parent: RenderNode | null;
+  children: RenderNode[];
+};
 
-function requireNode(ref: React.MutableRefObject<unknown>) {
-  const node = ref.current as typeof RenderNode | null;
-  if (!node) {
-    throw new Error("Expected RenderNode to be available.");
+function RenderNodeProbe(props: {
+  render: (data: RenderNodeProbeData) => React.ReactNode;
+}) {
+  const data = useRenderTreeSelector((chart, id) => {
+    const node = getRenderNode(chart, id);
+    if (!node) {
+      return null;
+    }
+
+    const parent = getRenderNodeParent(chart, id);
+    const children = getRenderNodeChildren(chart, id);
+    const depth = getRenderNodeDepth(chart, id);
+    const active = getRenderNodeActive(chart, id);
+
+    return {
+      node,
+      type: node.type,
+      active,
+      depth,
+      parent,
+      children,
+    } satisfies RenderNodeProbeData;
+  });
+
+  if (!data) {
+    return null;
   }
-  return node;
-}
 
-function captureSelector(
-  ref: React.MutableRefObject<unknown>,
-  selector: Parameters<typeof useRenderTreeSelector>[0],
-) {
-  const value = useRenderTreeSelector(selector);
-  ref.current = value;
-  return null;
+  return <>{props.render(data)}</>;
 }
 
 async function renderAndFlush(element: React.ReactElement) {
@@ -56,24 +74,30 @@ it("computes depth scoped by type", async () => {
 
   await renderAndFlush(
     <RenderTreeRoot>
-      <RenderNode type="stack">
-        <CaptureSelector
-          refObject={stackDepthRef}
-          selector={(chart, id) => getRenderNodeDepth(chart, id)}
+      <RenderTreeNode type="stack">
+        <RenderNodeProbe
+          render={(data) => {
+            stackDepthRef.current = data.depth;
+            return null;
+          }}
         />
-        <RenderNode type="stack">
-          <CaptureSelector
-            refObject={nestedStackDepthRef}
-            selector={(chart, id) => getRenderNodeDepth(chart, id)}
+        <RenderTreeNode type="stack">
+          <RenderNodeProbe
+            render={(data) => {
+              nestedStackDepthRef.current = data.depth;
+              return null;
+            }}
           />
-          <RenderNode type="screen">
-            <CaptureSelector
-              refObject={screenDepthRef}
-              selector={(chart, id) => getRenderNodeDepth(chart, id)}
+          <RenderTreeNode type="screen">
+            <RenderNodeProbe
+              render={(data) => {
+                screenDepthRef.current = data.depth;
+                return null;
+              }}
             />
-          </RenderNode>
-        </RenderNode>
-      </RenderNode>
+          </RenderTreeNode>
+        </RenderTreeNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
@@ -87,16 +111,18 @@ it("propagates active state through parents", async () => {
 
   const tree = await renderAndFlush(
     <RenderTreeRoot>
-      <RenderNode type="tabs" active>
-        <RenderNode type="stack" active>
-          <RenderNode type="screen">
-            <CaptureSelector
-              refObject={screenActiveRef}
-              selector={(chart, id) => getRenderNodeActive(chart, id)}
+      <RenderTreeNode type="tabs" active>
+        <RenderTreeNode type="stack" active>
+          <RenderTreeNode type="screen">
+            <RenderNodeProbe
+              render={(data) => {
+                screenActiveRef.current = data.active;
+                return null;
+              }}
             />
-          </RenderNode>
-        </RenderNode>
-      </RenderNode>
+          </RenderTreeNode>
+        </RenderTreeNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
@@ -105,16 +131,18 @@ it("propagates active state through parents", async () => {
   await updateAndFlush(
     tree,
     <RenderTreeRoot>
-      <RenderNode type="tabs" active={false}>
-        <RenderNode type="stack">
-          <RenderNode type="screen">
-            <CaptureSelector
-              refObject={screenActiveRef}
-              selector={(chart, id) => getRenderNodeActive(chart, id)}
+      <RenderTreeNode type="tabs" active={false}>
+        <RenderTreeNode type="stack">
+          <RenderTreeNode type="screen">
+            <RenderNodeProbe
+              render={(data) => {
+                screenActiveRef.current = data.active;
+                return null;
+              }}
             />
-          </RenderNode>
-        </RenderNode>
-      </RenderNode>
+          </RenderTreeNode>
+        </RenderTreeNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
@@ -126,18 +154,20 @@ it("computes active in a type-agnostic way", async () => {
 
   await renderAndFlush(
     <RenderTreeRoot>
-      <RenderNode type="tabs" active={false}>
-        <RenderNode type="stack" active>
-          <RenderNode type="screen">
-            <RenderNode type="panel" active>
-              <CaptureSelector
-                refObject={leafActiveRef}
-                selector={(chart, id) => getRenderNodeActive(chart, id)}
+      <RenderTreeNode type="tabs" active={false}>
+        <RenderTreeNode type="stack" active>
+          <RenderTreeNode type="screen">
+            <RenderTreeNode type="panel" active>
+              <RenderNodeProbe
+                render={(data) => {
+                  leafActiveRef.current = data.active;
+                  return null;
+                }}
               />
-            </RenderNode>
-          </RenderNode>
-        </RenderNode>
-      </RenderNode>
+            </RenderTreeNode>
+          </RenderTreeNode>
+        </RenderTreeNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
@@ -145,42 +175,36 @@ it("computes active in a type-agnostic way", async () => {
 });
 
 it("tracks children by id", async () => {
-  const stackRef = { current: null as unknown };
-  const screenRef = { current: null as unknown };
-  const stackChildrenRef = { current: null as unknown };
-  const screenParentRef = { current: null as unknown };
+  const stackIdRef = { current: null as string | null };
+  const screenIdRef = { current: null as string | null };
+  const stackChildrenRef = { current: null as string[] | null };
+  const screenParentRef = { current: null as string | null };
 
   await renderAndFlush(
     <RenderTreeRoot>
-      <RenderNode type="stack">
-        <Capture refObject={stackRef} />
-        <CaptureSelector
-          refObject={stackChildrenRef}
-          selector={(chart, id) =>
-            getRenderNodeChildren(chart, id).map(
-              (child) => child.id,
-            )
-          }
+      <RenderTreeNode type="stack">
+        <RenderNodeProbe
+          render={(data) => {
+            stackIdRef.current = data.node.id;
+            stackChildrenRef.current = data.children.map((child) => child.id);
+            return null;
+          }}
         />
-        <RenderNode type="screen">
-          <Capture refObject={screenRef} />
-          <CaptureSelector
-            refObject={screenParentRef}
-            selector={(chart, id) =>
-              getRenderNodeParent(chart, id)?.id
-            }
+        <RenderTreeNode type="screen">
+          <RenderNodeProbe
+            render={(data) => {
+              screenIdRef.current = data.node.id;
+              screenParentRef.current = data.parent?.id ?? null;
+              return null;
+            }}
           />
-        </RenderNode>
-      </RenderNode>
+        </RenderTreeNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
-  const resolvedStack = requireNode(stackRef);
-  const resolvedScreen = requireNode(screenRef);
-  expect(stackChildrenRef.current as string[]).toContain(
-    resolvedScreen.id,
-  );
-  expect(screenParentRef.current).toBe(resolvedStack.id);
+  expect(stackChildrenRef.current).toContain(screenIdRef.current);
+  expect(screenParentRef.current).toBe(stackIdRef.current);
 });
 
 it("updates depth when a stack is reparented", async () => {
@@ -188,14 +212,16 @@ it("updates depth when a stack is reparented", async () => {
 
   const tree = await renderAndFlush(
     <RenderTreeRoot>
-      <RenderNode type="stack">
-        <RenderNode type="stack">
-          <CaptureSelector
-            refObject={nestedStackDepthRef}
-            selector={(chart, id) => getRenderNodeDepth(chart, id)}
+      <RenderTreeNode type="stack">
+        <RenderTreeNode type="stack">
+          <RenderNodeProbe
+            render={(data) => {
+              nestedStackDepthRef.current = data.depth;
+              return null;
+            }}
           />
-        </RenderNode>
-      </RenderNode>
+        </RenderTreeNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
@@ -204,12 +230,14 @@ it("updates depth when a stack is reparented", async () => {
   await updateAndFlush(
     tree,
     <RenderTreeRoot>
-      <RenderNode type="stack">
-        <CaptureSelector
-          refObject={nestedStackDepthRef}
-          selector={(chart, id) => getRenderNodeDepth(chart, id)}
+      <RenderTreeNode type="stack">
+        <RenderNodeProbe
+          render={(data) => {
+            nestedStackDepthRef.current = data.depth;
+            return null;
+          }}
         />
-      </RenderNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
@@ -217,53 +245,50 @@ it("updates depth when a stack is reparented", async () => {
 });
 
 it("updates parent/children relationships on unmount", async () => {
-  const stackRef = { current: null as unknown };
-  const stackChildrenRef = { current: null as unknown };
-  const screenParentIdRef = { current: null as unknown };
+  const stackIdRef = { current: null as string | null };
+  const stackChildrenRef = { current: null as string[] | null };
+  const screenParentIdRef = { current: null as string | null };
 
   const tree = await renderAndFlush(
     <RenderTreeRoot>
-      <RenderNode type="stack">
-        <Capture refObject={stackRef} />
-        <CaptureSelector
-          refObject={stackChildrenRef}
-          selector={(chart, id) =>
-            getRenderNodeChildren(chart, id).map((child) => child.id)
-          }
+      <RenderTreeNode type="stack">
+        <RenderNodeProbe
+          render={(data) => {
+            stackIdRef.current = data.node.id;
+            stackChildrenRef.current = data.children.map((child) => child.id);
+            return null;
+          }}
         />
-        <RenderNode type="screen" id="screen-a">
-          <CaptureSelector
-            refObject={screenParentIdRef}
-            selector={(chart, id) => getRenderNodeParent(chart, id)?.id}
+        <RenderTreeNode type="screen" id="screen-a">
+          <RenderNodeProbe
+            render={(data) => {
+              screenParentIdRef.current = data.parent?.id ?? null;
+              return null;
+            }}
           />
-        </RenderNode>
-      </RenderNode>
+        </RenderTreeNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
-  expect(stackChildrenRef.current as Array<string | undefined>).toContain(
-    "screen-a",
-  );
-  const resolvedStack = requireNode(stackRef);
-  expect(screenParentIdRef.current).toBe(resolvedStack.id);
+  expect(stackChildrenRef.current).toContain("screen-a");
+  expect(screenParentIdRef.current).toBe(stackIdRef.current);
 
   await updateAndFlush(
     tree,
     <RenderTreeRoot>
-      <RenderNode type="stack">
-        <CaptureSelector
-          refObject={stackChildrenRef}
-          selector={(chart, id) =>
-            getRenderNodeChildren(chart, id).map((child) => child.id)
-          }
+      <RenderTreeNode type="stack">
+        <RenderNodeProbe
+          render={(data) => {
+            stackChildrenRef.current = data.children.map((child) => child.id);
+            return null;
+          }}
         />
-      </RenderNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
-  expect(stackChildrenRef.current as Array<string | undefined>).not.toContain(
-    "screen-a",
-  );
+  expect(stackChildrenRef.current).not.toContain("screen-a");
 });
 
 it("respects local active overrides", async () => {
@@ -271,14 +296,16 @@ it("respects local active overrides", async () => {
 
   const tree = await renderAndFlush(
     <RenderTreeRoot>
-      <RenderNode type="stack" active>
-        <RenderNode type="screen" active={false}>
-          <CaptureSelector
-            refObject={screenActiveRef}
-            selector={(chart, id) => getRenderNodeActive(chart, id)}
+      <RenderTreeNode type="stack" active>
+        <RenderTreeNode type="screen" active={false}>
+          <RenderNodeProbe
+            render={(data) => {
+              screenActiveRef.current = data.active;
+              return null;
+            }}
           />
-        </RenderNode>
-      </RenderNode>
+        </RenderTreeNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
@@ -287,30 +314,21 @@ it("respects local active overrides", async () => {
   await updateAndFlush(
     tree,
     <RenderTreeRoot>
-      <RenderNode type="stack" active={false}>
-        <RenderNode type="screen" active>
-          <CaptureSelector
-            refObject={screenActiveRef}
-            selector={(chart, id) => getRenderNodeActive(chart, id)}
+      <RenderTreeNode type="stack" active={false}>
+        <RenderTreeNode type="screen" active>
+          <RenderNodeProbe
+            render={(data) => {
+              screenActiveRef.current = data.active;
+              return null;
+            }}
           />
-        </RenderNode>
-      </RenderNode>
+        </RenderTreeNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
   expect(screenActiveRef.current).toBe(false);
 });
-
-function Capture(props: { refObject: React.MutableRefObject<unknown> }) {
-  return captureChart(props.refObject);
-}
-
-function CaptureSelector(props: {
-  refObject: React.MutableRefObject<unknown>;
-  selector: Parameters<typeof useRenderTreeSelector>[0];
-}) {
-  return captureSelector(props.refObject, props.selector);
-}
 
 it("only re-renders nodes affected by an upstream change", async () => {
   const panelARenders = { current: 0 };
@@ -325,9 +343,9 @@ it("only re-renders nodes affected by an upstream change", async () => {
 
   function PanelA(props: { active?: boolean }) {
     return (
-      <RenderNode type="panel" active={props.active}>
+      <RenderTreeNode type="panel" active={props.active}>
         <PanelAView />
-      </RenderNode>
+      </RenderTreeNode>
     );
   }
 
@@ -339,17 +357,17 @@ it("only re-renders nodes affected by an upstream change", async () => {
 
   function StackA() {
     return (
-      <RenderNode type="stack">
+      <RenderTreeNode type="stack">
         <StackAView />
-      </RenderNode>
+      </RenderTreeNode>
     );
   }
 
   const StackB = React.memo(function StackB() {
     return (
-      <RenderNode type="stack">
+      <RenderTreeNode type="stack">
         <StackBView />
-      </RenderNode>
+      </RenderTreeNode>
     );
   });
 
@@ -361,10 +379,10 @@ it("only re-renders nodes affected by an upstream change", async () => {
 
   const tree = await renderAndFlush(
     <RenderTreeRoot>
-      <RenderNode type="tabs" active>
+      <RenderTreeNode type="tabs" active>
         <PanelA active />
         <StackB />
-      </RenderNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
@@ -375,10 +393,10 @@ it("only re-renders nodes affected by an upstream change", async () => {
   await updateAndFlush(
     tree,
     <RenderTreeRoot>
-      <RenderNode type="tabs" active>
+      <RenderTreeNode type="tabs" active>
         <PanelA active={false} />
         <StackB />
-      </RenderNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
@@ -399,9 +417,9 @@ it("re-renders siblings when a shared ancestor changes", async () => {
 
   function StackA() {
     return (
-      <RenderNode type="stack">
+      <RenderTreeNode type="stack">
         <StackAView />
-      </RenderNode>
+      </RenderTreeNode>
     );
   }
 
@@ -413,18 +431,18 @@ it("re-renders siblings when a shared ancestor changes", async () => {
 
   function StackB() {
     return (
-      <RenderNode type="stack">
+      <RenderTreeNode type="stack">
         <StackBView />
-      </RenderNode>
+      </RenderTreeNode>
     );
   }
 
   const tree = await renderAndFlush(
     <RenderTreeRoot>
-      <RenderNode type="tabs" active>
+      <RenderTreeNode type="tabs" active>
         <StackA />
         <StackB />
-      </RenderNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
@@ -434,10 +452,10 @@ it("re-renders siblings when a shared ancestor changes", async () => {
   await updateAndFlush(
     tree,
     <RenderTreeRoot>
-      <RenderNode type="tabs" active={false}>
+      <RenderTreeNode type="tabs" active={false}>
         <StackA />
         <StackB />
-      </RenderNode>
+      </RenderTreeNode>
     </RenderTreeRoot>,
   );
 
@@ -457,25 +475,25 @@ it("only re-renders the reparented subtree when depth changes", async () => {
 
   function InnerStack() {
     return (
-      <RenderNode type="stack">
+      <RenderTreeNode type="stack">
         <InnerStackView />
-      </RenderNode>
+      </RenderTreeNode>
     );
   }
 
   function OuterStack() {
     return (
-      <RenderNode type="stack">
+      <RenderTreeNode type="stack">
         <InnerStack />
-      </RenderNode>
+      </RenderTreeNode>
     );
   }
 
   const SiblingStack = React.memo(function SiblingStack() {
     return (
-      <RenderNode type="stack">
+      <RenderTreeNode type="stack">
         <SiblingStackView />
-      </RenderNode>
+      </RenderTreeNode>
     );
   });
 
