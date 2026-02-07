@@ -1,23 +1,21 @@
 import * as React from "react";
 import { describe, expect, it } from "vitest";
 import { act, render, waitFor } from "@testing-library/react";
-import {
-  getRenderNodeActive,
-  useRenderTreeSelector,
-  useRenderNodeType,
-} from "@rn-tools/core";
+import { RenderNodeProbe } from "@rn-tools/core/mocks/render-node-probe";
 
 import {
   NavigationProvider,
   createNavigationState,
   createNavigationStore,
+  loadNavigationState,
   pushScreen,
+  type NavigationStore,
 } from "./navigation";
 import { Stack } from "./stack";
 
 async function renderWithProviders(
-  node,
-  store = createNavigationStore(),
+  node: React.ReactNode,
+  store: NavigationStore = createNavigationStore(),
 ) {
   const renderer = render(
     <NavigationProvider store={store}>{node}</NavigationProvider>,
@@ -25,36 +23,25 @@ async function renderWithProviders(
   return { store, renderer };
 }
 
-function ActiveProbe(props: { id: string }) {
-  const active = useRenderTreeSelector((chart, id) =>
-    getRenderNodeActive(chart, id),
-  );
-  return <span>{`${props.id}:${String(active)}`}</span>;
-}
-
 describe("Stack (navigation-v2)", () => {
   it("renders the rootScreen inside a screen node", async () => {
-    function Callback(props) {
-      return <>{useRenderNodeType()}</>;
-    }
-
     const { renderer } = await renderWithProviders(
-      <Stack rootScreen={<Callback />} />,
+      <Stack
+        rootScreen={<RenderNodeProbe render={(data) => data.type} />}
+      />,
     );
 
     expect(renderer.getByText("screen")).toBeTruthy();
   });
 
   it("respects the active flag from the stack", async () => {
-    function Callback(props) {
-      const active = useRenderTreeSelector((chart, id) =>
-        getRenderNodeActive(chart, id),
-      );
-      return <>{String(active)}</>;
-    }
-
     const { renderer } = await renderWithProviders(
-      <Stack active={false} rootScreen={<Callback />} />,
+      <Stack
+        active={false}
+        rootScreen={
+          <RenderNodeProbe render={(data) => String(data.active)} />
+        }
+      />,
     );
 
     expect(renderer.getByText("false")).toBeTruthy();
@@ -68,7 +55,7 @@ describe("Stack (navigation-v2)", () => {
       { element: <ScreenB />, options: { id: "screen-b" } },
     ];
 
-    function StackA(props) {
+    function StackA(props: { children?: React.ReactNode }) {
       return (
         <>
           <span>stack-a</span>
@@ -77,7 +64,7 @@ describe("Stack (navigation-v2)", () => {
       );
     }
 
-    function StackB(props) {
+    function StackB(props: { children?: React.ReactNode }) {
       return (
         <>
           <span>stack-b</span>
@@ -124,11 +111,19 @@ describe("Stack (navigation-v2)", () => {
         stacks: {
           "stack-a": [
             {
-              element: <ActiveProbe id="screen-a" />,
+              element: (
+                <RenderNodeProbe
+                  render={(data) => <span>{`screen-a:${String(data.active)}`}</span>}
+                />
+              ),
               options: { id: "screen-a" },
             },
             {
-              element: <ActiveProbe id="screen-b" />,
+              element: (
+                <RenderNodeProbe
+                  render={(data) => <span>{`screen-b:${String(data.active)}`}</span>}
+                />
+              ),
               options: { id: "screen-b" },
             },
           ],
@@ -151,7 +146,11 @@ describe("Stack (navigation-v2)", () => {
         stacks: {
           "stack-a": [
             {
-              element: <ActiveProbe id="screen-a" />,
+              element: (
+                <RenderNodeProbe
+                  render={(data) => <span>{`screen-a:${String(data.active)}`}</span>}
+                />
+              ),
               options: { id: "screen-a" },
             },
           ],
@@ -165,15 +164,104 @@ describe("Stack (navigation-v2)", () => {
     );
 
     act(() => {
-      pushScreen(store, <ActiveProbe id="screen-b" />, {
-        id: "screen-b",
-        stackId: "stack-a",
-      });
+      pushScreen(
+        store,
+        <RenderNodeProbe
+          render={(data) => <span>{`screen-b:${String(data.active)}`}</span>}
+        />,
+        {
+          id: "screen-b",
+          stackId: "stack-a",
+        },
+      );
     });
 
     await waitFor(() => {
       expect(renderer.getByText("screen-a:false")).toBeTruthy();
       expect(renderer.getByText("screen-b:true")).toBeTruthy();
     });
+  });
+
+  it("renders preloaded stacks created outside of React", async () => {
+    const store = createNavigationStore(
+      createNavigationState({
+        stacks: {
+          "stack-a": [
+            {
+              element: (
+                <RenderNodeProbe
+                  render={(data) => (
+                    <span>{`a1:${data.type}:${String(data.active)}`}</span>
+                  )}
+                />
+              ),
+              options: { id: "screen-a1" },
+            },
+            {
+              element: (
+                <RenderNodeProbe
+                  render={(data) => (
+                    <span>{`a2:${data.type}:${String(data.active)}`}</span>
+                  )}
+                />
+              ),
+              options: { id: "screen-a2" },
+            },
+          ],
+          "stack-b": [
+            {
+              element: (
+                <RenderNodeProbe
+                  render={(data) => (
+                    <span>{`b1:${data.type}:${String(data.active)}`}</span>
+                  )}
+                />
+              ),
+              options: { id: "screen-b1" },
+            },
+          ],
+        },
+      }),
+    );
+
+    const { renderer } = await renderWithProviders(
+      <>
+        <Stack id="stack-a" />
+        <Stack id="stack-b" />
+      </>,
+      store,
+    );
+
+    expect(renderer.getByText("a1:screen:false")).toBeTruthy();
+    expect(renderer.getByText("a2:screen:true")).toBeTruthy();
+    expect(renderer.getByText("b1:screen:true")).toBeTruthy();
+  });
+
+  it("loads navigation state into an existing store before rendering", async () => {
+    const store = createNavigationStore();
+
+    loadNavigationState(store, {
+      stacks: {
+        "stack-a": [
+          {
+            element: (
+              <RenderNodeProbe
+                render={(data) => (
+                  <span>{`a1:${String(data.active)}`}</span>
+                )}
+              />
+            ),
+            options: { id: "screen-a1" },
+          },
+        ],
+      },
+    });
+
+    const { renderer } = await renderWithProviders(
+      <Stack id="stack-a" />,
+      store,
+    );
+
+    expect(renderer.getByText("a1:true")).toBeTruthy();
   });
 });

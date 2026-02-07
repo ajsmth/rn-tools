@@ -2,56 +2,13 @@ import * as React from "react";
 import { render, waitFor } from "@testing-library/react/pure";
 import { expect, it } from "vitest";
 import {
-  type RenderNode,
   RenderTreeNode,
   RenderTreeRoot,
   getRenderNodeActive,
-  getRenderNodeChildren,
   getRenderNodeDepth,
-  getRenderNodeParent,
   useRenderTreeSelector,
-  getRenderNode,
 } from "./render-tree";
-
-type RenderNodeProbeData = {
-  node: RenderNode;
-  type: RenderNode["type"];
-  active: boolean;
-  depth: number;
-  parent: RenderNode | null;
-  children: RenderNode[];
-};
-
-function RenderNodeProbe(props: {
-  render: (data: RenderNodeProbeData) => React.ReactNode;
-}) {
-  const data = useRenderTreeSelector((chart, id) => {
-    const node = getRenderNode(chart, id);
-    if (!node) {
-      return null;
-    }
-
-    const parent = getRenderNodeParent(chart, id);
-    const children = getRenderNodeChildren(chart, id);
-    const depth = getRenderNodeDepth(chart, id);
-    const active = getRenderNodeActive(chart, id);
-
-    return {
-      node,
-      type: node.type,
-      active,
-      depth,
-      parent,
-      children,
-    } satisfies RenderNodeProbeData;
-  });
-
-  if (!data) {
-    return null;
-  }
-
-  return <>{props.render(data)}</>;
-}
+import { RenderNodeProbe } from "../mocks/render-node-probe";
 
 async function renderAndFlush(element: React.ReactElement) {
   const renderer = render(element);

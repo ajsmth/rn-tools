@@ -1,6 +1,6 @@
 import * as React from "react";
 import {
-  RenderNode,
+  RenderTreeNode,
   useRenderNode,
 } from "@rn-tools/core";
 import { useStackScreens } from "./navigation";
@@ -14,14 +14,14 @@ export type StackProps = {
 
 function StackRoot(props: StackProps) {
   return (
-    <RenderNode
+    <RenderTreeNode
       type="stack"
       id={props.id}
       active={props.active}
     >
       {props.rootScreen && <StackScreen>{props.rootScreen}</StackScreen>}
       {props.children}
-    </RenderNode>
+    </RenderTreeNode>
   );
 }
 
@@ -33,9 +33,9 @@ export type StackScreenProps = {
 
 function StackScreen(props: StackScreenProps) {
   return (
-    <RenderNode type="screen" id={props.id} active={props.active}>
+    <RenderTreeNode type="screen" id={props.id} active={props.active}>
       {props.children}
-    </RenderNode>
+    </RenderTreeNode>
   );
 }
 

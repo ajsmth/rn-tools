@@ -1,1 +1,2 @@
-module.exports = require("@rn-tools/eslint-config")
+module.exports = require("@rn-tools/eslint-config");
+
