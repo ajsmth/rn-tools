@@ -96,11 +96,18 @@ export function createNavigation(
 
     navStore.setState((prev) => {
       const stacks = new Map(prev.stacks);
-      const nextScreens = [
-        ...(stacks.get(stackId) ?? []),
-        { element, id: options?.id, options },
-      ];
-      stacks.set(stackId, nextScreens);
+      const existing = stacks.get(stackId) ?? [];
+
+      if (
+        options?.id &&
+        existing.some(
+          (s) => s.id === options.id || s.options?.id === options.id,
+        )
+      ) {
+        return prev;
+      }
+
+      stacks.set(stackId, [...existing, { element, id: options?.id, options }]);
       return { stacks };
     });
   }

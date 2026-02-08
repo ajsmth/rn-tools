@@ -227,6 +227,49 @@ describe("Stack", () => {
     expect(renderer.getByText("a1:true")).toBeTruthy();
   });
 
+  it("pushScreen does not push a duplicate when a screen with the same id exists", async () => {
+    const { navigation, renderer } = await renderWithProviders(
+      <Stack id="stack-a" />,
+      {
+        stacks: {
+          "stack-a": [
+            {
+              element: <span>screen-a</span>,
+              options: { id: "screen-a" },
+            },
+          ],
+        },
+      },
+    );
+
+    act(() => {
+      navigation.pushScreen(<span>screen-a-dup</span>, {
+        id: "screen-a",
+        stackId: "stack-a",
+      });
+    });
+
+    expect(navigation.store.getState().stacks.get("stack-a")).toHaveLength(1);
+    expect(renderer.getByText("screen-a")).toBeTruthy();
+
+    act(() => {
+      navigation.popScreen({ stackId: "stack-a" });
+    });
+
+    expect(navigation.store.getState().stacks.get("stack-a")).toHaveLength(0);
+    expect(renderer.queryByText("screen-a")).toBeNull();
+
+    act(() => {
+      navigation.pushScreen(<span>screen-a-again</span>, {
+        id: "screen-a",
+        stackId: "stack-a",
+      });
+    });
+
+    expect(navigation.store.getState().stacks.get("stack-a")).toHaveLength(1);
+    renderer.getByText("screen-a-again");
+  });
+
   it("resolves the deepest active stack and falls back when a subtree becomes inactive", async () => {
     const navigation = createNavigation();
 
