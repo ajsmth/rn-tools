@@ -1,5 +1,5 @@
 import { requireNativeModule } from "expo-modules-core";
-import { Store, useStore } from "./store";
+import { createStore, useStore } from "./store";
 
 export type EdgeInsets = {
   top: number;
@@ -50,7 +50,7 @@ function areInsetsEqual(left: EdgeInsets, right: EdgeInsets) {
   );
 }
 
-export const safeAreaStore = new Store<SafeAreaState>({
+export const safeAreaStore = createStore<SafeAreaState>({
   insets: getSafeAreaInsets(),
 });
 

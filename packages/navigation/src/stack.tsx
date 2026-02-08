@@ -1,9 +1,10 @@
 import * as React from "react";
-import {
-  RenderTreeNode,
-  useRenderNode,
-} from "@rn-tools/core";
+import { RenderTreeNode, useRenderNode } from "@rn-tools/core";
 import { useStackScreens } from "./navigation";
+
+// TODO - replace with custom implementation
+import * as RNScreens from "react-native-screens";
+import { StyleSheet } from "react-native";
 
 export type StackProps = {
   id?: string;
@@ -14,13 +15,11 @@ export type StackProps = {
 
 function StackRoot(props: StackProps) {
   return (
-    <RenderTreeNode
-      type="stack"
-      id={props.id}
-      active={props.active}
-    >
-      {props.rootScreen && <StackScreen>{props.rootScreen}</StackScreen>}
-      {props.children}
+    <RenderTreeNode type="stack" id={props.id} active={props.active}>
+      <RNScreens.ScreenStack style={StyleSheet.absoluteFill}>
+        {props.rootScreen && <StackScreen>{props.rootScreen}</StackScreen>}
+        {props.children}
+      </RNScreens.ScreenStack>
     </RenderTreeNode>
   );
 }
@@ -33,9 +32,11 @@ export type StackScreenProps = {
 
 function StackScreen(props: StackScreenProps) {
   return (
-    <RenderTreeNode type="screen" id={props.id} active={props.active}>
-      {props.children}
-    </RenderTreeNode>
+    <RNScreens.Screen style={StyleSheet.absoluteFill}>
+      <RenderTreeNode type="screen" id={props.id} active={props.active}>
+        {props.children}
+      </RenderTreeNode>
+    </RNScreens.Screen>
   );
 }
 

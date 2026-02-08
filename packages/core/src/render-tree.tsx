@@ -1,5 +1,6 @@
 import * as React from "react";
-import { Store, useStore } from "./store";
+import { createStore, useStore } from "./store";
+import type { Store } from "./store";
 
 /**
  * Each RenderTreeRoot creates a store that holds a RenderTree object.
@@ -281,9 +282,10 @@ export type RenderTreeRootProps = {
   store?: Store<RenderTree>;
 };
 
-export function createRenderTreeStore(initial?: RenderTree) {
-  const tree = initial ? createRenderTree(initial.nodes) : createRenderTree();
-  return new Store(tree);
+export type RenderTreeStore = Store<RenderTree>;
+
+export function createRenderTreeStore(initial?: RenderTree): RenderTreeStore {
+  return createStore(initial ? createRenderTree(initial.nodes) : createRenderTree());
 }
 
 export function RenderTreeRoot(props: RenderTreeRootProps) {

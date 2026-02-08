@@ -11,6 +11,10 @@ export default defineConfig({
         __dirname,
         "mocks/expo-modules-core.mock.ts",
       ),
+      "react-native-screens": path.resolve(
+        __dirname,
+        "mocks/react-native-screens.mock.tsx",
+      ),
       "react-native": path.resolve(
         __dirname,
         "../core/mocks/react-native.mock.ts",
@@ -20,6 +24,6 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: ["../core/mocks/setup.ts"],
+    setupFiles: [path.resolve(__dirname, "../core/mocks/setup.ts")],
   },
 });

@@ -1,5 +1,13 @@
 import * as React from "react";
-import { Store, useStore, RenderTreeRoot } from "@rn-tools/core"
+import {
+  createStore,
+  useStore,
+  RenderTreeRoot,
+  createRenderTreeStore,
+  getRenderNodeActive,
+  getRenderNodeDepth,
+} from "@rn-tools/core";
+import type { Store, RenderTreeStore } from "@rn-tools/core";
 
 export type PushScreenOptions = {
   id?: string;
@@ -22,12 +30,6 @@ const NavigationStoreContext = React.createContext<NavigationStore | null>(
   null,
 );
 
-export function createNavigationStore(
-  initialState: NavigationState | NavigationStateInput = { stacks: new Map() },
-): NavigationStore {
-  return new Store(normalizeNavigationState(initialState));
-}
-
 export type NavigationStateInput = {
   stacks?:
     | Map<string, NavigationScreenEntry[]>
@@ -47,18 +49,91 @@ export function loadNavigationState(
   store.setState(normalizeNavigationState(input));
 }
 
+export type Navigation = {
+  store: NavigationStore;
+  renderTreeStore: RenderTreeStore;
+  pushScreen: (element: React.ReactElement, options?: PushScreenOptions) => void;
+  popScreen: (options?: { stackId?: string }) => void;
+};
+
+export function createNavigation(
+  initialState?: NavigationStateInput,
+): Navigation {
+  const navStore = createStore(
+    normalizeNavigationState(initialState ?? { stacks: new Map() }),
+  );
+  const renderTreeStore = createRenderTreeStore();
+
+  function getActiveStackId(): string | null {
+    const tree = renderTreeStore.getState();
+    let deepestId: string | null = null;
+    let deepestDepth = -1;
+
+    for (const [id, node] of tree.nodes) {
+      if (node.type !== "stack") continue;
+      if (!getRenderNodeActive(tree, id)) continue;
+
+      const depth = getRenderNodeDepth(tree, id);
+      if (depth > deepestDepth) {
+        deepestDepth = depth;
+        deepestId = id;
+      }
+    }
+
+    return deepestId;
+  }
+
+  function pushScreen(
+    element: React.ReactElement,
+    options?: PushScreenOptions,
+  ) {
+    const stackId = options?.stackId ?? getActiveStackId();
+    if (!stackId) {
+      throw new Error(
+        "pushScreen: could not resolve stackId. Pass { stackId } explicitly or ensure a Stack is mounted and active.",
+      );
+    }
+
+    navStore.setState((prev) => {
+      const stacks = new Map(prev.stacks);
+      const nextScreens = [
+        ...(stacks.get(stackId) ?? []),
+        { element, id: options?.id, options },
+      ];
+      stacks.set(stackId, nextScreens);
+      return { stacks };
+    });
+  }
+
+  function popScreen(options?: { stackId?: string }) {
+    const stackId = options?.stackId ?? getActiveStackId();
+    if (!stackId) {
+      throw new Error(
+        "popScreen: could not resolve stackId. Pass { stackId } explicitly or ensure a Stack is mounted and active.",
+      );
+    }
+
+    navStore.setState((prev) => {
+      const stacks = new Map(prev.stacks);
+      const screens = stacks.get(stackId);
+      if (!screens || screens.length === 0) return prev;
+      stacks.set(stackId, screens.slice(0, -1));
+      return { stacks };
+    });
+  }
+
+  return { store: navStore, renderTreeStore, pushScreen, popScreen };
+}
+
 export type NavigationProviderProps = {
-  store?: NavigationStore;
+  navigation: Navigation;
   children: React.ReactNode;
 };
 
-const rootStore = createNavigationStore();
-export { rootStore as navigation };
-
 export function NavigationProvider(props: NavigationProviderProps) {
   return (
-    <RenderTreeRoot>
-      <NavigationStoreContext.Provider value={props.store ?? rootStore}>
+    <RenderTreeRoot store={props.navigation.renderTreeStore}>
+      <NavigationStoreContext.Provider value={props.navigation.store}>
         {props.children}
       </NavigationStoreContext.Provider>
     </RenderTreeRoot>
@@ -71,27 +146,6 @@ export function useNavigationStore(): NavigationStore {
     throw new Error("NavigationProvider is missing from the component tree.");
   }
   return store;
-}
-
-export function pushScreen(
-  store: NavigationStore,
-  element: React.ReactElement,
-  options?: PushScreenOptions,
-) {
-  const stackKey = options?.stackId;
-  if (!stackKey) {
-    throw new Error("pushScreen requires options.stackId.");
-  }
-
-  store.setState((prev) => {
-    const stacks = new Map(prev.stacks);
-    const nextScreens = [
-      ...(stacks.get(stackKey) ?? []),
-      { element, key: options?.id, options },
-    ];
-    stacks.set(stackKey, nextScreens);
-    return { stacks };
-  });
 }
 
 export function useStackScreens(
