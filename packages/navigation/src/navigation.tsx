@@ -20,8 +20,13 @@ export type NavigationScreenEntry = {
   options?: PushScreenOptions;
 };
 
+export type TabState = {
+  activeIndex: number;
+};
+
 export type NavigationState = {
   stacks: Map<string, NavigationScreenEntry[]>;
+  tabs: Map<string, TabState>;
 };
 
 export type NavigationStore = Store<NavigationState>;
@@ -34,6 +39,9 @@ export type NavigationStateInput = {
   stacks?:
     | Map<string, NavigationScreenEntry[]>
     | Record<string, NavigationScreenEntry[]>;
+  tabs?:
+    | Map<string, TabState>
+    | Record<string, TabState>;
 };
 
 export function createNavigationState(
@@ -54,6 +62,7 @@ export type Navigation = {
   renderTreeStore: RenderTreeStore;
   pushScreen: (element: React.ReactElement, options?: PushScreenOptions) => void;
   popScreen: (options?: { stackId?: string }) => void;
+  setActiveTab: (index: number, options?: { tabsId?: string }) => void;
 };
 
 export function createNavigation(
@@ -64,13 +73,13 @@ export function createNavigation(
   );
   const renderTreeStore = createRenderTreeStore();
 
-  function getActiveStackId(): string | null {
+  function getDeepestActiveNodeId(type: string): string | null {
     const tree = renderTreeStore.getState();
     let deepestId: string | null = null;
     let deepestDepth = -1;
 
     for (const [id, node] of tree.nodes) {
-      if (node.type !== "stack") continue;
+      if (node.type !== type) continue;
       if (!getRenderNodeActive(tree, id)) continue;
 
       const depth = getRenderNodeDepth(tree, id);
@@ -87,7 +96,7 @@ export function createNavigation(
     element: React.ReactElement,
     options?: PushScreenOptions,
   ) {
-    const stackId = options?.stackId ?? getActiveStackId();
+    const stackId = options?.stackId ?? getDeepestActiveNodeId("stack");
     if (!stackId) {
       throw new Error(
         "pushScreen: could not resolve stackId. Pass { stackId } explicitly or ensure a Stack is mounted and active.",
@@ -108,12 +117,12 @@ export function createNavigation(
       }
 
       stacks.set(stackId, [...existing, { element, id: options?.id, options }]);
-      return { stacks };
+      return { ...prev, stacks };
     });
   }
 
   function popScreen(options?: { stackId?: string }) {
-    const stackId = options?.stackId ?? getActiveStackId();
+    const stackId = options?.stackId ?? getDeepestActiveNodeId("stack");
     if (!stackId) {
       throw new Error(
         "popScreen: could not resolve stackId. Pass { stackId } explicitly or ensure a Stack is mounted and active.",
@@ -125,11 +134,26 @@ export function createNavigation(
       const screens = stacks.get(stackId);
       if (!screens || screens.length === 0) return prev;
       stacks.set(stackId, screens.slice(0, -1));
-      return { stacks };
+      return { ...prev, stacks };
     });
   }
 
-  return { store: navStore, renderTreeStore, pushScreen, popScreen };
+  function setActiveTab(index: number, options?: { tabsId?: string }) {
+    const tabsId = options?.tabsId ?? getDeepestActiveNodeId("tabs");
+    if (!tabsId) {
+      throw new Error(
+        "setActiveTab: could not resolve tabsId. Pass { tabsId } explicitly or ensure a Tabs is mounted and active.",
+      );
+    }
+
+    navStore.setState((prev) => {
+      const tabs = new Map(prev.tabs);
+      tabs.set(tabsId, { activeIndex: index });
+      return { ...prev, tabs };
+    });
+  }
+
+  return { store: navStore, renderTreeStore, pushScreen, popScreen, setActiveTab };
 }
 
 export type NavigationProviderProps = {
@@ -155,6 +179,13 @@ export function useNavigationStore(): NavigationStore {
   return store;
 }
 
+export function useTabActiveIndex(tabsId: string | null): number {
+  const store = useNavigationStore();
+  return useStore(store, (state) =>
+    tabsId ? state.tabs.get(tabsId)?.activeIndex ?? 0 : 0,
+  );
+}
+
 export function useStackScreens(
   stackKey: string | null,
 ): NavigationScreenEntry[] {
@@ -177,5 +208,15 @@ function normalizeNavigationState(
       ? new Map(stacksInput)
       : new Map(Object.entries(stacksInput));
 
-  return { stacks };
+  const tabsInput =
+    (input as NavigationState).tabs ??
+    (input as NavigationStateInput).tabs ??
+    new Map();
+
+  const tabs =
+    tabsInput instanceof Map
+      ? new Map(tabsInput)
+      : new Map(Object.entries(tabsInput));
+
+  return { stacks, tabs };
 }

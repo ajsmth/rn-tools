@@ -12,5 +12,10 @@ export const StyleSheet = {
   create: (styles: Record<string, unknown>) => styles,
 };
 
-export const View = "View";
-export const Text = "Text";
+export function View(props: { children?: unknown }) {
+  return props.children;
+}
+
+export function Text(props: { children?: unknown }) {
+  return props.children;
+}
