@@ -3,7 +3,7 @@ import { createStore, useStore } from "./store";
 import type { Store } from "./store";
 
 /**
- * Each RenderTreeRoot creates a store that holds a RenderTree object.
+ * Each RenderTree creates a store that holds a RenderTreeState object.
  * Nodes register themselves in that store keyed by id.
  * Nodes know their parent (id), type, and active flag.
  *
@@ -49,7 +49,7 @@ const nextRenderTreeIdForType = (() => {
   };
 })();
 
-export type RenderTree = {
+export type RenderTreeState = {
   nodes: Map<string, RenderNode>;
 };
 
@@ -74,7 +74,7 @@ function createRootNode(): RenderNode {
   };
 }
 
-function createRenderTree(nodes?: Map<string, RenderNode>): RenderTree {
+function createRenderTree(nodes?: Map<string, RenderNode>): RenderTreeState {
   const nextNodes = nodes ? new Map(nodes) : new Map();
   if (!nextNodes.has(RENDER_TREE_ROOT_ID)) {
     nextNodes.set(RENDER_TREE_ROOT_ID, createRootNode());
@@ -83,14 +83,14 @@ function createRenderTree(nodes?: Map<string, RenderNode>): RenderTree {
 }
 
 export function getRenderNode(
-  chart: RenderTree,
+  chart: RenderTreeState,
   id: string,
 ): RenderNode | null {
   return chart.nodes.get(id) ?? null;
 }
 
 export function getRenderNodeParent(
-  chart: RenderTree,
+  chart: RenderTreeState,
   id: string,
 ): RenderNode | null {
   const node = chart.nodes.get(id);
@@ -101,7 +101,7 @@ export function getRenderNodeParent(
 }
 
 export function getRenderNodeChildren(
-  chart: RenderTree,
+  chart: RenderTreeState,
   id: string,
 ): RenderNode[] {
   const node = chart.nodes.get(id);
@@ -114,7 +114,7 @@ export function getRenderNodeChildren(
 }
 
 export function getRenderNodeDepth(
-  chart: RenderTree,
+  chart: RenderTreeState,
   id: string,
   type?: RenderTreeType,
 ) {
@@ -134,7 +134,7 @@ export function getRenderNodeDepth(
   return depth;
 }
 
-export function getRenderNodeActive(chart: RenderTree, id: string) {
+export function getRenderNodeActive(chart: RenderTreeState, id: string) {
   const node = chart.nodes.get(id);
   if (!node) {
     return false;
@@ -153,7 +153,7 @@ export function getRenderNodeActive(chart: RenderTree, id: string) {
 }
 
 export function buildRenderTreeDebugTree(
-  chart: RenderTree,
+  chart: RenderTreeState,
 ): RenderTreeDebugNode | null {
   const root = chart.nodes.get(RENDER_TREE_ROOT_ID);
   if (!root) {
@@ -192,7 +192,7 @@ export function buildRenderTreeDebugTree(
 }
 
 export function logRenderTreeDebugTree(
-  chart: RenderTree,
+  chart: RenderTreeState,
   label = "RenderTreeDebugTree",
 ) {
   const tree = buildRenderTreeDebugTree(chart);
@@ -203,7 +203,7 @@ export function logRenderTreeDebugTree(
 }
 
 export const RenderTreeStoreContext =
-  React.createContext<Store<RenderTree> | null>(null);
+  React.createContext<Store<RenderTreeState> | null>(null);
 
 export const RenderNodeIdContext = React.createContext<string | null>(null);
 export const RenderNodeTypeContext = React.createContext<RenderTreeType | null>(
@@ -212,7 +212,7 @@ export const RenderNodeTypeContext = React.createContext<RenderTreeType | null>(
 // TODO: add coverage for node type context/hook wiring.
 
 function registerRenderNode(
-  store: Store<RenderTree>,
+  store: Store<RenderTreeState>,
   nodeId: string,
   options: RenderTreeOptions,
   parentId: string | null,
@@ -248,7 +248,7 @@ function registerRenderNode(
   });
 }
 
-function unregisterRenderNode(store: Store<RenderTree>, nodeId: string) {
+function unregisterRenderNode(store: Store<RenderTreeState>, nodeId: string) {
   store.setState((tree) => {
     if (!tree.nodes.has(nodeId)) {
       return tree;
@@ -273,22 +273,22 @@ function unregisterRenderNode(store: Store<RenderTree>, nodeId: string) {
  * Root provider for a render tree.
  *
  * Usage:
- * <RenderTreeRoot>
+ * <RenderTree>
  *   <Stack />
- * </RenderTreeRoot>
+ * </RenderTree>
  */
-export type RenderTreeRootProps = {
+export type RenderTreeProps = {
   children: React.ReactNode;
-  store?: Store<RenderTree>;
+  store?: Store<RenderTreeState>;
 };
 
-export type RenderTreeStore = Store<RenderTree>;
+export type RenderTreeStore = Store<RenderTreeState>;
 
-export function createRenderTreeStore(initial?: RenderTree): RenderTreeStore {
+export function createRenderTreeStore(initial?: RenderTreeState): RenderTreeStore {
   return createStore(initial ? createRenderTree(initial.nodes) : createRenderTree());
 }
 
-export function RenderTreeRoot(props: RenderTreeRootProps) {
+export const RenderTree = React.memo(function RenderTree(props: RenderTreeProps) {
   const storeRef = React.useRef(createRenderTreeStore());
   const store = props.store ?? storeRef.current;
 
@@ -301,7 +301,7 @@ export function RenderTreeRoot(props: RenderTreeRootProps) {
       </RenderNodeIdContext.Provider>
     </RenderTreeStoreContext.Provider>
   );
-}
+});
 
 /**
  * Registers a node in the render tree.
@@ -326,7 +326,7 @@ export function RenderTreeNode(
   );
 
   if (!store) {
-    throw new Error("RenderTreeRoot is missing from the component tree.");
+    throw new Error("RenderTree is missing from the component tree.");
   }
 
   React.useLayoutEffect(() => {
@@ -356,7 +356,7 @@ export function useRenderNode(): RenderNode | null {
   const store = React.useContext(RenderTreeStoreContext);
   const nodeId = React.useContext(RenderNodeIdContext);
   if (!store) {
-    throw new Error("RenderTreeRoot is missing from the component tree.");
+    throw new Error("RenderTree is missing from the component tree.");
   }
   if (!nodeId) {
     throw new Error("RenderNode is missing from the component tree.");
@@ -373,7 +373,7 @@ export function useRenderNodeId(): string {
   const store = React.useContext(RenderTreeStoreContext);
   const nodeId = React.useContext(RenderNodeIdContext);
   if (!store) {
-    throw new Error("RenderTreeRoot is missing from the component tree.");
+    throw new Error("RenderTree is missing from the component tree.");
   }
   if (!nodeId) {
     throw new Error("RenderNode is missing from the component tree.");
@@ -385,7 +385,7 @@ export function useRenderNodeIdOfType(type: RenderTreeType): string {
   const store = React.useContext(RenderTreeStoreContext);
   const nodeId = React.useContext(RenderNodeIdContext);
   if (!store) {
-    throw new Error("RenderTreeRoot is missing from the component tree.");
+    throw new Error("RenderTree is missing from the component tree.");
   }
   if (!nodeId) {
     throw new Error("RenderNode is missing from the component tree.");
@@ -413,7 +413,7 @@ export function useRenderNodeType(): RenderTreeType {
   const store = React.useContext(RenderTreeStoreContext);
   const type = React.useContext(RenderNodeTypeContext);
   if (!store) {
-    throw new Error("RenderTreeRoot is missing from the component tree.");
+    throw new Error("RenderTree is missing from the component tree.");
   }
   if (!type) {
     throw new Error("RenderNode is missing from the component tree.");
@@ -430,13 +430,13 @@ export function useRenderNodeType(): RenderTreeType {
  * );
  */
 export function useRenderTreeSelector<S>(
-  selector: (chart: RenderTree, id: string) => S,
+  selector: (chart: RenderTreeState, id: string) => S,
   isEqual?: (left: S, right: S) => boolean,
 ): S | null {
   const store = React.useContext(RenderTreeStoreContext);
   const nodeId = React.useContext(RenderNodeIdContext);
   if (!store) {
-    throw new Error("RenderTreeRoot is missing from the component tree.");
+    throw new Error("RenderTree is missing from the component tree.");
   }
   if (!nodeId) {
     throw new Error("RenderNode is missing from the component tree.");

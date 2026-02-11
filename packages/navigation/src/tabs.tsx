@@ -4,7 +4,7 @@ import {
   useRenderNode,
   useSafeAreaInsets,
 } from "@rn-tools/core";
-import { useTabActiveIndex, useNavigationStore, useNavigation } from "./navigation";
+import { useTabActiveIndex, useNavigationStore, useNavigation } from "./navigation-client";
 
 import * as RNScreens from "react-native-screens";
 import { StyleSheet, View, type ViewStyle } from "react-native";

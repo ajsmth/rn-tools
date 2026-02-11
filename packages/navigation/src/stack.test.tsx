@@ -5,10 +5,10 @@ import { RenderNodeProbe } from "@rn-tools/core/mocks/render-node-probe";
 
 import {
   createNavigation,
-  NavigationProvider,
   loadNavigationState,
   type NavigationStateInput,
-} from "./navigation";
+} from "./navigation-client";
+import { Navigation } from "./navigation";
 import { Stack, type StackHandle } from "./stack";
 
 async function renderWithProviders(
@@ -17,7 +17,7 @@ async function renderWithProviders(
 ) {
   const navigation = createNavigation(initialState);
   const renderer = render(
-    <NavigationProvider navigation={navigation}>{node}</NavigationProvider>,
+    <Navigation navigation={navigation}>{node}</Navigation>,
   );
   return { store: navigation.store, navigation, renderer };
 }
@@ -219,9 +219,9 @@ describe("Stack", () => {
     });
 
     const renderer = render(
-      <NavigationProvider navigation={navigation}>
+      <Navigation navigation={navigation}>
         <Stack id="stack-a" />
-      </NavigationProvider>,
+      </Navigation>,
     );
 
     expect(renderer.getByText("a1:true")).toBeTruthy();
@@ -304,10 +304,10 @@ describe("Stack", () => {
     }
 
     const result = render(
-      <NavigationProvider navigation={navigation}>
+      <Navigation navigation={navigation}>
         <Stack id="left" rootScreen={<span>left-root</span>} />
         <Stack id="right" active={true} rootScreen={<NestedRight />} />
-      </NavigationProvider>,
+      </Navigation>,
     );
 
     await waitFor(() => {
@@ -325,10 +325,10 @@ describe("Stack", () => {
 
     // Deactivate the right subtree — left should become the active stack
     result.rerender(
-      <NavigationProvider navigation={navigation}>
+      <Navigation navigation={navigation}>
         <Stack id="left" rootScreen={<span>left-root</span>} />
         <Stack id="right" active={false} rootScreen={<NestedRight />} />
-      </NavigationProvider>,
+      </Navigation>,
     );
 
     act(() => {

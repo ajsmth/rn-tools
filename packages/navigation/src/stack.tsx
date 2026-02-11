@@ -4,7 +4,7 @@ import {
   useStackScreens,
   useNavigation,
   type PushScreenOptions,
-} from "./navigation";
+} from "./navigation-client";
 
 // TODO - replace with custom implementation
 import * as RNScreens from "react-native-screens";

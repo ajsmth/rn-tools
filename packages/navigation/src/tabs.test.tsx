@@ -5,9 +5,9 @@ import { RenderNodeProbe } from "@rn-tools/core/mocks/render-node-probe";
 
 import {
   createNavigation,
-  NavigationProvider,
   type NavigationStateInput,
-} from "./navigation";
+} from "./navigation-client";
+import { Navigation } from "./navigation";
 import { Tabs, type TabScreenOptions, type TabsHandle } from "./tabs";
 import { Stack } from "./stack";
 
@@ -35,7 +35,7 @@ function renderWithProviders(
 ) {
   const navigation = createNavigation(initialState);
   const renderer = render(
-    <NavigationProvider navigation={navigation}>{node}</NavigationProvider>,
+    <Navigation navigation={navigation}>{node}</Navigation>,
   );
   return { store: navigation.store, navigation, renderer };
 }
@@ -196,9 +196,9 @@ describe("Nested Stack + Tabs", () => {
     ];
 
     const result = render(
-      <NavigationProvider navigation={navigation}>
+      <Navigation navigation={navigation}>
         <Tabs id="my-tabs" screens={screens} />
-      </NavigationProvider>,
+      </Navigation>,
     );
 
     await waitFor(() => {
@@ -232,9 +232,9 @@ describe("Nested Stack + Tabs", () => {
     ];
 
     render(
-      <NavigationProvider navigation={navigation}>
+      <Navigation navigation={navigation}>
         <Tabs id="my-tabs" screens={screens} />
-      </NavigationProvider>,
+      </Navigation>,
     );
 
     // Switch to tab 1 (stack-b)
@@ -268,9 +268,9 @@ describe("Nested Stack + Tabs", () => {
     ];
 
     const result = render(
-      <NavigationProvider navigation={navigation}>
+      <Navigation navigation={navigation}>
         <Stack id="outer-stack" rootScreen={<Tabs id="inner-tabs" screens={tabScreens} />} />
-      </NavigationProvider>,
+      </Navigation>,
     );
 
     await waitFor(() => {

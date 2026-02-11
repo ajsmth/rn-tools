@@ -3,7 +3,7 @@ import { render, waitFor } from "@testing-library/react/pure";
 import { expect, it } from "vitest";
 import {
   RenderTreeNode,
-  RenderTreeRoot,
+  RenderTree,
   getRenderNodeActive,
   getRenderNodeDepth,
   useRenderTreeSelector,
@@ -30,7 +30,7 @@ it("computes depth scoped by type", async () => {
   const screenDepthRef = { current: null as unknown };
 
   await renderAndFlush(
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="stack">
         <RenderNodeProbe
           render={(data) => {
@@ -55,7 +55,7 @@ it("computes depth scoped by type", async () => {
           </RenderTreeNode>
         </RenderTreeNode>
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(stackDepthRef.current).toBe(1);
@@ -67,7 +67,7 @@ it("propagates active state through parents", async () => {
   const screenActiveRef = { current: null as unknown };
 
   const tree = await renderAndFlush(
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="tabs" active>
         <RenderTreeNode type="stack" active>
           <RenderTreeNode type="screen">
@@ -80,14 +80,14 @@ it("propagates active state through parents", async () => {
           </RenderTreeNode>
         </RenderTreeNode>
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(screenActiveRef.current).toBe(true);
 
   await updateAndFlush(
     tree,
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="tabs" active={false}>
         <RenderTreeNode type="stack">
           <RenderTreeNode type="screen">
@@ -100,7 +100,7 @@ it("propagates active state through parents", async () => {
           </RenderTreeNode>
         </RenderTreeNode>
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(screenActiveRef.current).toBe(false);
@@ -110,7 +110,7 @@ it("computes active in a type-agnostic way", async () => {
   const leafActiveRef = { current: null as unknown };
 
   await renderAndFlush(
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="tabs" active={false}>
         <RenderTreeNode type="stack" active>
           <RenderTreeNode type="screen">
@@ -125,7 +125,7 @@ it("computes active in a type-agnostic way", async () => {
           </RenderTreeNode>
         </RenderTreeNode>
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(leafActiveRef.current).toBe(false);
@@ -138,7 +138,7 @@ it("tracks children by id", async () => {
   const screenParentRef = { current: null as string | null };
 
   await renderAndFlush(
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="stack">
         <RenderNodeProbe
           render={(data) => {
@@ -157,7 +157,7 @@ it("tracks children by id", async () => {
           />
         </RenderTreeNode>
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(stackChildrenRef.current).toContain(screenIdRef.current);
@@ -168,7 +168,7 @@ it("updates depth when a stack is reparented", async () => {
   const nestedStackDepthRef = { current: null as unknown };
 
   const tree = await renderAndFlush(
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="stack">
         <RenderTreeNode type="stack">
           <RenderNodeProbe
@@ -179,14 +179,14 @@ it("updates depth when a stack is reparented", async () => {
           />
         </RenderTreeNode>
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(nestedStackDepthRef.current).toBe(2);
 
   await updateAndFlush(
     tree,
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="stack">
         <RenderNodeProbe
           render={(data) => {
@@ -195,7 +195,7 @@ it("updates depth when a stack is reparented", async () => {
           }}
         />
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(nestedStackDepthRef.current).toBe(1);
@@ -207,7 +207,7 @@ it("updates parent/children relationships on unmount", async () => {
   const screenParentIdRef = { current: null as string | null };
 
   const tree = await renderAndFlush(
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="stack">
         <RenderNodeProbe
           render={(data) => {
@@ -225,7 +225,7 @@ it("updates parent/children relationships on unmount", async () => {
           />
         </RenderTreeNode>
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(stackChildrenRef.current).toContain("screen-a");
@@ -233,7 +233,7 @@ it("updates parent/children relationships on unmount", async () => {
 
   await updateAndFlush(
     tree,
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="stack">
         <RenderNodeProbe
           render={(data) => {
@@ -242,7 +242,7 @@ it("updates parent/children relationships on unmount", async () => {
           }}
         />
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(stackChildrenRef.current).not.toContain("screen-a");
@@ -252,7 +252,7 @@ it("respects local active overrides", async () => {
   const screenActiveRef = { current: null as unknown };
 
   const tree = await renderAndFlush(
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="stack" active>
         <RenderTreeNode type="screen" active={false}>
           <RenderNodeProbe
@@ -263,14 +263,14 @@ it("respects local active overrides", async () => {
           />
         </RenderTreeNode>
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(screenActiveRef.current).toBe(false);
 
   await updateAndFlush(
     tree,
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="stack" active={false}>
         <RenderTreeNode type="screen" active>
           <RenderNodeProbe
@@ -281,7 +281,7 @@ it("respects local active overrides", async () => {
           />
         </RenderTreeNode>
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(screenActiveRef.current).toBe(false);
@@ -335,12 +335,12 @@ it("only re-renders nodes affected by an upstream change", async () => {
   }
 
   const tree = await renderAndFlush(
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="tabs" active>
         <PanelA active />
         <StackB />
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   const initialPanelARenders = panelARenders.current;
@@ -349,12 +349,12 @@ it("only re-renders nodes affected by an upstream change", async () => {
 
   await updateAndFlush(
     tree,
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="tabs" active>
         <PanelA active={false} />
         <StackB />
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(panelARenders.current).toBeGreaterThan(initialPanelARenders);
@@ -395,12 +395,12 @@ it("re-renders siblings when a shared ancestor changes", async () => {
   }
 
   const tree = await renderAndFlush(
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="tabs" active>
         <StackA />
         <StackB />
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   const initialStackARenders = stackARenders.current;
@@ -408,12 +408,12 @@ it("re-renders siblings when a shared ancestor changes", async () => {
 
   await updateAndFlush(
     tree,
-    <RenderTreeRoot>
+    <RenderTree>
       <RenderTreeNode type="tabs" active={false}>
         <StackA />
         <StackB />
       </RenderTreeNode>
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(stackARenders.current).toBeGreaterThan(initialStackARenders);
@@ -461,10 +461,10 @@ it("only re-renders the reparented subtree when depth changes", async () => {
   }
 
   const tree = await renderAndFlush(
-    <RenderTreeRoot>
+    <RenderTree>
       <OuterStack />
       <SiblingStack />
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   const initialInnerStackRenders = innerStackRenders.current;
@@ -472,10 +472,10 @@ it("only re-renders the reparented subtree when depth changes", async () => {
 
   await updateAndFlush(
     tree,
-    <RenderTreeRoot>
+    <RenderTree>
       <InnerStack />
       <SiblingStack />
-    </RenderTreeRoot>,
+    </RenderTree>,
   );
 
   expect(innerStackRenders.current).toBeGreaterThan(initialInnerStackRenders);

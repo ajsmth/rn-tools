@@ -1,16 +1,16 @@
 import {
   createNavigation,
-  NavigationProvider,
+  Navigation,
   Stack,
   Tabs,
-  type TabScreenEntry,
+  type TabScreenOptions,
 } from "@rn-tools/navigation";
 import * as React from "react";
 import { Text, View, Button, Pressable } from "react-native";
 
 const navigation = createNavigation();
 
-const tabScreens: TabScreenEntry[] = [
+const tabScreens: TabScreenOptions[] = [
   {
     id: "home",
     screen: <Stack id="home" rootScreen={<HomeScreen />} />,
@@ -30,14 +30,9 @@ const tabScreens: TabScreenEntry[] = [
 
 export default function App() {
   return (
-    <NavigationProvider navigation={navigation}>
-      <Stack
-        id="root"
-        rootScreen={
-          <Tabs id="main-tabs" screens={tabScreens} tabbarPosition="top" />
-        }
-      />
-    </NavigationProvider>
+    <Navigation navigation={navigation}>
+      <Tabs id="main-tabs" screens={tabScreens} tabbarPosition="top" />
+    </Navigation>
   );
 }
 
