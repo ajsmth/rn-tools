@@ -9,7 +9,7 @@ import {
   loadNavigationState,
   type NavigationStateInput,
 } from "./navigation";
-import { Stack } from "./stack";
+import { Stack, type StackHandle } from "./stack";
 
 async function renderWithProviders(
   node: React.ReactNode,
@@ -268,6 +268,32 @@ describe("Stack", () => {
 
     expect(navigation.store.getState().stacks.get("stack-a")).toHaveLength(1);
     renderer.getByText("screen-a-again");
+  });
+
+  it("ref.pushScreen adds a screen and ref.popScreen removes it", async () => {
+    const ref = React.createRef<StackHandle>();
+    const { renderer } = await renderWithProviders(
+      <Stack ref={ref} id="stack-a" rootScreen={<span>root</span>} />,
+    );
+
+    expect(renderer.getByText("root")).toBeTruthy();
+
+    act(() => {
+      ref.current!.pushScreen(<span>pushed</span>, { id: "pushed-screen" });
+    });
+
+    await waitFor(() => {
+      expect(renderer.getByText("pushed")).toBeTruthy();
+    });
+
+    act(() => {
+      ref.current!.popScreen();
+    });
+
+    await waitFor(() => {
+      expect(renderer.queryByText("pushed")).toBeNull();
+      expect(renderer.getByText("root")).toBeTruthy();
+    });
   });
 
   it("resolves the deepest active stack and falls back when a subtree becomes inactive", async () => {

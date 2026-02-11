@@ -4,7 +4,7 @@ import {
   useRenderNode,
   useSafeAreaInsets,
 } from "@rn-tools/core";
-import { useTabActiveIndex, useNavigationStore } from "./navigation";
+import { useTabActiveIndex, useNavigationStore, useNavigation } from "./navigation";
 
 import * as RNScreens from "react-native-screens";
 import { StyleSheet, View, type ViewStyle } from "react-native";
@@ -121,21 +121,17 @@ export const Tabs = React.memo(
   React.forwardRef<TabsHandle, Omit<TabsProps, "children">>(
     function Tabs(props, ref) {
       const position = props.tabbarPosition ?? "bottom";
-      const navStore = useNavigationStore();
+      const navigation = useNavigation();
       const node = useRenderNode();
       const tabsId = props.id ?? node?.id ?? null;
 
       React.useImperativeHandle(ref, () => ({
         setActiveIndex(index: number) {
           if (tabsId) {
-            navStore.setState((prev) => {
-              const tabs = new Map(prev.tabs);
-              tabs.set(tabsId, { activeIndex: index });
-              return { ...prev, tabs };
-            });
+            navigation.setActiveTab(index, { tabsId });
           }
         },
-      }), [tabsId, navStore]);
+      }), [tabsId, navigation]);
 
       const tabbar = React.useMemo(
         () => (

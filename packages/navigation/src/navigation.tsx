@@ -31,6 +31,8 @@ export type NavigationState = {
 
 export type NavigationStore = Store<NavigationState>;
 
+const NavigationContext = React.createContext<Navigation | null>(null);
+
 const NavigationStoreContext = React.createContext<NavigationStore | null>(
   null,
 );
@@ -164,11 +166,21 @@ export type NavigationProviderProps = {
 export function NavigationProvider(props: NavigationProviderProps) {
   return (
     <RenderTreeRoot store={props.navigation.renderTreeStore}>
-      <NavigationStoreContext.Provider value={props.navigation.store}>
-        {props.children}
-      </NavigationStoreContext.Provider>
+      <NavigationContext.Provider value={props.navigation}>
+        <NavigationStoreContext.Provider value={props.navigation.store}>
+          {props.children}
+        </NavigationStoreContext.Provider>
+      </NavigationContext.Provider>
     </RenderTreeRoot>
   );
+}
+
+export function useNavigation(): Navigation {
+  const navigation = React.useContext(NavigationContext);
+  if (!navigation) {
+    throw new Error("NavigationProvider is missing from the component tree.");
+  }
+  return navigation;
 }
 
 export function useNavigationStore(): NavigationStore {
