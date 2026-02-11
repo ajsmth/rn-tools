@@ -9,7 +9,7 @@ import { useTabActiveIndex, useNavigationStore } from "./navigation";
 import * as RNScreens from "react-native-screens";
 import { StyleSheet, View, type ViewStyle } from "react-native";
 
-export type TabScreenEntry = {
+export type TabScreenOptions = {
   id: string;
   screen: React.ReactElement;
   tab: (props: {
@@ -19,25 +19,29 @@ export type TabScreenEntry = {
   }) => React.ReactElement;
 };
 
+export type TabsHandle = {
+  setActiveIndex: (index: number) => void;
+};
+
 export type TabsProps = {
   id?: string;
   active?: boolean;
-  screens: TabScreenEntry[];
+  screens: TabScreenOptions[];
   tabbarPosition?: "top" | "bottom";
   tabbarStyle?: ViewStyle;
   children?: React.ReactNode;
 };
 
-function TabsRoot(props: TabsProps) {
+const TabsRoot = React.memo(function TabsRoot(props: TabsProps) {
   return (
     <RenderTreeNode type="tabs" id={props.id} active={props.active}>
       {props.children}
     </RenderTreeNode>
   );
-}
+});
 
-function TabBar(props: {
-  screens: TabScreenEntry[];
+const TabBar = React.memo(function TabBar(props: {
+  screens: TabScreenOptions[];
   style?: ViewStyle;
   position: "top" | "bottom";
 }) {
@@ -47,37 +51,47 @@ function TabBar(props: {
   const navStore = useNavigationStore();
   const insets = useSafeAreaInsets();
 
+  const tabbarStyle = React.useMemo(
+    () => [
+      styles.tabbar,
+      props.position === "top" && { paddingTop: insets.top },
+      props.position === "bottom" && { paddingBottom: insets.bottom },
+      props.style,
+    ],
+    [props.position, props.style, insets.top, insets.bottom],
+  );
+
+  const handlePress = React.useCallback(
+    (index: number) => {
+      if (tabsId) {
+        navStore.setState((prev) => {
+          const tabs = new Map(prev.tabs);
+          tabs.set(tabsId, { activeIndex: index });
+          return { ...prev, tabs };
+        });
+      }
+    },
+    [tabsId, navStore],
+  );
+
   return (
-    <View
-      style={[
-        styles.tabbar,
-        props.position === "top" && { paddingTop: insets.top },
-        props.position === "bottom" && { paddingBottom: insets.bottom },
-        props.style,
-      ]}
-    >
+    <View style={tabbarStyle}>
       {props.screens.map((entry, index) => (
         <React.Fragment key={entry.id}>
           {entry.tab({
             id: entry.id,
             isActive: index === activeIndex,
-            onPress: () => {
-              if (tabsId) {
-                navStore.setState((prev) => {
-                  const tabs = new Map(prev.tabs);
-                  tabs.set(tabsId, { activeIndex: index });
-                  return { ...prev, tabs };
-                });
-              }
-            },
+            onPress: () => handlePress(index),
           })}
         </React.Fragment>
       ))}
     </View>
   );
-}
+});
 
-function TabsSlot(props: { screens: TabScreenEntry[] }) {
+const TabsSlot = React.memo(function TabsSlot(props: {
+  screens: TabScreenOptions[];
+}) {
   const node = useRenderNode();
   const tabsId = node?.id ?? null;
   const activeIndex = useTabActiveIndex(tabsId);
@@ -101,33 +115,59 @@ function TabsSlot(props: { screens: TabScreenEntry[] }) {
       ))}
     </RNScreens.ScreenContainer>
   );
-}
+});
 
-export function Tabs(props: Omit<TabsProps, "children">) {
-  const position = props.tabbarPosition ?? "bottom";
-  const tabbar = (
-    <TabBar
-      screens={props.screens}
-      style={props.tabbarStyle}
-      position={position}
-    />
-  );
+export const Tabs = React.memo(
+  React.forwardRef<TabsHandle, Omit<TabsProps, "children">>(
+    function Tabs(props, ref) {
+      const position = props.tabbarPosition ?? "bottom";
+      const navStore = useNavigationStore();
+      const node = useRenderNode();
+      const tabsId = props.id ?? node?.id ?? null;
 
-  return (
-    <TabsRoot {...props}>
-      {position === "top" && tabbar}
-      <View style={{ flex: 1 }}>
-        <TabsSlot screens={props.screens} />
-      </View>
-      {position === "bottom" && tabbar}
-    </TabsRoot>
-  );
-}
+      React.useImperativeHandle(ref, () => ({
+        setActiveIndex(index: number) {
+          if (tabsId) {
+            navStore.setState((prev) => {
+              const tabs = new Map(prev.tabs);
+              tabs.set(tabsId, { activeIndex: index });
+              return { ...prev, tabs };
+            });
+          }
+        },
+      }), [tabsId, navStore]);
+
+      const tabbar = React.useMemo(
+        () => (
+          <TabBar
+            screens={props.screens}
+            style={props.tabbarStyle}
+            position={position}
+          />
+        ),
+        [props.screens, props.tabbarStyle, position],
+      );
+
+      return (
+        <TabsRoot {...props}>
+          {position === "top" && tabbar}
+          <View style={styles.slotContainer}>
+            <TabsSlot screens={props.screens} />
+          </View>
+          {position === "bottom" && tabbar}
+        </TabsRoot>
+      );
+    },
+  ),
+);
 
 const styles = StyleSheet.create({
   tabbar: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+  },
+  slotContainer: {
+    flex: 1,
   },
 });

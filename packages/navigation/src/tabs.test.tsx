@@ -8,10 +8,10 @@ import {
   NavigationProvider,
   type NavigationStateInput,
 } from "./navigation";
-import { Tabs, type TabScreenEntry } from "./tabs";
+import { Tabs, type TabScreenOptions, type TabsHandle } from "./tabs";
 import { Stack } from "./stack";
 
-function makeScreens(count: number): TabScreenEntry[] {
+function makeScreens(count: number): TabScreenOptions[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `tab-${i}`,
     screen: (
@@ -88,6 +88,26 @@ describe("Tabs", () => {
     expect(renderer.getByText("tab-0:tab-screen:false")).toBeTruthy();
   });
 
+  it("ref.setActiveIndex changes the active tab", async () => {
+    const screens = makeScreens(3);
+    const ref = React.createRef<TabsHandle>();
+    const { renderer } = renderWithProviders(
+      <Tabs ref={ref} id="my-tabs" screens={screens} />,
+    );
+
+    expect(renderer.getByText("tab-0:tab-screen:true")).toBeTruthy();
+
+    act(() => {
+      ref.current!.setActiveIndex(2);
+    });
+
+    await waitFor(() => {
+      expect(renderer.getByText("tab-0:tab-screen:false")).toBeTruthy();
+      expect(renderer.getByText("tab-1:tab-screen:false")).toBeTruthy();
+      expect(renderer.getByText("tab-2:tab-screen:true")).toBeTruthy();
+    });
+  });
+
   it("supports preloaded activeIndex from the navigation state", () => {
     const screens = makeScreens(3);
     const { renderer } = renderWithProviders(
@@ -162,7 +182,7 @@ describe("Nested Stack + Tabs", () => {
   it("pushScreen targets the stack inside the active tab", async () => {
     const navigation = createNavigation();
 
-    const screens: TabScreenEntry[] = [
+    const screens: TabScreenOptions[] = [
       {
         id: "tab-a",
         screen: <Stack id="stack-a" rootScreen={<span>stack-a-root</span>} />,
@@ -198,7 +218,7 @@ describe("Nested Stack + Tabs", () => {
   it("switching tabs redirects pushScreen to the newly active stack", async () => {
     const navigation = createNavigation();
 
-    const screens: TabScreenEntry[] = [
+    const screens: TabScreenOptions[] = [
       {
         id: "tab-a",
         screen: <Stack id="stack-a" rootScreen={<span>stack-a-root</span>} />,
@@ -234,7 +254,7 @@ describe("Nested Stack + Tabs", () => {
   it("setActiveTab resolves the correct tabs when a stack wraps tabs", async () => {
     const navigation = createNavigation();
 
-    const tabScreens: TabScreenEntry[] = [
+    const tabScreens: TabScreenOptions[] = [
       {
         id: "tab-a",
         screen: <span>tab-a-content</span>,
