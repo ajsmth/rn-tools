@@ -1,0 +1,11 @@
+{
+  "$schema": "https://github.com/changesets/changesets/blob/main/packages/config/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [["@rn-tools/core", "@rn-tools/sheets", "@rn-tools/navigation"]],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}

@@ -1,6 +1,6 @@
 {
   "name": "@rn-tools/sheets",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "A React Native library for creating and managing native sheets in Expo applications.",
   "main": "src/index.ts",
   "scripts": {
@@ -31,7 +31,7 @@
     "@types/react": "18.3.12"
   },
   "dependencies": {
-    "@rn-tools/core": "*"
+    "@rn-tools/core": "3.0.0"
   },
   "peerDependencies": {
     "expo": "*",
