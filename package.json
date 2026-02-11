@@ -2,11 +2,7 @@
   "private": true,
   "scripts": {
     "start": "cd example && yarn start",
-    "build:ui": "cd packages/ui && yarn build --watch",
-    "build:tailwind": "cd packages/tailwind && yarn build --watch",
-    "publish:navigation": "cd packages/navigation && yarn publish --no-git-tag-version",
-    "test": "yarn workspaces foreach -A -p -t --exclude example run test",
-    "prepare": "husky"
+    "test": "node scripts/run-tests.mjs"
   },
   "workspaces": [
     "packages/*",

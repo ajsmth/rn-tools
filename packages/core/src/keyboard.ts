@@ -1,5 +1,5 @@
 import { Keyboard, KeyboardEvent } from "react-native";
-import { Store, useStore } from "./store";
+import { createStore, useStore } from "./store";
 
 export type KeyboardState = {
   height: number;
@@ -11,7 +11,7 @@ export function getKeyboardHeight(): number {
   return fallbackHeight;
 }
 
-export const keyboardHeightStore = new Store<KeyboardState>({
+export const keyboardHeightStore = createStore<KeyboardState>({
   height: getKeyboardHeight(),
 });
 

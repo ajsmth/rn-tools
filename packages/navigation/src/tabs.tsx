@@ -1,313 +1,169 @@
 import * as React from "react";
 import {
-  BackHandler,
-  Pressable,
-  StyleSheet,
-  View,
-  type PressableProps,
-  type ViewProps,
-  type ViewStyle,
-} from "react-native";
-import {
-  Screen as RNScreen,
-  ScreenProps as RNScreenProps,
-  ScreenContainer as RNScreenContainer,
-  ScreenContainerProps as RNScreenContainerProps,
-} from "react-native-screens";
+  RenderTreeNode,
+  useRenderNode,
+  useSafeAreaInsets,
+} from "@rn-tools/core";
+import { useTabActiveIndex, useNavigationStore, useNavigation } from "./navigation-client";
 
-import {
-  ActiveContext,
-  DepthContext,
-  TabIdContext,
-  TabScreenIndexContext,
-} from "./contexts";
-import {
-  useGetNavigationStore,
-  useNavigationDispatch,
-  useNavigationState,
-} from "./navigation-store";
-import { generateTabId, useSafeAreaInsetsSafe } from "./utils";
+import * as RNScreens from "react-native-screens";
+import { StyleSheet, View, type ViewStyle } from "react-native";
 
-export type TabsRootProps = {
-  children: React.ReactNode;
+export type TabScreenOptions = {
+  id: string;
+  screen: React.ReactElement;
+  tab: (props: {
+    id: string;
+    isActive: boolean;
+    onPress: () => void;
+  }) => React.ReactElement;
+};
+
+export type TabsHandle = {
+  setActiveIndex: (index: number) => void;
+};
+
+export type TabsProps = {
   id?: string;
+  active?: boolean;
+  screens: TabScreenOptions[];
+  tabbarPosition?: "top" | "bottom";
+  tabbarStyle?: ViewStyle;
+  children?: React.ReactNode;
 };
 
-let useTabsInternal = (tabId = "") =>
-  useNavigationState((state) => {
-    let tab = state.tabs.lookup[tabId];
-
-    if (!tab) {
-      return null;
-    }
-
-    return tab;
-  });
-
-let TabsRoot = React.memo(function TabsRoot({ children, id }: TabsRootProps) {
-  let tabIdRef = React.useRef(id || generateTabId());
-  let tabId = tabIdRef.current;
-  let tabs = useTabsInternal(tabId);
-  let dispatch = useNavigationDispatch();
-
-  React.useEffect(() => {
-    if (!tabs) {
-      dispatch({ type: "CREATE_TAB_INSTANCE", tabId: tabId });
-    }
-  }, [tabs, tabId, dispatch]);
-
-  let depth = React.useContext(DepthContext);
-  let isActive = React.useContext(ActiveContext);
-  let parentTabId = React.useContext(TabIdContext);
-
-  React.useEffect(() => {
-    if (tabs != null) {
-      dispatch({
-        type: "REGISTER_TAB",
-        depth,
-        isActive,
-        tabId: tabs.id,
-        parentTabId,
-      });
-    }
-  }, [tabs, depth, isActive, parentTabId, dispatch]);
-
-  React.useEffect(() => {
-    return () => {
-      if (tabId != null) {
-        dispatch({ type: "UNREGISTER_TAB", tabId });
-      }
-    };
-  }, [tabId, dispatch]);
-
-  if (!tabs) {
-    return null;
-  }
-
+const TabsRoot = React.memo(function TabsRoot(props: TabsProps) {
   return (
-    <TabIdContext.Provider value={tabs.id}>{children}</TabIdContext.Provider>
+    <RenderTreeNode type="tabs" id={props.id} active={props.active}>
+      {props.children}
+    </RenderTreeNode>
   );
 });
 
-let defaultScreenContainerStyle = {
-  flex: 1,
-};
+const TabBar = React.memo(function TabBar(props: {
+  screens: TabScreenOptions[];
+  style?: ViewStyle;
+  position: "top" | "bottom";
+}) {
+  const node = useRenderNode();
+  const tabsId = node?.id ?? null;
+  const activeIndex = useTabActiveIndex(tabsId);
+  const navStore = useNavigationStore();
+  const insets = useSafeAreaInsets();
 
-export type TabsScreensProps = RNScreenContainerProps;
-
-function TabsScreens({ children, ...props }: TabsScreensProps) {
-  return (
-    <RNScreenContainer style={defaultScreenContainerStyle} {...props}>
-      {React.Children.map(children, (child, index) => {
-        return (
-          <TabScreenIndexContext.Provider value={index}>
-            {child}
-          </TabScreenIndexContext.Provider>
-        );
-      })}
-    </RNScreenContainer>
+  const tabbarStyle = React.useMemo(
+    () => [
+      styles.tabbar,
+      props.position === "top" && { paddingTop: insets.top },
+      props.position === "bottom" && { paddingBottom: insets.bottom },
+      props.style,
+    ],
+    [props.position, props.style, insets.top, insets.bottom],
   );
-}
 
-export type TabsScreenProps = RNScreenProps;
-
-let TabsScreen = React.memo(function TabsScreen({
-  children,
-  style: styleProp,
-  ...props
-}: TabsScreenProps) {
-  let dispatch = useNavigationDispatch();
-
-  let tabId = React.useContext(TabIdContext);
-  let tabs = useTabsInternal(tabId);
-  let getNavigationStore = useGetNavigationStore();
-  let index = React.useContext(TabScreenIndexContext);
-
-  let parentIsActive = React.useContext(ActiveContext);
-  let activeIndex = tabs?.activeIndex;
-  let isActive = index === activeIndex;
-
-  React.useEffect(() => {
-    function backHandler() {
-      // Use getter to register the handler once on mount
-      // Prevents it from overriding child screen handlers
-      let tabs = getNavigationStore().tabs.lookup[tabId];
-      if (tabs && tabs.history.length > 0) {
-        dispatch({ type: "TAB_BACK", tabId });
-        return true;
+  const handlePress = React.useCallback(
+    (index: number) => {
+      if (tabsId) {
+        navStore.setState((prev) => {
+          const tabs = new Map(prev.tabs);
+          tabs.set(tabsId, { activeIndex: index });
+          return { ...prev, tabs };
+        });
       }
-
-      return false;
-    }
-
-    BackHandler.addEventListener("hardwareBackPress", backHandler);
-  }, [tabId, dispatch, getNavigationStore]);
-
-  let style = React.useMemo(
-    () => styleProp || StyleSheet.absoluteFill,
-    [styleProp]
+    },
+    [tabsId, navStore],
   );
 
   return (
-    <RNScreen
-      active={isActive ? 1 : 0}
-      activityState={isActive ? 2 : 0}
-      style={style}
-      {...props}
-    >
-      <ActiveContext.Provider value={parentIsActive && isActive}>
-        {children}
-      </ActiveContext.Provider>
-    </RNScreen>
-  );
-});
-
-export let defaultTabbarStyle: ViewStyle = {
-  flexDirection: "row",
-  backgroundColor: "white",
-};
-
-
-let TabsTabbar = React.memo(function TabsTabbar({
-  children,
-  style: styleProp,
-  ...props
-}: { children: React.ReactNode } & ViewProps) {
-  let style = React.useMemo(() => styleProp || defaultTabbarStyle, [styleProp]);
-
-  return (
-    <View style={style} {...props}>
-      {React.Children.map(children, (child, index) => {
-        return (
-          <TabScreenIndexContext.Provider value={index}>
-            {child}
-          </TabScreenIndexContext.Provider>
-        );
-      })}
+    <View style={tabbarStyle}>
+      {props.screens.map((entry, index) => (
+        <React.Fragment key={entry.id}>
+          {entry.tab({
+            id: entry.id,
+            isActive: index === activeIndex,
+            onPress: () => handlePress(index),
+          })}
+        </React.Fragment>
+      ))}
     </View>
   );
 });
 
-type TabbarTabProps = {
-  activeStyle?: PressableProps["style"];
-  inactiveStyle?: PressableProps["style"];
-  style?: PressableProps["style"];
-  children:
-    | React.ReactNode
-    | ((props: { isActive: boolean; onPress: () => void }) => React.ReactNode);
-} & Omit<PressableProps, "children">;
-
-let defaultTabStyle: ViewStyle = {
-  flex: 1,
-};
-
-let TabsTab = React.memo(function TabsTab({
-  children,
-  ...props
-}: TabbarTabProps) {
-  let dispatch = useNavigationDispatch();
-
-  let tabId = React.useContext(TabIdContext);
-  let index = React.useContext(TabScreenIndexContext);
-  let tabs = useTabsInternal(tabId);
-
-  let activeIndex = tabs?.activeIndex;
-  let isActive = index === activeIndex;
-
-  let onPress: () => void = React.useCallback(() => {
-    dispatch({ type: "SET_TAB_INDEX", tabId, index });
-
-    if (isActive) {
-      dispatch({ type: "POP_ACTIVE_TAB", tabId, index });
-    }
-  }, [tabId, index, dispatch, isActive]);
-
-  let style = React.useMemo(() => {
-    let baseStyle = props.style || defaultTabStyle;
-    let activeStyle = isActive ? props.activeStyle : props.inactiveStyle;
-    return [baseStyle, activeStyle];
-  }, [isActive, props.activeStyle, props.inactiveStyle, props.style]);
-
-  let renderChildren = React.useMemo(() => {
-    if (typeof children === "function") {
-      return children({ isActive, onPress });
-    }
-
-    return children;
-  }, [isActive, onPress, children]);
+const TabsSlot = React.memo(function TabsSlot(props: {
+  screens: TabScreenOptions[];
+}) {
+  const node = useRenderNode();
+  const tabsId = node?.id ?? null;
+  const activeIndex = useTabActiveIndex(tabsId);
 
   return (
-    // @ts-expect-error - cleanup typings
-    <Pressable onPress={onPress} style={style} {...props}>
-      {renderChildren}
-    </Pressable>
+    <RNScreens.ScreenContainer style={StyleSheet.absoluteFill}>
+      {props.screens.map((entry, index) => (
+        <RNScreens.Screen
+          key={entry.id}
+          activityState={index === activeIndex ? 2 : 0}
+          style={StyleSheet.absoluteFill}
+        >
+          <RenderTreeNode
+            type="tab-screen"
+            id={`${tabsId}/${entry.id}`}
+            active={index === activeIndex}
+          >
+            {entry.screen}
+          </RenderTreeNode>
+        </RNScreens.Screen>
+      ))}
+    </RNScreens.ScreenContainer>
   );
 });
 
+export const Tabs = React.memo(
+  React.forwardRef<TabsHandle, Omit<TabsProps, "children">>(
+    function Tabs(props, ref) {
+      const position = props.tabbarPosition ?? "bottom";
+      const navigation = useNavigation();
+      const node = useRenderNode();
+      const tabsId = props.id ?? node?.id ?? null;
 
-export type TabNavigatorProps = Omit<TabsRootProps, "children"> & {
-  screens: TabNavigatorScreenOptions[];
-  tabbarPosition?: "top" | "bottom";
-  tabbarStyle?: ViewProps["style"];
-};
+      React.useImperativeHandle(ref, () => ({
+        setActiveIndex(index: number) {
+          if (tabsId) {
+            navigation.setActiveTab(index, { tabsId });
+          }
+        },
+      }), [tabsId, navigation]);
 
-export type TabNavigatorScreenOptions = {
-  key: string;
-  screen: React.ReactElement<unknown>;
-  tab: (props: { isActive: boolean; onPress: () => void }) => React.ReactNode;
-};
+      const tabbar = React.useMemo(
+        () => (
+          <TabBar
+            screens={props.screens}
+            style={props.tabbarStyle}
+            position={position}
+          />
+        ),
+        [props.screens, props.tabbarStyle, position],
+      );
 
-let TabNavigator = React.memo(function TabNavigator({
-  screens,
-  tabbarPosition = "bottom",
-  tabbarStyle: tabbarStyleProp,
-  ...rootProps
-}: TabNavigatorProps) {
-  let insets = useSafeAreaInsetsSafe();
+      return (
+        <TabsRoot {...props}>
+          {position === "top" && tabbar}
+          <View style={styles.slotContainer}>
+            <TabsSlot screens={props.screens} />
+          </View>
+          {position === "bottom" && tabbar}
+        </TabsRoot>
+      );
+    },
+  ),
+);
 
-  let tabbarStyle = React.useMemo(() => {
-    return [
-      defaultTabbarStyle,
-      {
-        paddingBottom: tabbarPosition === "bottom" ? insets.bottom : 0,
-        paddingTop: tabbarPosition === "top" ? insets.top : 0,
-      },
-      tabbarStyleProp,
-    ];
-  }, [tabbarPosition, tabbarStyleProp, insets]);
-
-  return (
-    <Tabs.Root {...rootProps}>
-      {tabbarPosition === "top" && (
-        <Tabs.Tabbar style={tabbarStyle}>
-          {screens.map((screen) => {
-            return <Tabs.Tab key={screen.key}>{screen.tab}</Tabs.Tab>;
-          })}
-        </Tabs.Tabbar>
-      )}
-
-      <Tabs.Screens>
-        {screens.map((screen) => {
-          return <Tabs.Screen key={screen.key}>{screen.screen}</Tabs.Screen>;
-        })}
-      </Tabs.Screens>
-
-      {tabbarPosition === "bottom" && (
-        <Tabs.Tabbar style={tabbarStyle}>
-          {screens.map((screen) => {
-            return <Tabs.Tab key={screen.key}>{screen.tab}</Tabs.Tab>;
-          })}
-        </Tabs.Tabbar>
-      )}
-    </Tabs.Root>
-  );
+const styles = StyleSheet.create({
+  tabbar: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  slotContainer: {
+    flex: 1,
+  },
 });
-
-export let Tabs = {
-  Root: TabsRoot,
-  Screens: TabsScreens,
-  Screen: TabsScreen,
-  Tabbar: TabsTabbar,
-  Tab: TabsTab,
-  Navigator: TabNavigator,
-};

@@ -3,44 +3,47 @@ import useSyncExternalStoreExports from "use-sync-external-store/shim/with-selec
 
 const { useSyncExternalStoreWithSelector } = useSyncExternalStoreExports;
 
-export class Store<T> {
-  private readonly listeners = new Set<() => void>();
-  private state: T;
-  private readonly initialState: T;
-
-  constructor(initialState: T) {
-    this.state = initialState;
-    this.initialState = initialState;
-  }
-
-  getState = () => this.state;
-  getInitialState = () => this.initialState;
-
-  setState = (nextState: T | ((prevState: T) => T)) => {
-    const resolved =
-      typeof nextState === "function"
-        ? (nextState as (prevState: T) => T)(this.state)
-        : nextState;
-
-    if (Object.is(resolved, this.state)) {
-      return;
-    }
-
-    this.state = resolved;
-    this.listeners.forEach((listener) => listener());
-  };
-
-  subscribe = (listener: () => void) => {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  };
-}
+export type Store<T> = {
+  getState: () => T;
+  getInitialState: () => T;
+  setState: (nextState: T | ((prevState: T) => T)) => void;
+  subscribe: (listener: () => void) => () => void;
+};
 
 export type StoreApi<T> = Store<T>;
 
+export function createStore<T>(initialState: T): Store<T> {
+  const listeners = new Set<() => void>();
+  let state = initialState;
+
+  const getState = () => state;
+  const getInitialState = () => initialState;
+
+  const setState = (nextState: T | ((prevState: T) => T)) => {
+    const resolved =
+      typeof nextState === "function"
+        ? (nextState as (prevState: T) => T)(state)
+        : nextState;
+
+    if (Object.is(resolved, state)) {
+      return;
+    }
+
+    state = resolved;
+    listeners.forEach((listener) => listener());
+  };
+
+  const subscribe = (listener: () => void) => {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  };
+
+  return { getState, getInitialState, setState, subscribe };
+}
+
 export function useStore<T, S = T>(
   store: Store<T>,
-  selector: (state: T) => S = (state) => state as S,
+  selector: (state: T) => S = (state) => state as unknown as S,
   isEqual: (left: S, right: S) => boolean = Object.is,
 ): S {
   const slice = useSyncExternalStoreWithSelector(
@@ -61,7 +64,7 @@ export function StoreProvider<T>(props: {
   children: React.ReactNode;
 }) {
   return (
-    <StoreContext.Provider value={props.store as Store<unknown>}>
+    <StoreContext.Provider value={props.store}>
       {props.children}
     </StoreContext.Provider>
   );

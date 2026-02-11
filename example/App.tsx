@@ -1,99 +1,137 @@
 import {
-  navigation,
+  createNavigation,
+  Navigation,
   Stack,
-  defaultTabbarStyle,
   Tabs,
+  type TabScreenOptions,
 } from "@rn-tools/navigation";
-import { BottomSheet } from "@rn-tools/sheets";
 import * as React from "react";
-import {
-  Text,
-  View,
-  TouchableOpacity,
-  Button,
-  ScrollView,
-  TextInput,
-  FlatList,
-  KeyboardAvoidingView,
-} from "react-native";
-import { NavigationExamples } from "./src/navigation-examples";
-import { useKeyboardHeight } from "@rn-tools/core";
-// navigation.setDebugModeEnabled(true);
+import { Text, View, Button, Pressable } from "react-native";
+
+const navigation = createNavigation();
+
+const tabScreens: TabScreenOptions[] = [
+  {
+    id: "home",
+    screen: <Stack id="home" rootScreen={<HomeScreen />} />,
+    tab: TabButton,
+  },
+  {
+    id: "explore",
+    screen: <Stack id="explore" rootScreen={<ExploreScreen />} />,
+    tab: TabButton,
+  },
+  {
+    id: "settings",
+    screen: <SettingsScreen />,
+    tab: TabButton,
+  },
+];
 
 export default function App() {
-  const [isOpen, setIsOpen] = React.useState(false);
-
   return (
-    <View className="flex-1 pt-24">
-      <View className="flex-1">
-        <Button title="Show sheet" onPress={() => setIsOpen(!isOpen)} />
-
-        <BottomSheet
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          initialIndex={1}
-          canDismiss
-          onStateChange={(event) => console.log({ event })}
-          snapPoints={[400, 600, 1200]}
-          appearanceAndroid={{
-            dimAmount: 0,
-            cornerRadius: 32.0,
-            backgroundColor: "#ffffff",
-          }}
-          appearanceIOS={{
-            cornerRadius: 16.0,
-            grabberVisible: true,
-            backgroundColor: "#ffffff",
-          }}
-        >
-          {isOpen && <MyContent setIsOpen={setIsOpen} />}
-        </BottomSheet>
-      </View>
-    </View>
+    <Navigation navigation={navigation}>
+      <Tabs id="main-tabs" screens={tabScreens} tabbarPosition="top" />
+    </Navigation>
   );
 }
 
-const data = Array.from({ length: 50 }).map((i, index) => `Item ${index}`);
-
-function MyContent({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
-  const handleClose = React.useCallback(() => {
-    setIsOpen(false);
-  }, []);
-
-  const keyboardHeight = useKeyboardHeight();
-
+function TabButton({
+  id,
+  isActive,
+  onPress,
+}: {
+  id: string;
+  isActive: boolean;
+  onPress: () => void;
+}) {
+  const label = id.charAt(0).toUpperCase() + id.slice(1);
   return (
-    <View className="bg-white absolute inset-0 border rounded-lg px-4">
-      <View className="py-4 border">
-        <Text style={{ fontWeight: "bold", fontSize: 24 }}>
-          Native bottom sheets! Wahoo
-        </Text>
-        <Button onPress={() => handleClose()} title="Close" />
-      </View>
+    <Pressable
+      onPress={onPress}
+      style={{
+        flex: 1,
+        alignItems: "center",
+        paddingVertical: 12,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 14,
+          fontWeight: isActive ? "bold" : "normal",
+          color: isActive ? "#007AFF" : "#8E8E93",
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
 
-      <FlatList
-        nestedScrollEnabled
-        className="flex-1"
-        renderItem={({ item }) => (
-          <TextInput placeholder={`Text input ${item}`} />
-        )}
-        data={data}
-        contentContainerStyle={{ paddingBottom: keyboardHeight }}
+function HomeScreen() {
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text style={{ fontSize: 24, fontWeight: "bold" }}>Home</Text>
+      <Button
+        title="Push screen"
+        onPress={() => {
+          navigation.pushScreen(
+            <DetailScreen title="Pushed Screen" count={1} />,
+          );
+        }}
       />
     </View>
   );
 }
 
-function RootScreen() {
+function ExploreScreen() {
   return (
-    <View className="flex-1 px-4" style={{ paddingTop: 64 }}>
-      <TouchableOpacity
-        onPress={() => navigation.pushScreen(<NavigationExamples />)}
-      >
-        <Text className="font-semibold t4xt-lg underline">
-          Navigation Examples
-        </Text>
-      </TouchableOpacity>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text style={{ fontSize: 24, fontWeight: "bold" }}>Explore</Text>
+      <Button
+        title="Push screen"
+        onPress={() => {
+          navigation.pushScreen(
+            <DetailScreen title="Explore Detail" count={1} />,
+          );
+        }}
+      />
+    </View>
+  );
+}
+
+function SettingsScreen() {
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text style={{ fontSize: 24, fontWeight: "bold" }}>Settings</Text>
+      <Button
+        title="Push screen"
+        onPress={() => {
+          navigation.pushScreen(
+            <DetailScreen title="Settings Detail" count={1} />,
+          );
+        }}
+      />
+    </View>
+  );
+}
+
+function DetailScreen({ title, count }: { title: string; count: number }) {
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text style={{ fontSize: 24, fontWeight: "bold" }}>{title}</Text>
+      <Text style={{ fontSize: 16, color: "#666", marginTop: 8 }}>
+        Screen #{count}
+      </Text>
+      <Button
+        title="Push another"
+        onPress={() => {
+          navigation.pushScreen(
+            <DetailScreen title="Pushed Screen" count={count + 1} />,
+          );
+        }}
+      />
+      <Button title="Pop screen" onPress={() => navigation.popScreen()} />
     </View>
   );
 }
