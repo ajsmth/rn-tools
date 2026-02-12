@@ -13,12 +13,12 @@ const navigation = createNavigation();
 const tabScreens: TabScreenOptions[] = [
   {
     id: "home",
-    screen: <Stack id="home" rootScreen={<HomeScreen />} />,
+    screen: <Stack rootScreen={<HomeScreen />} />,
     tab: TabButton,
   },
   {
     id: "explore",
-    screen: <Stack id="explore" rootScreen={<ExploreScreen />} />,
+    screen: <Stack rootScreen={<ExploreScreen />} />,
     tab: TabButton,
   },
   {

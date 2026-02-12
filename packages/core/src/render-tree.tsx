@@ -40,7 +40,7 @@ export type RenderNode = {
 
 const RENDER_TREE_GENERATED_ID_PREFIX = "rt:";
 
-const nextRenderTreeIdForType = (() => {
+export const nextRenderTreeIdForType = (() => {
   const counters = new Map<RenderTreeType, number>();
   return (type: RenderTreeType) => {
     const next = (counters.get(type) ?? 0) + 1;

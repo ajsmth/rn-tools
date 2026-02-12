@@ -272,7 +272,7 @@ describe("Stack", () => {
 
   it("ref.pushScreen adds a screen and ref.popScreen removes it", async () => {
     const ref = React.createRef<StackHandle>();
-    const { renderer } = await renderWithProviders(
+    const { renderer, store } = await renderWithProviders(
       <Stack ref={ref} id="stack-a" rootScreen={<span>root</span>} />,
     );
 
@@ -286,6 +286,8 @@ describe("Stack", () => {
       expect(renderer.getByText("pushed")).toBeTruthy();
     });
 
+    expect(store.getState().stacks.get("stack-a")).toHaveLength(1);
+
     act(() => {
       ref.current!.popScreen();
     });
@@ -294,6 +296,73 @@ describe("Stack", () => {
       expect(renderer.queryByText("pushed")).toBeNull();
       expect(renderer.getByText("root")).toBeTruthy();
     });
+
+    expect(store.getState().stacks.get("stack-a")).toHaveLength(0);
+  });
+
+  it("ref.pushScreen targets the correct stack when id is not provided", async () => {
+    const ref = React.createRef<StackHandle>();
+    const { renderer, store } = await renderWithProviders(
+      <Stack ref={ref} rootScreen={<span>root</span>} />,
+    );
+
+    expect(renderer.getByText("root")).toBeTruthy();
+
+    act(() => {
+      ref.current!.pushScreen(<span>pushed</span>, { id: "pushed-screen" });
+    });
+
+    await waitFor(() => {
+      expect(renderer.getByText("pushed")).toBeTruthy();
+    });
+
+    // The screen should be pushed to the auto-generated stack id
+    const state = store.getState();
+    expect(state.stacks.size).toBe(1);
+    const [stackId, screens] = [...state.stacks.entries()][0];
+    expect(typeof stackId).toBe("string");
+    expect(screens).toHaveLength(1);
+
+    act(() => {
+      ref.current!.popScreen();
+    });
+
+    await waitFor(() => {
+      expect(renderer.queryByText("pushed")).toBeNull();
+      expect(renderer.getByText("root")).toBeTruthy();
+    });
+
+    expect(store.getState().stacks.get(stackId)).toHaveLength(0);
+  });
+
+  it("ref.pushScreen targets the inner stack when nested without an explicit id", async () => {
+    const innerRef = React.createRef<StackHandle>();
+
+    function InnerStack() {
+      return <Stack ref={innerRef} rootScreen={<span>inner-root</span>} />;
+    }
+
+    const { renderer, store } = await renderWithProviders(
+      <Stack id="outer" rootScreen={<InnerStack />} />,
+    );
+
+    await waitFor(() => {
+      expect(renderer.getByText("inner-root")).toBeTruthy();
+    });
+
+    act(() => {
+      innerRef.current!.pushScreen(<span>inner-pushed</span>, {
+        id: "inner-screen",
+      });
+    });
+
+    await waitFor(() => {
+      expect(renderer.getByText("inner-pushed")).toBeTruthy();
+    });
+
+    // The screen was pushed to the inner stack's auto-generated id, not "outer"
+    const state = store.getState();
+    expect(state.stacks.has("outer")).toBe(false);
   });
 
   it("resolves the deepest active stack and falls back when a subtree becomes inactive", async () => {

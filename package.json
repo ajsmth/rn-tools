@@ -4,8 +4,8 @@
     "start": "cd example && yarn start",
     "test": "node scripts/run-tests.mjs",
     "changeset": "changeset",
-    "version": "changeset version",
-    "publish": "changeset publish"
+    "release:version": "changeset version",
+    "release:publish": "node scripts/publish.mjs"
   },
   "workspaces": [
     "packages/*",

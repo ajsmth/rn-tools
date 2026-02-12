@@ -3,8 +3,13 @@ import {
   RenderTreeNode,
   useRenderNode,
   useSafeAreaInsets,
+  nextRenderTreeIdForType,
 } from "@rn-tools/core";
-import { useTabActiveIndex, useNavigationStore, useNavigation } from "./navigation-client";
+import {
+  useTabActiveIndex,
+  useNavigationStore,
+  useNavigation,
+} from "./navigation-client";
 
 import * as RNScreens from "react-native-screens";
 import { StyleSheet, View, type ViewStyle } from "react-native";
@@ -32,13 +37,30 @@ export type TabsProps = {
   children?: React.ReactNode;
 };
 
-const TabsRoot = React.memo(function TabsRoot(props: TabsProps) {
-  return (
-    <RenderTreeNode type="tabs" id={props.id} active={props.active}>
-      {props.children}
-    </RenderTreeNode>
-  );
-});
+const TabsRoot = React.memo(
+  React.forwardRef<TabsHandle, TabsProps>(function TabsRoot(props, ref) {
+    const tabsId = React.useRef(
+      props.id ?? nextRenderTreeIdForType("tabs"),
+    ).current;
+    const navigation = useNavigation();
+
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        setActiveIndex(index: number) {
+          navigation.setActiveTab(index, { tabsId });
+        },
+      }),
+      [tabsId, navigation],
+    );
+
+    return (
+      <RenderTreeNode type="tabs" id={tabsId} active={props.active}>
+        {props.children}
+      </RenderTreeNode>
+    );
+  }),
+);
 
 const TabBar = React.memo(function TabBar(props: {
   screens: TabScreenOptions[];
@@ -121,17 +143,6 @@ export const Tabs = React.memo(
   React.forwardRef<TabsHandle, Omit<TabsProps, "children">>(
     function Tabs(props, ref) {
       const position = props.tabbarPosition ?? "bottom";
-      const navigation = useNavigation();
-      const node = useRenderNode();
-      const tabsId = props.id ?? node?.id ?? null;
-
-      React.useImperativeHandle(ref, () => ({
-        setActiveIndex(index: number) {
-          if (tabsId) {
-            navigation.setActiveTab(index, { tabsId });
-          }
-        },
-      }), [tabsId, navigation]);
 
       const tabbar = React.useMemo(
         () => (
@@ -145,7 +156,7 @@ export const Tabs = React.memo(
       );
 
       return (
-        <TabsRoot {...props}>
+        <TabsRoot ref={ref} {...props}>
           {position === "top" && tabbar}
           <View style={styles.slotContainer}>
             <TabsSlot screens={props.screens} />

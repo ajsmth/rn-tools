@@ -1,16 +1,9 @@
 {
   "name": "@rn-tools/sheets",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A React Native library for creating and managing native sheets in Expo applications.",
   "main": "src/index.ts",
   "scripts": {
-    "build": "expo-module build",
-    "clean": "expo-module clean",
-    "lint": "expo-module lint",
-    "test": "expo-module test",
-    "prepare": "expo-module prepare",
-    "prepublishOnly": "expo-module prepublishOnly",
-    "expo-module": "expo-module",
     "open:ios": "xed example/ios",
     "open:android": "open -a \"Android Studio\" example/android"
   },
@@ -31,7 +24,7 @@
     "@types/react": "18.3.12"
   },
   "dependencies": {
-    "@rn-tools/core": "3.0.0"
+    "@rn-tools/core": "3.0.1"
   },
   "peerDependencies": {
     "expo": "*",

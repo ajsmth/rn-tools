@@ -1,16 +1,10 @@
 {
   "name": "@rn-tools/core",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Core utilities for rn-tools",
   "main": "src/index.ts",
   "scripts": {
-    "build": "expo-module build",
-    "clean": "expo-module clean",
-    "lint": "expo-module lint",
-    "test": "vitest",
-    "prepare": "expo-module prepare",
-    "prepublishOnly": "expo-module prepublishOnly",
-    "expo-module": "expo-module"
+    "test": "vitest"
   },
   "keywords": [
     "react-native",

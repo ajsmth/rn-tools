@@ -1,5 +1,9 @@
 import * as React from "react";
-import { RenderTreeNode, useRenderNode } from "@rn-tools/core";
+import {
+  RenderTreeNode,
+  useRenderNode,
+  nextRenderTreeIdForType,
+} from "@rn-tools/core";
 import {
   useStackScreens,
   useNavigation,
@@ -11,7 +15,10 @@ import * as RNScreens from "react-native-screens";
 import { StyleSheet } from "react-native";
 
 export type StackHandle = {
-  pushScreen: (element: React.ReactElement, options?: PushScreenOptions) => void;
+  pushScreen: (
+    element: React.ReactElement,
+    options?: PushScreenOptions,
+  ) => void;
   popScreen: () => void;
 };
 
@@ -22,16 +29,36 @@ export type StackProps = {
   children?: React.ReactNode;
 };
 
-const StackRoot = React.memo(function StackRoot(props: StackProps) {
-  return (
-    <RenderTreeNode type="stack" id={props.id} active={props.active}>
-      <RNScreens.ScreenStack style={StyleSheet.absoluteFill}>
-        {props.rootScreen && <StackScreen>{props.rootScreen}</StackScreen>}
-        {props.children}
-      </RNScreens.ScreenStack>
-    </RenderTreeNode>
-  );
-});
+const StackRoot = React.memo(
+  React.forwardRef<StackHandle, StackProps>(function StackRoot(props, ref) {
+    const stackId = React.useRef(
+      props.id ?? nextRenderTreeIdForType("stack"),
+    ).current;
+    const navigation = useNavigation();
+
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        pushScreen(element: React.ReactElement, options?: PushScreenOptions) {
+          navigation.pushScreen(element, { ...options, stackId });
+        },
+        popScreen() {
+          navigation.popScreen({ stackId });
+        },
+      }),
+      [stackId, navigation],
+    );
+
+    return (
+      <RenderTreeNode type="stack" id={stackId} active={props.active}>
+        <RNScreens.ScreenStack style={StyleSheet.absoluteFill}>
+          {props.rootScreen && <StackScreen>{props.rootScreen}</StackScreen>}
+          {props.children}
+        </RNScreens.ScreenStack>
+      </RenderTreeNode>
+    );
+  }),
+);
 
 export type StackScreenProps = {
   id?: string;
@@ -72,25 +99,8 @@ const StackSlot = React.memo(function StackSlot() {
 export const Stack = React.memo(
   React.forwardRef<StackHandle, Omit<StackProps, "children">>(
     function Stack(props, ref) {
-      const navigation = useNavigation();
-      const node = useRenderNode();
-      const stackId = props.id ?? node?.id ?? null;
-
-      React.useImperativeHandle(ref, () => ({
-        pushScreen(element: React.ReactElement, options?: PushScreenOptions) {
-          if (stackId) {
-            navigation.pushScreen(element, { ...options, stackId });
-          }
-        },
-        popScreen() {
-          if (stackId) {
-            navigation.popScreen({ stackId });
-          }
-        },
-      }), [stackId, navigation]);
-
       return (
-        <StackRoot {...props}>
+        <StackRoot ref={ref} {...props}>
           <StackSlot />
         </StackRoot>
       );

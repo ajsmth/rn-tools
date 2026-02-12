@@ -91,7 +91,7 @@ describe("Tabs", () => {
   it("ref.setActiveIndex changes the active tab", async () => {
     const screens = makeScreens(3);
     const ref = React.createRef<TabsHandle>();
-    const { renderer } = renderWithProviders(
+    const { renderer, store } = renderWithProviders(
       <Tabs ref={ref} id="my-tabs" screens={screens} />,
     );
 
@@ -106,6 +106,77 @@ describe("Tabs", () => {
       expect(renderer.getByText("tab-1:tab-screen:false")).toBeTruthy();
       expect(renderer.getByText("tab-2:tab-screen:true")).toBeTruthy();
     });
+
+    expect(store.getState().tabs.get("my-tabs")).toEqual({ activeIndex: 2 });
+  });
+
+  it("ref.setActiveIndex targets the correct tabs when id is not provided", async () => {
+    const screens = makeScreens(3);
+    const ref = React.createRef<TabsHandle>();
+    const { renderer, store } = renderWithProviders(
+      <Tabs ref={ref} screens={screens} />,
+    );
+
+    expect(renderer.getByText("tab-0:tab-screen:true")).toBeTruthy();
+
+    act(() => {
+      ref.current!.setActiveIndex(2);
+    });
+
+    await waitFor(() => {
+      expect(renderer.getByText("tab-0:tab-screen:false")).toBeTruthy();
+      expect(renderer.getByText("tab-1:tab-screen:false")).toBeTruthy();
+      expect(renderer.getByText("tab-2:tab-screen:true")).toBeTruthy();
+    });
+
+    // The tab state should be set on the auto-generated tabs id
+    const state = store.getState();
+    expect(state.tabs.size).toBe(1);
+    const [, tabState] = [...state.tabs.entries()][0];
+    expect(tabState).toEqual({ activeIndex: 2 });
+  });
+
+  it("ref.setActiveIndex targets the inner tabs when nested inside a stack without an explicit id", async () => {
+    const ref = React.createRef<TabsHandle>();
+    const navigation = createNavigation();
+
+    const tabScreens: TabScreenOptions[] = [
+      {
+        id: "tab-a",
+        screen: <span>tab-a-content</span>,
+        tab: () => <span>tab-a</span>,
+      },
+      {
+        id: "tab-b",
+        screen: <span>tab-b-content</span>,
+        tab: () => <span>tab-b</span>,
+      },
+    ];
+
+    const result = render(
+      <Navigation navigation={navigation}>
+        <Stack
+          id="outer-stack"
+          rootScreen={<Tabs ref={ref} screens={tabScreens} />}
+        />
+      </Navigation>,
+    );
+
+    await waitFor(() => {
+      expect(result.getByText("tab-a-content")).toBeTruthy();
+    });
+
+    act(() => {
+      ref.current!.setActiveIndex(1);
+    });
+
+    // The tab switch should target the auto-generated tabs id, not "outer-stack"
+    const state = navigation.store.getState();
+    expect(state.tabs.has("outer-stack")).toBe(false);
+    expect(state.tabs.size).toBe(1);
+
+    const [, tabState] = [...state.tabs.entries()][0];
+    expect(tabState.activeIndex).toBe(1);
   });
 
   it("supports preloaded activeIndex from the navigation state", () => {
