@@ -5,7 +5,6 @@ import {
   Tabs,
   type TabScreenOptions,
 } from "@rn-tools/navigation";
-import { createSheets, SheetsProvider, useSheets } from "@rn-tools/sheets";
 import * as React from "react";
 import { Text, View, Button, Pressable } from "react-native";
 
@@ -30,13 +29,9 @@ const tabScreens: TabScreenOptions[] = [
 ];
 
 export default function App() {
-  const sheets = React.useMemo(() => createSheets(), []);
-
   return (
     <Navigation navigation={navigation}>
-      <SheetsProvider sheets={sheets}>
-        <Tabs id="main-tabs" screens={tabScreens} tabbarPosition="top" />
-      </SheetsProvider>
+      <Tabs id="main-tabs" screens={tabScreens} tabbarPosition="top" />
     </Navigation>
   );
 }
@@ -74,8 +69,6 @@ function TabButton({
 }
 
 function HomeScreen() {
-  const sheets = useSheets();
-
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text style={{ fontSize: 24, fontWeight: "bold" }}>Home</Text>
@@ -98,12 +91,14 @@ function HomeScreen() {
         </Text>
         <Button
           title="Present sheet (auto-size)"
-          onPress={() => sheets.present(<SheetContent label="Auto-sized" />)}
+          onPress={() =>
+            navigation.present(<SheetContent label="Auto-sized" />)
+          }
         />
         <Button
           title="Present sheet (snap points)"
           onPress={() =>
-            sheets.present(<SheetContent label="Snap points" />, {
+            navigation.present(<SheetContent label="Snap points" />, {
               snapPoints: [300, 500],
             })
           }
@@ -111,23 +106,26 @@ function HomeScreen() {
         <Button
           title="Present sheet (id: edit)"
           onPress={() =>
-            sheets.present(<SheetContent label="Edit sheet" />, { id: "edit" })
+            navigation.present(<SheetContent label="Edit sheet" />, {
+              id: "edit",
+            })
           }
         />
-        <Button title="Dismiss top sheet" onPress={() => sheets.dismiss()} />
+        <Button
+          title="Dismiss top sheet"
+          onPress={() => navigation.dismiss()}
+        />
         <Button
           title='Dismiss by id "edit"'
-          onPress={() => sheets.dismiss("edit")}
+          onPress={() => navigation.dismiss("edit")}
         />
-        <Button title="Dismiss all" onPress={() => sheets.dismissAll()} />
+        <Button title="Dismiss all" onPress={() => navigation.dismissAll()} />
       </View>
     </View>
   );
 }
 
 function SheetContent({ label }: { label: string }) {
-  const sheets = useSheets();
-
   return (
     <View style={{ padding: 24 }}>
       <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 12 }}>
@@ -138,13 +136,13 @@ function SheetContent({ label }: { label: string }) {
       </Text>
       <Button
         title="Present nested sheet"
-        onPress={() =>
-          sheets.present(<SheetContent label="Nested sheet" />, {
+        onPress={() => {
+          navigation.present(<SheetContent label="Nested sheet" />, {
             snapPoints: [250],
-          })
-        }
+          });
+        }}
       />
-      <Button title="Dismiss this sheet" onPress={() => sheets.dismiss()} />
+      <Button title="Dismiss this sheet" onPress={() => navigation.dismiss()} />
     </View>
   );
 }

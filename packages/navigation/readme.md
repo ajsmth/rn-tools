@@ -1,6 +1,6 @@
 # @rn-tools/navigation
 
-Navigation primitives for React Native. Built on `react-native-screens`.
+Navigation primitives for React Native. Built on `react-native-screens` with integrated sheets support.
 
 ## Installation
 
@@ -51,7 +51,7 @@ export default function App() {
 }
 ```
 
-Push and pop screens imperatively:
+Navigate screens and present sheets imperatively:
 
 ```tsx
 navigation.push(<DetailScreen />, { id: "detail" });
@@ -62,10 +62,13 @@ navigation.dismiss();
 navigation.dismissAll();
 ```
 
-When no explicit target is provided, these methods automatically resolve the deepest active stack or tabs instance.
+When no explicit target is provided:
+- `push/pop/tab` resolve the deepest active stack/tabs node.
+- `dismiss()` resolves the active sheet.
 
 ## Docs
 
-- [Navigation](docs/navigation.md) — setup, `createNavigation`, `NavigationClient` API, hooks
+- [Navigation](docs/navigation.md) — setup, `createNavigation`, `NavigationClient` API (screens + sheets), hooks
 - [Stack](docs/stack.md) — stack navigation, pushing/popping, refs, preloading, nesting
 - [Tabs](docs/tabs.md) — tab navigation, tab bar, refs, preloading, nesting with stacks
+- [Sheets](../sheets/README.md) — sheet setup, API, and props
