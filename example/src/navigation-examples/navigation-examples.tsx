@@ -43,7 +43,7 @@ function NavLink({
     <TouchableOpacity
       className="px-4"
       onPress={() => {
-        navigation.pushScreen(
+        navigation.push(
           <Stack.Screen>
             <Stack.Header title={label} />
             {screen}

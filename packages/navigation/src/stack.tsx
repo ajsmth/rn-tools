@@ -7,7 +7,7 @@ import {
 import {
   useStackScreens,
   useNavigation,
-  type PushScreenOptions,
+  type PushOptions,
 } from "./navigation-client";
 
 // TODO - replace with custom implementation
@@ -15,11 +15,11 @@ import * as RNScreens from "react-native-screens";
 import { StyleSheet } from "react-native";
 
 export type StackHandle = {
-  pushScreen: (
+  push: (
     element: React.ReactElement,
-    options?: PushScreenOptions,
+    options?: PushOptions,
   ) => void;
-  popScreen: () => void;
+  pop: () => void;
 };
 
 export type StackProps = {
@@ -39,11 +39,11 @@ const StackRoot = React.memo(
     React.useImperativeHandle(
       ref,
       () => ({
-        pushScreen(element: React.ReactElement, options?: PushScreenOptions) {
-          navigation.pushScreen(element, { ...options, stackId });
+        push(element: React.ReactElement, options?: PushOptions) {
+          navigation.push(element, { ...options, stack: stackId });
         },
-        popScreen() {
-          navigation.popScreen({ stackId });
+        pop() {
+          navigation.pop({ stack: stackId });
         },
       }),
       [stackId, navigation],

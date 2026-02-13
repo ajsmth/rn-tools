@@ -13,7 +13,7 @@ export function PreventGoingBack() {
   return (
     <Button
       title="Push screen"
-      onPress={() => navigation.pushScreen(<MyScreen />)}
+      onPress={() => navigation.push(<MyScreen />)}
     />
   );
 }
@@ -25,7 +25,7 @@ function MyScreen() {
 
   let onPressBackButton = React.useCallback(() => {
     if (canGoBack) {
-      navigation.popScreen();
+      navigation.pop();
     } else {
       Alert.alert("Are you sure you want to go back?", "", [
         {
@@ -34,7 +34,7 @@ function MyScreen() {
         },
         {
           text: "Yes",
-          onPress: () => navigation.popScreen(),
+          onPress: () => navigation.pop(),
         },
       ]);
     }

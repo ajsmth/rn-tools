@@ -8,15 +8,15 @@ import {
 } from "@rn-tools/core";
 import type { Store, RenderTreeStore } from "@rn-tools/core";
 
-export type PushScreenOptions = {
+export type PushOptions = {
   id?: string;
-  stackId?: string;
+  stack?: string;
 };
 
 export type NavigationScreenEntry = {
   element: React.ReactElement;
   id?: string;
-  options?: PushScreenOptions;
+  options?: PushOptions;
 };
 
 export type TabState = {
@@ -61,9 +61,9 @@ export function loadNavigationState(
 export type NavigationClient = {
   store: NavigationStore;
   renderTreeStore: RenderTreeStore;
-  pushScreen: (element: React.ReactElement, options?: PushScreenOptions) => void;
-  popScreen: (options?: { stackId?: string }) => void;
-  setActiveTab: (index: number, options?: { tabsId?: string }) => void;
+  push: (element: React.ReactElement, options?: PushOptions) => void;
+  pop: (options?: { stack?: string }) => void;
+  tab: (index: number, options?: { tabs?: string }) => void;
 };
 
 export function createNavigation(
@@ -93,14 +93,14 @@ export function createNavigation(
     return deepestId;
   }
 
-  function pushScreen(
+  function push(
     element: React.ReactElement,
-    options?: PushScreenOptions,
+    options?: PushOptions,
   ) {
-    const stackId = options?.stackId ?? getDeepestActiveNodeId("stack");
+    const stackId = options?.stack ?? getDeepestActiveNodeId("stack");
     if (!stackId) {
       throw new Error(
-        "pushScreen: could not resolve stackId. Pass { stackId } explicitly or ensure a Stack is mounted and active.",
+        "push: could not resolve stack. Pass { stack } explicitly or ensure a Stack is mounted and active.",
       );
     }
 
@@ -122,11 +122,11 @@ export function createNavigation(
     });
   }
 
-  function popScreen(options?: { stackId?: string }) {
-    const stackId = options?.stackId ?? getDeepestActiveNodeId("stack");
+  function pop(options?: { stack?: string }) {
+    const stackId = options?.stack ?? getDeepestActiveNodeId("stack");
     if (!stackId) {
       throw new Error(
-        "popScreen: could not resolve stackId. Pass { stackId } explicitly or ensure a Stack is mounted and active.",
+        "pop: could not resolve stack. Pass { stack } explicitly or ensure a Stack is mounted and active.",
       );
     }
 
@@ -139,11 +139,11 @@ export function createNavigation(
     });
   }
 
-  function setActiveTab(index: number, options?: { tabsId?: string }) {
-    const tabsId = options?.tabsId ?? getDeepestActiveNodeId("tabs");
+  function tab(index: number, options?: { tabs?: string }) {
+    const tabsId = options?.tabs ?? getDeepestActiveNodeId("tabs");
     if (!tabsId) {
       throw new Error(
-        "setActiveTab: could not resolve tabsId. Pass { tabsId } explicitly or ensure a Tabs is mounted and active.",
+        "tab: could not resolve tabs. Pass { tabs } explicitly or ensure a Tabs is mounted and active.",
       );
     }
 
@@ -154,7 +154,7 @@ export function createNavigation(
     });
   }
 
-  return { store: navStore, renderTreeStore, pushScreen, popScreen, setActiveTab };
+  return { store: navStore, renderTreeStore, push, pop, tab };
 }
 
 export function useNavigation(): NavigationClient {

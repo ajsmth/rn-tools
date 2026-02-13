@@ -87,18 +87,18 @@ function MyScreen({
   children?: React.ReactNode;
   bg?: string;
 }) {
-  function pushScreen() {
-    navigation.pushScreen(
+  function push() {
+    navigation.push(
       <Stack.Screen>
         <MyScreen title="Pushed screen" bg={bg}>
-          <Button title="Pop screen" onPress={popScreen} />
+          <Button title="Pop screen" onPress={pop} />
         </MyScreen>
       </Stack.Screen>
     );
   }
 
-  function popScreen() {
-    navigation.popScreen();
+  function pop() {
+    navigation.pop();
   }
 
   return (
@@ -111,7 +111,7 @@ function MyScreen({
       }}
     >
       <Text>{title}</Text>
-      <Button title="Push screen" onPress={pushScreen} />
+      <Button title="Push screen" onPress={push} />
       {children}
     </View>
   );

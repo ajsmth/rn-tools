@@ -53,9 +53,9 @@ The `stacks` and `tabs` fields accept either plain `Record` objects (as above) o
 type NavigationClient = {
   store: NavigationStore;
   renderTreeStore: RenderTreeStore;
-  pushScreen: (element: React.ReactElement, options?: PushScreenOptions) => void;
-  popScreen: (options?: { stackId?: string }) => void;
-  setActiveTab: (index: number, options?: { tabsId?: string }) => void;
+  push: (element: React.ReactElement, options?: PushOptions) => void;
+  pop: (options?: { stack?: string }) => void;
+  tab: (index: number, options?: { tabs?: string }) => void;
 };
 ```
 
@@ -63,9 +63,9 @@ type NavigationClient = {
 |----------|-------------|
 | `store` | The underlying store holding `NavigationState` (stacks and tabs). |
 | `renderTreeStore` | The render tree store tracking mounted navigation nodes. |
-| `pushScreen` | Push a screen onto a stack. See [pushScreen](#pushscreen). |
-| `popScreen` | Pop the top screen from a stack. See [popScreen](#popscreen). |
-| `setActiveTab` | Switch the active tab. See [setActiveTab](#setactivetab). |
+| `push` | Push a screen onto a stack. See [push](#push). |
+| `pop` | Pop the top screen from a stack. See [pop](#pop). |
+| `tab` | Switch the active tab. See [tab](#tab). |
 
 ## Props
 
@@ -78,10 +78,10 @@ type NavigationClient = {
 
 ## Methods
 
-### `pushScreen`
+### `push`
 
 ```ts
-navigation.pushScreen(element, options?)
+navigation.push(element, options?)
 ```
 
 Pushes a screen element onto a stack.
@@ -90,28 +90,28 @@ Pushes a screen element onto a stack.
 |-----------|------|-------------|
 | `element` | `React.ReactElement` | The screen content to push. |
 | `options.id` | `string?` | Optional screen ID. Prevents duplicate pushes when a screen with the same ID already exists on the stack. |
-| `options.stackId` | `string?` | Target a specific stack. When omitted, the deepest active stack in the render tree is used. |
+| `options.stack` | `string?` | Target a specific stack. When omitted, the deepest active stack in the render tree is used. |
 
-Throws if no `stackId` is provided and no stack is currently mounted and active.
+Throws if no `stack` is provided and no stack is currently mounted and active.
 
-### `popScreen`
+### `pop`
 
 ```ts
-navigation.popScreen(options?)
+navigation.pop(options?)
 ```
 
 Removes the top screen from a stack. No-op if the stack is empty.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `options.stackId` | `string?` | Target a specific stack. When omitted, the deepest active stack is used. |
+| `options.stack` | `string?` | Target a specific stack. When omitted, the deepest active stack is used. |
 
-Throws if no `stackId` is provided and no stack is currently mounted and active.
+Throws if no `stack` is provided and no stack is currently mounted and active.
 
-### `setActiveTab`
+### `tab`
 
 ```ts
-navigation.setActiveTab(index, options?)
+navigation.tab(index, options?)
 ```
 
 Switches to the tab at the given index.
@@ -119,16 +119,16 @@ Switches to the tab at the given index.
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `index` | `number` | Zero-based index of the tab to activate. |
-| `options.tabsId` | `string?` | Target a specific tabs instance. When omitted, the deepest active tabs in the render tree is used. |
+| `options.tabs` | `string?` | Target a specific tabs instance. When omitted, the deepest active tabs in the render tree is used. |
 
-Throws if no `tabsId` is provided and no tabs instance is currently mounted and active.
+Throws if no `tabs` is provided and no tabs instance is currently mounted and active.
 
 ## Automatic Target Resolution
 
-When `pushScreen`, `popScreen`, or `setActiveTab` are called without an explicit target ID, the navigation system walks the render tree to find the **deepest active** node of the matching type (`stack` or `tabs`).
+When `push`, `pop`, or `tab` are called without an explicit target ID, the navigation system walks the render tree to find the **deepest active** node of the matching type (`stack` or `tabs`).
 
 This means:
-- If tabs contain stacks, `pushScreen()` targets the stack inside the active tab.
+- If tabs contain stacks, `push()` targets the stack inside the active tab.
 - If a parent stack becomes inactive, operations fall back to the next deepest active stack.
 - Nested stacks/tabs are handled automatically without needing to pass IDs.
 
@@ -178,7 +178,7 @@ function MyScreen() {
   return (
     <Button
       title="Push"
-      onPress={() => navigation.pushScreen(<NextScreen />)}
+      onPress={() => navigation.push(<NextScreen />)}
     />
   );
 }

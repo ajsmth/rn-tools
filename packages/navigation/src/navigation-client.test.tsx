@@ -48,9 +48,9 @@ describe("createNavigation", () => {
     const nav = createNavigation();
     expect(nav.store).toBeDefined();
     expect(nav.renderTreeStore).toBeDefined();
-    expect(typeof nav.pushScreen).toBe("function");
-    expect(typeof nav.popScreen).toBe("function");
-    expect(typeof nav.setActiveTab).toBe("function");
+    expect(typeof nav.push).toBe("function");
+    expect(typeof nav.pop).toBe("function");
+    expect(typeof nav.tab).toBe("function");
   });
 
   it("initializes with empty state by default", () => {
@@ -87,13 +87,13 @@ describe("loadNavigationState", () => {
   });
 });
 
-describe("pushScreen", () => {
+describe("push", () => {
   it("pushes a screen to the specified stack", () => {
     const nav = createNavigation({
       stacks: { "stack-a": [] },
     });
 
-    nav.pushScreen(<span>pushed</span>, { stackId: "stack-a" });
+    nav.push(<span>pushed</span>, { stack: "stack-a" });
 
     const screens = nav.store.getState().stacks.get("stack-a");
     expect(screens).toHaveLength(1);
@@ -102,7 +102,7 @@ describe("pushScreen", () => {
   it("creates the stack entry if it did not exist", () => {
     const nav = createNavigation();
 
-    nav.pushScreen(<span>pushed</span>, { stackId: "stack-new" });
+    nav.push(<span>pushed</span>, { stack: "stack-new" });
 
     const screens = nav.store.getState().stacks.get("stack-new");
     expect(screens).toHaveLength(1);
@@ -115,7 +115,7 @@ describe("pushScreen", () => {
       },
     });
 
-    nav.pushScreen(<span>dup</span>, { id: "screen-1", stackId: "stack-a" });
+    nav.push(<span>dup</span>, { id: "screen-1", stack: "stack-a" });
 
     expect(nav.store.getState().stacks.get("stack-a")).toHaveLength(1);
   });
@@ -127,22 +127,22 @@ describe("pushScreen", () => {
       },
     });
 
-    nav.popScreen({ stackId: "stack-a" });
+    nav.pop({ stack: "stack-a" });
     expect(nav.store.getState().stacks.get("stack-a")).toHaveLength(0);
 
-    nav.pushScreen(<span>new</span>, { id: "screen-1", stackId: "stack-a" });
+    nav.push(<span>new</span>, { id: "screen-1", stack: "stack-a" });
     expect(nav.store.getState().stacks.get("stack-a")).toHaveLength(1);
   });
 
-  it("throws when no stackId is provided and no stack is mounted", () => {
+  it("throws when no stack is provided and no stack is mounted", () => {
     const nav = createNavigation();
-    expect(() => nav.pushScreen(<span>x</span>)).toThrow(
-      "could not resolve stackId",
+    expect(() => nav.push(<span>x</span>)).toThrow(
+      "could not resolve stack",
     );
   });
 });
 
-describe("popScreen", () => {
+describe("pop", () => {
   it("removes the top screen from the specified stack", () => {
     const nav = createNavigation({
       stacks: {
@@ -153,7 +153,7 @@ describe("popScreen", () => {
       },
     });
 
-    nav.popScreen({ stackId: "stack-a" });
+    nav.pop({ stack: "stack-a" });
 
     expect(nav.store.getState().stacks.get("stack-a")).toHaveLength(1);
   });
@@ -164,25 +164,25 @@ describe("popScreen", () => {
     });
 
     const before = nav.store.getState();
-    nav.popScreen({ stackId: "stack-a" });
+    nav.pop({ stack: "stack-a" });
     const after = nav.store.getState();
 
     expect(before).toBe(after);
   });
 
-  it("throws when no stackId is provided and no stack is mounted", () => {
+  it("throws when no stack is provided and no stack is mounted", () => {
     const nav = createNavigation();
-    expect(() => nav.popScreen()).toThrow("could not resolve stackId");
+    expect(() => nav.pop()).toThrow("could not resolve stack");
   });
 });
 
-describe("setActiveTab", () => {
+describe("tab", () => {
   it("sets the active index for the specified tabs", () => {
     const nav = createNavigation({
       tabs: { "my-tabs": { activeIndex: 0 } },
     });
 
-    nav.setActiveTab(2, { tabsId: "my-tabs" });
+    nav.tab(2, { tabs: "my-tabs" });
 
     expect(nav.store.getState().tabs.get("my-tabs")).toEqual({
       activeIndex: 2,
@@ -192,15 +192,15 @@ describe("setActiveTab", () => {
   it("creates the tabs entry if it did not exist", () => {
     const nav = createNavigation();
 
-    nav.setActiveTab(1, { tabsId: "new-tabs" });
+    nav.tab(1, { tabs: "new-tabs" });
 
     expect(nav.store.getState().tabs.get("new-tabs")).toEqual({
       activeIndex: 1,
     });
   });
 
-  it("throws when no tabsId is provided and no tabs are mounted", () => {
+  it("throws when no tabs is provided and no tabs are mounted", () => {
     const nav = createNavigation();
-    expect(() => nav.setActiveTab(0)).toThrow("could not resolve tabsId");
+    expect(() => nav.tab(0)).toThrow("could not resolve tabs");
   });
 });

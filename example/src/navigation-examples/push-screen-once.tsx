@@ -13,11 +13,11 @@ function MyScreen({
   title: string;
   children?: React.ReactNode;
 }) {
-  function pushScreenOnce() {
-    navigation.pushScreen(
+  function pushOnce() {
+    navigation.push(
       <Stack.Screen>
         <MyScreen title="Pushed screen">
-          <Button title="Pop screen" onPress={popScreen} />
+          <Button title="Pop screen" onPress={pop} />
         </MyScreen>
       </Stack.Screen>,
       {
@@ -26,14 +26,14 @@ function MyScreen({
     );
   }
 
-  function popScreen() {
-    navigation.popScreen();
+  function pop() {
+    navigation.pop();
   }
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>{title}</Text>
-      <Button title="Push screen" onPress={pushScreenOnce} />
+      <Button title="Push screen" onPress={pushOnce} />
       {children}
     </View>
   );

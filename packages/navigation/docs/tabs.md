@@ -75,13 +75,13 @@ Ref handle exposed by the `Tabs` component.
 
 ```ts
 type TabsHandle = {
-  setActiveIndex: (index: number) => void;
+  setActive: (index: number) => void;
 };
 ```
 
 | Method | Description |
 |--------|-------------|
-| `setActiveIndex(index)` | Imperatively switch to the tab at the given index. |
+| `setActive(index)` | Imperatively switch to the tab at the given index. |
 
 ## Ref Usage
 
@@ -99,7 +99,7 @@ function App() {
       <Tabs ref={tabsRef} id="main-tabs" screens={screens} />
       <Button
         title="Go to Settings"
-        onPress={() => tabsRef.current?.setActiveIndex(1)}
+        onPress={() => tabsRef.current?.setActive(1)}
       />
     </>
   );
@@ -153,4 +153,4 @@ const screens: TabScreenOptions[] = [
 ];
 ```
 
-When pushing screens via `navigation.pushScreen()`, the navigation system automatically targets the stack inside the currently active tab.
+When pushing screens via `navigation.push()`, the navigation system automatically targets the stack inside the currently active tab.

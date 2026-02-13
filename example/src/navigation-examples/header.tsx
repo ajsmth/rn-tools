@@ -7,7 +7,7 @@ export function HeaderExample() {
     <View>
       <Button
         title="Push screen with header"
-        onPress={() => navigation.pushScreen(<MyScreenWithHeader />)}
+        onPress={() => navigation.push(<MyScreenWithHeader />)}
       />
     </View>
   );

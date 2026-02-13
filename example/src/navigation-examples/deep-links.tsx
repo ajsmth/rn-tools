@@ -26,7 +26,7 @@ export function DeepLinksExample() {
                 navigation.setTabIndex(0);
 
                 // Push the screen we want
-                navigation.pushScreen(
+                navigation.push(
                   <Stack.Screen>
                     <MyScreen title={`Item: ${itemId}`} />
                   </Stack.Screen>
@@ -42,7 +42,7 @@ export function DeepLinksExample() {
                 navigation.setTabIndex(0);
 
                 // Push the screen we want
-                navigation.pushScreen(
+                navigation.push(
                   <Stack.Screen>
                     <MyScreen title={`Item: ${itemId}`} />
                   </Stack.Screen>
@@ -137,7 +137,7 @@ function MyScreen({
         {!isRoot && (
           <TouchableOpacity
             onPress={() => {
-              navigation.popScreen();
+              navigation.pop();
             }}
           >
             <Text>Pop</Text>

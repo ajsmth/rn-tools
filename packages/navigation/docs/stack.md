@@ -24,21 +24,21 @@ function App() {
 
 ## Types
 
-### `PushScreenOptions`
+### `PushOptions`
 
 Options passed when pushing a screen onto the stack.
 
 ```ts
-type PushScreenOptions = {
+type PushOptions = {
   id?: string;
-  stackId?: string;
+  stack?: string;
 };
 ```
 
 | Field | Description |
 |-------|-------------|
 | `id` | Unique identifier for the screen. Prevents duplicate screens with the same ID from being pushed. |
-| `stackId` | Explicitly target a specific stack. When omitted, the deepest active stack is used. |
+| `stack` | Explicitly target a specific stack. When omitted, the deepest active stack is used. |
 
 ### `StackHandle`
 
@@ -46,15 +46,15 @@ Ref handle exposed by the `Stack` component.
 
 ```ts
 type StackHandle = {
-  pushScreen: (element: React.ReactElement, options?: PushScreenOptions) => void;
-  popScreen: () => void;
+  push: (element: React.ReactElement, options?: PushOptions) => void;
+  pop: () => void;
 };
 ```
 
 | Method | Description |
 |--------|-------------|
-| `pushScreen(element, options?)` | Push a screen onto this stack. Supports duplicate prevention via `options.id`. |
-| `popScreen()` | Pop the top screen from this stack. |
+| `push(element, options?)` | Push a screen onto this stack. Supports duplicate prevention via `options.id`. |
+| `pop()` | Pop the top screen from this stack. |
 
 ## Ref Usage
 
@@ -73,12 +73,12 @@ function App() {
       <Button
         title="Open Detail"
         onPress={() =>
-          stackRef.current?.pushScreen(<DetailScreen />, { id: "detail" })
+          stackRef.current?.push(<DetailScreen />, { id: "detail" })
         }
       />
       <Button
         title="Go Back"
-        onPress={() => stackRef.current?.popScreen()}
+        onPress={() => stackRef.current?.pop()}
       />
     </>
   );
@@ -93,16 +93,16 @@ Screens can also be managed through the `navigation` object returned by `createN
 const navigation = createNavigation();
 
 // Push onto the deepest active stack
-navigation.pushScreen(<DetailScreen />);
+navigation.push(<DetailScreen />);
 
 // Push onto a specific stack
-navigation.pushScreen(<DetailScreen />, { id: "detail", stackId: "main-stack" });
+navigation.push(<DetailScreen />, { id: "detail", stack: "main-stack" });
 
 // Pop from the deepest active stack
-navigation.popScreen();
+navigation.pop();
 
 // Pop from a specific stack
-navigation.popScreen({ stackId: "main-stack" });
+navigation.pop({ stack: "main-stack" });
 ```
 
 ## Duplicate Prevention
@@ -111,10 +111,10 @@ When pushing a screen with an `id`, the stack will skip the push if a screen wit
 
 ```tsx
 // First push succeeds
-navigation.pushScreen(<DetailScreen />, { id: "detail", stackId: "main-stack" });
+navigation.push(<DetailScreen />, { id: "detail", stack: "main-stack" });
 
 // Second push is ignored — "detail" already exists on the stack
-navigation.pushScreen(<DetailScreen />, { id: "detail", stackId: "main-stack" });
+navigation.push(<DetailScreen />, { id: "detail", stack: "main-stack" });
 ```
 
 Once the screen is popped, it can be pushed again with the same ID.
@@ -138,7 +138,7 @@ const navigation = createNavigation({
 
 ## Nesting Stacks
 
-Stacks can be nested. When calling `navigation.pushScreen()` without an explicit `stackId`, it targets the deepest active stack:
+Stacks can be nested. When calling `navigation.push()` without an explicit `stack`, it targets the deepest active stack:
 
 ```tsx
 function App() {
@@ -148,7 +148,7 @@ function App() {
 }
 
 // Targets "inner" — the deepest active stack
-navigation.pushScreen(<DetailScreen />);
+navigation.push(<DetailScreen />);
 ```
 
 If a parent stack becomes inactive, push operations fall back to the next deepest active stack.

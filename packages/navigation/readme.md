@@ -54,9 +54,9 @@ export default function App() {
 Push and pop screens imperatively:
 
 ```tsx
-navigation.pushScreen(<DetailScreen />, { id: "detail" });
-navigation.popScreen();
-navigation.setActiveTab(1);
+navigation.push(<DetailScreen />, { id: "detail" });
+navigation.pop();
+navigation.tab(1);
 ```
 
 When no explicit target is provided, these methods automatically resolve the deepest active stack or tabs instance.

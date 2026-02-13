@@ -64,7 +64,7 @@ function MyScreen({
         <View className="flex-1 gap-4">
           <TouchableOpacity
             onPress={() =>
-              navigation.pushScreen(
+              navigation.push(
                 <Stack.Screen>
                   <MyScreen />
                 </Stack.Screen>
@@ -76,7 +76,7 @@ function MyScreen({
 
           <TouchableOpacity
             onPress={() =>
-              navigation.pushScreen(
+              navigation.push(
                 <Stack.Screen
                   stackPresentation="modal"
                   stackAnimation="slide_from_bottom"
@@ -92,7 +92,7 @@ function MyScreen({
 
           <TouchableOpacity
             onPress={() =>
-              navigation.pushScreen(
+              navigation.push(
                 <Stack.Screen>
                   <MyTabs />
                 </Stack.Screen>
@@ -104,7 +104,7 @@ function MyScreen({
 
           <TouchableOpacity
             onPress={() => {
-              navigation.popScreen();
+              navigation.pop();
             }}
           >
             <Text className="font-medium text-lg">Pop</Text>

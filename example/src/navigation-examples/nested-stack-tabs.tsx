@@ -70,16 +70,16 @@ function MyScreen({
   showPopButton?: boolean;
   bg?: string;
 }) {
-  function pushScreen() {
-    navigation.pushScreen(
+  function push() {
+    navigation.push(
       <Stack.Screen>
         <MyScreen title="Pushed screen" showPopButton />
       </Stack.Screen>
     );
   }
 
-  function popScreen() {
-    navigation.popScreen();
+  function pop() {
+    navigation.pop();
   }
 
   return (
@@ -92,8 +92,8 @@ function MyScreen({
       }}
     >
       <Text>{title}</Text>
-      <Button title="Push screen" onPress={pushScreen} />
-      {showPopButton && <Button title="Pop screen" onPress={popScreen} />}
+      <Button title="Push screen" onPress={push} />
+      {showPopButton && <Button title="Pop screen" onPress={pop} />}
     </View>
   );
 }

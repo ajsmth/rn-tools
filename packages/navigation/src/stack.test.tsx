@@ -110,7 +110,7 @@ describe("Stack", () => {
     expect(renderer.getByText("screen-b:true")).toBeTruthy();
   });
 
-  it("pushScreen adds a new active screen to the stack", async () => {
+  it("push adds a new active screen to the stack", async () => {
     const { navigation, renderer } = await renderWithProviders(
       <Stack id="stack-a" />,
       {
@@ -132,13 +132,13 @@ describe("Stack", () => {
     );
 
     act(() => {
-      navigation.pushScreen(
+      navigation.push(
         <RenderNodeProbe
           render={(data) => <span>{`screen-b:${String(data.active)}`}</span>}
         />,
         {
           id: "screen-b",
-          stackId: "stack-a",
+          stack: "stack-a",
         },
       );
     });
@@ -227,7 +227,7 @@ describe("Stack", () => {
     expect(renderer.getByText("a1:true")).toBeTruthy();
   });
 
-  it("pushScreen does not push a duplicate when a screen with the same id exists", async () => {
+  it("push does not push a duplicate when a screen with the same id exists", async () => {
     const { navigation, renderer } = await renderWithProviders(
       <Stack id="stack-a" />,
       {
@@ -243,9 +243,9 @@ describe("Stack", () => {
     );
 
     act(() => {
-      navigation.pushScreen(<span>screen-a-dup</span>, {
+      navigation.push(<span>screen-a-dup</span>, {
         id: "screen-a",
-        stackId: "stack-a",
+        stack: "stack-a",
       });
     });
 
@@ -253,16 +253,16 @@ describe("Stack", () => {
     expect(renderer.getByText("screen-a")).toBeTruthy();
 
     act(() => {
-      navigation.popScreen({ stackId: "stack-a" });
+      navigation.pop({ stack: "stack-a" });
     });
 
     expect(navigation.store.getState().stacks.get("stack-a")).toHaveLength(0);
     expect(renderer.queryByText("screen-a")).toBeNull();
 
     act(() => {
-      navigation.pushScreen(<span>screen-a-again</span>, {
+      navigation.push(<span>screen-a-again</span>, {
         id: "screen-a",
-        stackId: "stack-a",
+        stack: "stack-a",
       });
     });
 
@@ -270,7 +270,7 @@ describe("Stack", () => {
     renderer.getByText("screen-a-again");
   });
 
-  it("ref.pushScreen adds a screen and ref.popScreen removes it", async () => {
+  it("ref.push adds a screen and ref.pop removes it", async () => {
     const ref = React.createRef<StackHandle>();
     const { renderer, store } = await renderWithProviders(
       <Stack ref={ref} id="stack-a" rootScreen={<span>root</span>} />,
@@ -279,7 +279,7 @@ describe("Stack", () => {
     expect(renderer.getByText("root")).toBeTruthy();
 
     act(() => {
-      ref.current!.pushScreen(<span>pushed</span>, { id: "pushed-screen" });
+      ref.current!.push(<span>pushed</span>, { id: "pushed-screen" });
     });
 
     await waitFor(() => {
@@ -289,7 +289,7 @@ describe("Stack", () => {
     expect(store.getState().stacks.get("stack-a")).toHaveLength(1);
 
     act(() => {
-      ref.current!.popScreen();
+      ref.current!.pop();
     });
 
     await waitFor(() => {
@@ -300,7 +300,7 @@ describe("Stack", () => {
     expect(store.getState().stacks.get("stack-a")).toHaveLength(0);
   });
 
-  it("ref.pushScreen targets the correct stack when id is not provided", async () => {
+  it("ref.push targets the correct stack when id is not provided", async () => {
     const ref = React.createRef<StackHandle>();
     const { renderer, store } = await renderWithProviders(
       <Stack ref={ref} rootScreen={<span>root</span>} />,
@@ -309,7 +309,7 @@ describe("Stack", () => {
     expect(renderer.getByText("root")).toBeTruthy();
 
     act(() => {
-      ref.current!.pushScreen(<span>pushed</span>, { id: "pushed-screen" });
+      ref.current!.push(<span>pushed</span>, { id: "pushed-screen" });
     });
 
     await waitFor(() => {
@@ -324,7 +324,7 @@ describe("Stack", () => {
     expect(screens).toHaveLength(1);
 
     act(() => {
-      ref.current!.popScreen();
+      ref.current!.pop();
     });
 
     await waitFor(() => {
@@ -335,7 +335,7 @@ describe("Stack", () => {
     expect(store.getState().stacks.get(stackId)).toHaveLength(0);
   });
 
-  it("ref.pushScreen targets the inner stack when nested without an explicit id", async () => {
+  it("ref.push targets the inner stack when nested without an explicit id", async () => {
     const innerRef = React.createRef<StackHandle>();
 
     function InnerStack() {
@@ -351,7 +351,7 @@ describe("Stack", () => {
     });
 
     act(() => {
-      innerRef.current!.pushScreen(<span>inner-pushed</span>, {
+      innerRef.current!.push(<span>inner-pushed</span>, {
         id: "inner-screen",
       });
     });
@@ -383,9 +383,9 @@ describe("Stack", () => {
       expect(result.getByText("nested-root")).toBeTruthy();
     });
 
-    // pushScreen with no stackId should target the deepest active stack: right-nested
+    // push with no stack should target the deepest active stack: right-nested
     act(() => {
-      navigation.pushScreen(<span>first-push</span>);
+      navigation.push(<span>first-push</span>);
     });
 
     const stateAfterFirst = navigation.store.getState();
@@ -401,7 +401,7 @@ describe("Stack", () => {
     );
 
     act(() => {
-      navigation.pushScreen(<span>second-push</span>);
+      navigation.push(<span>second-push</span>);
     });
 
     const stateAfterSecond = navigation.store.getState();

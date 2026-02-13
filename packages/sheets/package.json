@@ -5,7 +5,8 @@
   "main": "src/index.ts",
   "scripts": {
     "open:ios": "xed example/ios",
-    "open:android": "open -a \"Android Studio\" example/android"
+    "open:android": "open -a \"Android Studio\" example/android",
+    "test": "NODE_OPTIONS='--no-experimental-detect-module' vitest"
   },
   "keywords": [
     "react-native",
@@ -21,7 +22,9 @@
   "license": "MIT",
   "homepage": "https://github.com/ajsmth/rn-tools#readme",
   "devDependencies": {
-    "@types/react": "18.3.12"
+    "@testing-library/react": "^14.2.1",
+    "@types/react": "18.3.12",
+    "vitest": "^1.6.0"
   },
   "dependencies": {
     "@rn-tools/core": "3.0.1"

@@ -25,7 +25,7 @@ export type TabScreenOptions = {
 };
 
 export type TabsHandle = {
-  setActiveIndex: (index: number) => void;
+  setActive: (index: number) => void;
 };
 
 export type TabsProps = {
@@ -47,8 +47,8 @@ const TabsRoot = React.memo(
     React.useImperativeHandle(
       ref,
       () => ({
-        setActiveIndex(index: number) {
-          navigation.setActiveTab(index, { tabsId });
+        setActive(index: number) {
+          navigation.tab(index, { tabs: tabsId });
         },
       }),
       [tabsId, navigation],
