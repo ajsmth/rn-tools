@@ -1,6 +1,6 @@
 {
   "name": "@rn-tools/core",
-  "version": "3.0.1",
+  "version": "3.0.3",
   "description": "Core utilities for rn-tools",
   "main": "src/index.ts",
   "scripts": {

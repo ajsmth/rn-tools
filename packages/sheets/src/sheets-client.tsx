@@ -1,6 +1,11 @@
 import * as React from "react";
-import { createStore } from "@rn-tools/core";
-import type { Store } from "@rn-tools/core";
+import {
+  createStore,
+  createRenderTreeStore,
+  getRenderNodeActive,
+  getRenderNodeDepth,
+} from "@rn-tools/core";
+import type { Store, RenderTreeStore } from "@rn-tools/core";
 import type {
   AppearanceAndroid,
   AppearanceIOS,
@@ -37,6 +42,8 @@ export type SheetsStore = Store<SheetsState>;
 
 export type SheetsClient = {
   store: SheetsStore;
+  renderTreeStore: RenderTreeStore;
+  setRenderTreeStore: (store: RenderTreeStore) => void;
   present: (element: React.ReactElement, options?: SheetOptions) => string;
   dismiss: (id?: string) => void;
   dismissAll: () => void;
@@ -52,6 +59,31 @@ let counter = 0;
 
 export function createSheets(): SheetsClient {
   const store = createStore<SheetsState>({ sheets: [] });
+  const renderTreeStore = createRenderTreeStore();
+  let activeRenderTreeStore: RenderTreeStore = renderTreeStore;
+
+  function setRenderTreeStore(nextStore: RenderTreeStore) {
+    activeRenderTreeStore = nextStore;
+  }
+
+  function getActiveSheetKeyFromRenderTree(): string | null {
+    const tree = activeRenderTreeStore.getState();
+    let deepestId: string | null = null;
+    let deepestDepth = -1;
+
+    for (const [id, node] of tree.nodes) {
+      if (node.type !== "sheet") continue;
+      if (!getRenderNodeActive(tree, id)) continue;
+
+      const depth = getRenderNodeDepth(tree, id);
+      if (depth > deepestDepth) {
+        deepestDepth = depth;
+        deepestId = id;
+      }
+    }
+
+    return deepestId;
+  }
 
   function present(
     element: React.ReactElement,
@@ -111,6 +143,27 @@ export function createSheets(): SheetsClient {
       let targetIndex = -1;
 
       if (id == null) {
+        const activeSheetKey = getActiveSheetKeyFromRenderTree();
+        if (activeSheetKey) {
+          targetIndex = prev.sheets.findIndex(
+            (entry) => entry.key === activeSheetKey,
+          );
+        }
+
+        if (targetIndex !== -1) {
+          const activeEntry = prev.sheets[targetIndex];
+          if (activeEntry.status === "closing") {
+            targetIndex = -1;
+          }
+        }
+
+        if (targetIndex !== -1) {
+          const sheets = [...prev.sheets];
+          sheets[targetIndex] = { ...prev.sheets[targetIndex], status: "closing" };
+          return { ...prev, sheets };
+        }
+
+        // Fallback: close latest non-closing entry when render-tree has no active sheet.
         for (let i = prev.sheets.length - 1; i >= 0; i--) {
           if (prev.sheets[i].status !== "closing") {
             targetIndex = i;
@@ -207,6 +260,8 @@ export function createSheets(): SheetsClient {
 
   return {
     store,
+    renderTreeStore,
+    setRenderTreeStore,
     present,
     dismiss,
     dismissAll,

@@ -1,16 +1,19 @@
 import * as React from "react";
 import { describe, expect, it } from "vitest";
 import { createSheets } from "./sheets-client";
+import { createRenderTreeStore } from "@rn-tools/core";
 
 describe("createSheets", () => {
   it("returns the expected client API", () => {
     const sheets = createSheets();
 
     expect(sheets.store).toBeDefined();
+    expect(sheets.renderTreeStore).toBeDefined();
     expect(typeof sheets.present).toBe("function");
     expect(typeof sheets.dismiss).toBe("function");
     expect(typeof sheets.dismissAll).toBe("function");
     expect(typeof sheets.remove).toBe("function");
+    expect(typeof sheets.setRenderTreeStore).toBe("function");
     expect(typeof sheets.markDidOpen).toBe("function");
     expect(typeof sheets.markDidDismiss).toBe("function");
   });
@@ -145,6 +148,56 @@ describe("dismiss", () => {
     sheets.dismiss("missing");
 
     expect(sheets.store.getState()).toBe(before);
+  });
+
+  it("uses render-tree active sheet for no-arg dismiss", () => {
+    const sheets = createSheets();
+    const keyA = sheets.present(<span>a</span>);
+    const keyB = sheets.present(<span>b</span>);
+    sheets.markDidOpen(keyA);
+    sheets.markDidOpen(keyB);
+
+    const customTree = createRenderTreeStore({
+      nodes: new Map([
+        [
+          "render-tree-root",
+          {
+            id: "render-tree-root",
+            type: "root",
+            parentId: null,
+            active: true,
+            children: [keyA, keyB],
+          },
+        ],
+        [
+          keyA,
+          {
+            id: keyA,
+            type: "sheet",
+            parentId: "render-tree-root",
+            active: true,
+            children: [],
+          },
+        ],
+        [
+          keyB,
+          {
+            id: keyB,
+            type: "sheet",
+            parentId: "render-tree-root",
+            active: false,
+            children: [],
+          },
+        ],
+      ]),
+    });
+
+    sheets.setRenderTreeStore(customTree);
+    sheets.dismiss();
+
+    const state = sheets.store.getState().sheets;
+    expect(state.find((entry) => entry.key === keyA)?.status).toBe("closing");
+    expect(state.find((entry) => entry.key === keyB)?.status).toBe("open");
   });
 });
 
