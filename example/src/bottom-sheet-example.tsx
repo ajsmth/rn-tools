@@ -1,12 +1,6 @@
 import { BottomSheet } from "@rn-tools/sheets";
 import * as React from "react";
-import {
-  Text,
-  View,
-  Button,
-  TextInput,
-  FlatList,
-} from "react-native";
+import { Text, View, Button, TextInput, FlatList } from "react-native";
 import { useKeyboardHeight } from "@rn-tools/core";
 
 const data = Array.from({ length: 50 }).map((i, index) => `Item ${index}`);

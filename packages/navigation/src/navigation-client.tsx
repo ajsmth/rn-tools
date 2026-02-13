@@ -7,6 +7,8 @@ import {
   getRenderNodeDepth,
 } from "@rn-tools/core";
 import type { Store, RenderTreeStore } from "@rn-tools/core";
+import { createSheets } from "@rn-tools/sheets";
+import type { SheetOptions, SheetsClient } from "@rn-tools/sheets";
 
 export type PushOptions = {
   id?: string;
@@ -61,9 +63,13 @@ export function loadNavigationState(
 export type NavigationClient = {
   store: NavigationStore;
   renderTreeStore: RenderTreeStore;
+  sheetsStore: SheetsClient;
   push: (element: React.ReactElement, options?: PushOptions) => void;
   pop: (options?: { stack?: string }) => void;
   tab: (index: number, options?: { tabs?: string }) => void;
+  present: (element: React.ReactElement, options?: SheetOptions) => string;
+  dismiss: (id?: string) => void;
+  dismissAll: () => void;
 };
 
 export function createNavigation(
@@ -73,6 +79,7 @@ export function createNavigation(
     normalizeNavigationState(initialState ?? { stacks: new Map() }),
   );
   const renderTreeStore = createRenderTreeStore();
+  const sheetsStore = createSheets();
 
   function getDeepestActiveNodeId(type: string): string | null {
     const tree = renderTreeStore.getState();
@@ -154,7 +161,29 @@ export function createNavigation(
     });
   }
 
-  return { store: navStore, renderTreeStore, push, pop, tab };
+  function present(element: React.ReactElement, options?: SheetOptions): string {
+    return sheetsStore.present(element, options);
+  }
+
+  function dismiss(id?: string) {
+    sheetsStore.dismiss(id);
+  }
+
+  function dismissAll() {
+    sheetsStore.dismissAll();
+  }
+
+  return {
+    store: navStore,
+    renderTreeStore,
+    sheetsStore,
+    push,
+    pop,
+    tab,
+    present,
+    dismiss,
+    dismissAll,
+  };
 }
 
 export function useNavigation(): NavigationClient {

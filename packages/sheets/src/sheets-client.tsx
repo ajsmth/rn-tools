@@ -20,11 +20,13 @@ export type SheetOptions = {
   appearanceIOS?: AppearanceIOS;
 };
 
+export type SheetStatus = "opening" | "open" | "closing";
+
 export type SheetEntry = {
   key: string;
   element: React.ReactElement;
   options: SheetOptions;
-  open: boolean;
+  status: SheetStatus;
 };
 
 export type SheetsState = {
@@ -38,6 +40,9 @@ export type SheetsClient = {
   present: (element: React.ReactElement, options?: SheetOptions) => string;
   dismiss: (id?: string) => void;
   dismissAll: () => void;
+  remove: (id: string) => void;
+  markDidOpen: (key: string) => void;
+  markDidDismiss: (key: string) => void;
 };
 
 export const SheetsContext = React.createContext<SheetsClient | null>(null);
@@ -52,93 +57,163 @@ export function createSheets(): SheetsClient {
     element: React.ReactElement,
     options: SheetOptions = {},
   ): string {
-    const key = `sheet-${++counter}`;
+    const generatedKey = `sheet-${++counter}`;
+    let presentedKey = generatedKey;
 
     store.setState((prev) => {
-      if (
-        options.id &&
-        prev.sheets.some((entry) => entry.options.id === options.id)
-      ) {
-        console.log(
-          `[sheets] present: duplicate id="${options.id}", skipping`,
-        );
-        return prev;
+      if (options.id == null) {
+        return {
+          ...prev,
+          sheets: [
+            ...prev.sheets,
+            { key: generatedKey, element, options, status: "opening" },
+          ],
+        };
       }
 
-      const logId = options.id || "(none)";
-      console.log(
-        `[sheets] present: key="${key}" id="${logId}"`,
+      const duplicateIndex = prev.sheets.findIndex(
+        (entry) => entry.options.id === options.id,
       );
+
+      if (duplicateIndex === -1) {
+        return {
+          ...prev,
+          sheets: [
+            ...prev.sheets,
+            { key: generatedKey, element, options, status: "opening" },
+          ],
+        };
+      }
+
+      const duplicate = prev.sheets[duplicateIndex];
+      presentedKey = duplicate.key;
+      const nextEntry: SheetEntry = {
+        key: duplicate.key,
+        element,
+        options,
+        status: "opening",
+      };
+
+      const withoutDuplicate = prev.sheets.filter((_, i) => i !== duplicateIndex);
       return {
         ...prev,
-        sheets: [...prev.sheets, { key, element, options, open: true }],
+        sheets: [...withoutDuplicate, nextEntry],
       };
     });
 
-    return key;
+    return presentedKey;
   }
 
   function dismiss(id?: string) {
     store.setState((prev) => {
       if (prev.sheets.length === 0) return prev;
 
-      // Find target entry
-      let targetIndex: number;
+      let targetIndex = -1;
 
       if (id == null) {
-        // Find topmost open sheet
-        targetIndex = -1;
         for (let i = prev.sheets.length - 1; i >= 0; i--) {
-          if (prev.sheets[i].open) {
+          if (prev.sheets[i].status !== "closing") {
             targetIndex = i;
             break;
           }
         }
-        if (targetIndex === -1) return prev;
       } else {
         targetIndex = prev.sheets.findIndex(
           (entry) => entry.options.id === id || entry.key === id,
         );
-        if (targetIndex === -1) return prev;
       }
+
+      if (targetIndex === -1) return prev;
 
       const entry = prev.sheets[targetIndex];
+      if (entry.status === "closing") return prev;
 
-      if (entry.open) {
-        // Phase 1: mark as closing (triggers close animation)
-        console.log(`[sheets] dismiss: closing key="${entry.key}"`);
-        const sheets = [...prev.sheets];
-        sheets[targetIndex] = { ...entry, open: false };
-        return { ...prev, sheets };
-      } else {
-        // Phase 2: remove after animation complete
-        console.log(`[sheets] dismiss: removing key="${entry.key}"`);
-        return {
-          ...prev,
-          sheets: prev.sheets.filter((_, i) => i !== targetIndex),
-        };
-      }
+      const sheets = [...prev.sheets];
+      sheets[targetIndex] = { ...entry, status: "closing" };
+      return { ...prev, sheets };
     });
+
   }
 
   function dismissAll() {
     store.setState((prev) => {
       if (prev.sheets.length === 0) return prev;
 
-      const hasOpen = prev.sheets.some((e) => e.open);
-      if (!hasOpen) return prev;
+      let changed = false;
+      const sheets = prev.sheets.map((entry) => {
+        if (entry.status === "closing") return entry;
+        changed = true;
+        return { ...entry, status: "closing" as const };
+      });
 
-      console.log(`[sheets] dismissAll: closing ${prev.sheets.length} sheet(s)`);
+      if (!changed) return prev;
+
       return {
         ...prev,
-        sheets: prev.sheets.map((e) =>
-          e.open ? { ...e, open: false } : e,
-        ),
+        sheets,
       };
     });
+
   }
 
-  return { store, present, dismiss, dismissAll };
+  function remove(id: string) {
+    store.setState((prev) => {
+      const targetIndex = prev.sheets.findIndex(
+        (entry) => entry.options.id === id || entry.key === id,
+      );
+      if (targetIndex === -1) return prev;
+
+      return {
+        ...prev,
+        sheets: prev.sheets.filter((_, i) => i !== targetIndex),
+      };
+    });
+
+  }
+
+  function markDidOpen(key: string) {
+    store.setState((prev) => {
+      const index = prev.sheets.findIndex((entry) => entry.key === key);
+      if (index === -1) return prev;
+
+      const entry = prev.sheets[index];
+      if (entry.status !== "opening") return prev;
+
+      const sheets = [...prev.sheets];
+      sheets[index] = { ...entry, status: "open" };
+      return { ...prev, sheets };
+    });
+
+  }
+
+  function markDidDismiss(key: string) {
+    store.setState((prev) => {
+      const index = prev.sheets.findIndex((entry) => entry.key === key);
+      if (index === -1) return prev;
+
+      const entry = prev.sheets[index];
+      if (entry.status !== "closing") {
+        // Ignore dismiss notifications unless close was requested.
+        return prev;
+      }
+
+      return {
+        ...prev,
+        sheets: prev.sheets.filter((_, i) => i !== index),
+      };
+    });
+
+  }
+
+  return {
+    store,
+    present,
+    dismiss,
+    dismissAll,
+    remove,
+    markDidOpen,
+    markDidDismiss,
+  };
 }
 
 export function useSheets(): SheetsClient {

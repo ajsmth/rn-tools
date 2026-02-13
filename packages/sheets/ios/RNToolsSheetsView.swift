@@ -42,6 +42,15 @@ public class RNToolsSheetsView: ExpoView, RNToolsSheetsViewDelegate {
 
     func updateSnapPoints(_ snapPoints: [CGFloat]) {
         props.snapPoints = snapPoints
+        if props.isOpen {
+            sheetVC.updateSheetConfiguration(
+                openTo: props.initialIndex,
+                snapPoints: props.snapPoints,
+                grabberVisible: props.grabberVisible,
+                backgroundColor: props.backgroundColor,
+                cornerRadius: props.cornerRadius
+            )
+        }
     }
 
     func updateIsOpen(_ isOpen: Bool) {
@@ -61,6 +70,15 @@ public class RNToolsSheetsView: ExpoView, RNToolsSheetsViewDelegate {
 
     func updateInitialIndex(_ initialIndex: Int) {
         props.initialIndex = initialIndex
+        if props.isOpen {
+            sheetVC.updateSheetConfiguration(
+                openTo: props.initialIndex,
+                snapPoints: props.snapPoints,
+                grabberVisible: props.grabberVisible,
+                backgroundColor: props.backgroundColor,
+                cornerRadius: props.cornerRadius
+            )
+        }
     }
 
     func updateCanDismiss(_ canDismiss: Bool) {
@@ -75,6 +93,15 @@ public class RNToolsSheetsView: ExpoView, RNToolsSheetsViewDelegate {
         props.grabberVisible = grabberVisible
         props.backgroundColor = backgroundColor
         props.cornerRadius = cornerRadius
+        if props.isOpen {
+            sheetVC.updateSheetConfiguration(
+                openTo: props.initialIndex,
+                snapPoints: props.snapPoints,
+                grabberVisible: props.grabberVisible,
+                backgroundColor: props.backgroundColor,
+                cornerRadius: props.cornerRadius
+            )
+        }
     }
 
     func handleSheetDismissed() {
@@ -165,10 +192,52 @@ final class SheetViewController: UIViewController,
         backgroundColor: String?,
         cornerRadius: Float?
     ) {
-        guard overlayWindow == nil else { return }
+        guard overlayWindow == nil else {
+            updateSheetConfiguration(
+                openTo: index,
+                snapPoints: snapPoints,
+                grabberVisible: grabberVisible,
+                backgroundColor: backgroundColor,
+                cornerRadius: cornerRadius
+            )
+            return
+        }
 
         modalPresentationStyle = .pageSheet
 
+        updateSheetConfiguration(
+            openTo: index,
+            snapPoints: snapPoints,
+            grabberVisible: grabberVisible,
+            backgroundColor: backgroundColor,
+            cornerRadius: cornerRadius
+        )
+
+        let w = UIWindow(frame: UIScreen.main.bounds)
+        w.windowLevel = .statusBar + 2
+        w.rootViewController = UIViewController()
+        w.makeKeyAndVisible()
+
+        overlayWindow = w
+
+        let host = UIViewController()
+        host.modalPresentationStyle = .overFullScreen
+        host.view.backgroundColor = .clear
+
+        w.rootViewController?.present(host, animated: false) {
+            host.present(self, animated: true) { [weak self] in
+                self?.emitInitialOpenState(requestedIndex: index)
+            }
+        }
+    }
+
+    func updateSheetConfiguration(
+        openTo index: Int = 0,
+        snapPoints: [CGFloat],
+        grabberVisible: Bool,
+        backgroundColor: String?,
+        cornerRadius: Float?
+    ) {
         if let sheet = sheetPresentationController {
             sheet.delegate = self
             sheet.prefersGrabberVisible = grabberVisible
@@ -187,21 +256,6 @@ final class SheetViewController: UIViewController,
         }
 
         view.backgroundColor = UIColor(hex: backgroundColor) ?? .white
-
-        let w = UIWindow(frame: UIScreen.main.bounds)
-        w.windowLevel = .statusBar + 2
-        w.rootViewController = UIViewController()
-        w.makeKeyAndVisible()
-
-        overlayWindow = w
-
-        let host = UIViewController()
-        host.modalPresentationStyle = .overFullScreen
-        host.view.backgroundColor = .clear
-
-        w.rootViewController?.present(host, animated: false) {
-            host.present(self, animated: true)
-        }
     }
 
     func dismissSheet() {
@@ -254,6 +308,26 @@ final class SheetViewController: UIViewController,
     ) {
         delegate?.handleSheetDismissed()
         cleanup()
+    }
+
+    private func emitInitialOpenState(requestedIndex: Int) {
+        guard let sheet = sheetPresentationController else { return }
+
+        if
+            let selectedID = sheet.selectedDetentIdentifier,
+            let index = sheet.detents.firstIndex(where: { $0.identifier == selectedID })
+        {
+            delegate?.handleSheetStateChange(index: index)
+            return
+        }
+
+        let fallbackIndex: Int
+        if sheet.detents.indices.contains(requestedIndex) {
+            fallbackIndex = requestedIndex
+        } else {
+            fallbackIndex = 0
+        }
+        delegate?.handleSheetStateChange(index: fallbackIndex)
     }
 
     private func makeDetents(from points: [CGFloat])

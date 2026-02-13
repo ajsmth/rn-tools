@@ -8,10 +8,8 @@ import {
 import { createSheets, SheetsProvider, useSheets } from "@rn-tools/sheets";
 import * as React from "react";
 import { Text, View, Button, Pressable } from "react-native";
-import { BottomSheetExample } from "~/bottom-sheet-example";
 
 const navigation = createNavigation();
-const sheets = createSheets();
 
 const tabScreens: TabScreenOptions[] = [
   {
@@ -32,7 +30,8 @@ const tabScreens: TabScreenOptions[] = [
 ];
 
 export default function App() {
-  return <BottomSheetExample />;
+  const sheets = React.useMemo(() => createSheets(), []);
+
   return (
     <Navigation navigation={navigation}>
       <SheetsProvider sheets={sheets}>
@@ -75,6 +74,8 @@ function TabButton({
 }
 
 function HomeScreen() {
+  const sheets = useSheets();
+
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text style={{ fontSize: 24, fontWeight: "bold" }}>Home</Text>
@@ -125,6 +126,8 @@ function HomeScreen() {
 }
 
 function SheetContent({ label }: { label: string }) {
+  const sheets = useSheets();
+
   return (
     <View style={{ padding: 24 }}>
       <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 12 }}>

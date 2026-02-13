@@ -1,10 +1,12 @@
 # Navigation
 
-Root component and client for the `@rn-tools/navigation` system. The `Navigation` component provides context for all navigation primitives (`Stack`, `Tabs`), while the `NavigationClient` exposes imperative methods for pushing screens, popping screens, and switching tabs.
+Root component and client for the `@rn-tools/navigation` system.
+
+`Navigation` provides context for `Stack` and `Tabs`, and now also mounts sheet support internally so you can present sheets directly from the navigation client.
 
 ## Setup
 
-Create a navigation client and wrap your app in the `Navigation` component:
+Create a navigation client and wrap your app:
 
 ```tsx
 import { createNavigation, Navigation } from "@rn-tools/navigation";
@@ -14,69 +16,45 @@ const navigation = createNavigation();
 export default function App() {
   return (
     <Navigation navigation={navigation}>
-      {/* Stacks, Tabs, and screens go here */}
+      {/* Stacks, Tabs, screens */}
     </Navigation>
   );
 }
 ```
 
 `Navigation` sets up:
-- A `RenderTree` to track which stacks and tabs are mounted and active.
-- A root `Stack` (id `__root__`) that wraps all children.
-- Context providers for the navigation store and client, accessible via `useNavigation()`.
+- a render tree for active stack/tab resolution
+- a root `Stack` (`__root__`)
+- navigation context/providers
+- a sheets provider (for `navigation.present(...)`)
 
 ## `createNavigation`
 
-Creates a `NavigationClient` with an optional initial state.
-
 ```ts
 const navigation = createNavigation();
-
-// or with preloaded state
-const navigation = createNavigation({
-  stacks: {
-    "main-stack": [
-      { element: <DetailScreen />, options: { id: "detail" } },
-    ],
-  },
-  tabs: {
-    "main-tabs": { activeIndex: 1 },
-  },
-});
 ```
 
-The `stacks` and `tabs` fields accept either plain `Record` objects (as above) or `Map` instances.
+`createNavigation` also accepts preloaded `stacks` and `tabs` state.
 
-### Return value: `NavigationClient`
+## `NavigationClient`
 
 ```ts
 type NavigationClient = {
   store: NavigationStore;
   renderTreeStore: RenderTreeStore;
+  sheetsStore: SheetsClient;
+
   push: (element: React.ReactElement, options?: PushOptions) => void;
   pop: (options?: { stack?: string }) => void;
   tab: (index: number, options?: { tabs?: string }) => void;
+
+  present: (element: React.ReactElement, options?: SheetOptions) => string;
+  dismiss: (id?: string) => void;
+  dismissAll: () => void;
 };
 ```
 
-| Property | Description |
-|----------|-------------|
-| `store` | The underlying store holding `NavigationState` (stacks and tabs). |
-| `renderTreeStore` | The render tree store tracking mounted navigation nodes. |
-| `push` | Push a screen onto a stack. See [push](#push). |
-| `pop` | Pop the top screen from a stack. See [pop](#pop). |
-| `tab` | Switch the active tab. See [tab](#tab). |
-
-## Props
-
-### `NavigationProps`
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `navigation` | `NavigationClient` | The client returned by `createNavigation()`. |
-| `children` | `React.ReactNode` | Your app's navigation tree (stacks, tabs, screens). |
-
-## Methods
+## Screen methods
 
 ### `push`
 
@@ -84,15 +62,10 @@ type NavigationClient = {
 navigation.push(element, options?)
 ```
 
-Pushes a screen element onto a stack.
+Pushes to a stack.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `element` | `React.ReactElement` | The screen content to push. |
-| `options.id` | `string?` | Optional screen ID. Prevents duplicate pushes when a screen with the same ID already exists on the stack. |
-| `options.stack` | `string?` | Target a specific stack. When omitted, the deepest active stack in the render tree is used. |
-
-Throws if no `stack` is provided and no stack is currently mounted and active.
+- `options.stack?`: target stack id; otherwise deepest active stack is used.
+- `options.id?`: optional logical id to dedupe pushes on the same stack.
 
 ### `pop`
 
@@ -100,13 +73,7 @@ Throws if no `stack` is provided and no stack is currently mounted and active.
 navigation.pop(options?)
 ```
 
-Removes the top screen from a stack. No-op if the stack is empty.
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `options.stack` | `string?` | Target a specific stack. When omitted, the deepest active stack is used. |
-
-Throws if no `stack` is provided and no stack is currently mounted and active.
+Pops top screen from target stack (or deepest active stack).
 
 ### `tab`
 
@@ -114,115 +81,92 @@ Throws if no `stack` is provided and no stack is currently mounted and active.
 navigation.tab(index, options?)
 ```
 
-Switches to the tab at the given index.
+Switches active tab index.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `index` | `number` | Zero-based index of the tab to activate. |
-| `options.tabs` | `string?` | Target a specific tabs instance. When omitted, the deepest active tabs in the render tree is used. |
+- `options.tabs?`: target tabs id; otherwise deepest active tabs is used.
 
-Throws if no `tabs` is provided and no tabs instance is currently mounted and active.
+## Sheet methods
 
-## Automatic Target Resolution
-
-When `push`, `pop`, or `tab` are called without an explicit target ID, the navigation system walks the render tree to find the **deepest active** node of the matching type (`stack` or `tabs`).
-
-This means:
-- If tabs contain stacks, `push()` targets the stack inside the active tab.
-- If a parent stack becomes inactive, operations fall back to the next deepest active stack.
-- Nested stacks/tabs are handled automatically without needing to pass IDs.
-
-## `createNavigationState`
-
-Creates a normalized `NavigationState` from a plain input. Useful for preparing state outside of the client:
+### `present`
 
 ```ts
-import { createNavigationState } from "@rn-tools/navigation";
-
-const state = createNavigationState({
-  stacks: { "main-stack": [] },
-  tabs: { "main-tabs": { activeIndex: 0 } },
-});
+navigation.present(element, options?)
 ```
 
-## `loadNavigationState`
+Presents a bottom sheet and returns a sheet key.
 
-Replaces the state in an existing navigation store. Useful for restoring persisted state:
+`options` is the same `SheetOptions` used by `@rn-tools/sheets`:
+- `id?`
+- `snapPoints?`
+- `initialIndex?`
+- `canDismiss?`
+- `onDismissPrevented?`
+- `onStateChange?`
+- `containerStyle?`
+- `appearanceAndroid?`
+- `appearanceIOS?`
+
+### `dismiss`
 
 ```ts
-import { createNavigation, loadNavigationState } from "@rn-tools/navigation";
-
-const navigation = createNavigation();
-
-loadNavigationState(navigation.store, {
-  stacks: {
-    "main-stack": [
-      { element: <DetailScreen />, options: { id: "detail" } },
-    ],
-  },
-});
+navigation.dismiss(id?)
 ```
 
-## Hooks
+Dismisses by sheet id/key, or dismisses the top-most sheet if omitted.
 
-### `useNavigation`
+### `dismissAll`
 
-Returns the `NavigationClient` from context. Must be called within a `Navigation` tree.
-
-```tsx
-import { useNavigation } from "@rn-tools/navigation";
-
-function MyScreen() {
-  const navigation = useNavigation();
-
-  return (
-    <Button
-      title="Push"
-      onPress={() => navigation.push(<NextScreen />)}
-    />
-  );
-}
+```ts
+navigation.dismissAll()
 ```
 
-## Full Example
+Dismisses all active sheets.
+
+## Example
 
 ```tsx
-import {
-  createNavigation,
-  Navigation,
-  Stack,
-  Tabs,
-  type TabScreenOptions,
-} from "@rn-tools/navigation";
+import * as React from "react";
+import { Button, Text, View } from "react-native";
+import { createNavigation, Navigation, Stack } from "@rn-tools/navigation";
 
 const navigation = createNavigation();
-
-const tabScreens: TabScreenOptions[] = [
-  {
-    id: "home",
-    screen: <Stack id="home" rootScreen={<HomeScreen />} />,
-    tab: ({ id, isActive, onPress }) => (
-      <Pressable onPress={onPress}>
-        <Text style={{ fontWeight: isActive ? "bold" : "normal" }}>Home</Text>
-      </Pressable>
-    ),
-  },
-  {
-    id: "settings",
-    screen: <SettingsScreen />,
-    tab: ({ id, isActive, onPress }) => (
-      <Pressable onPress={onPress}>
-        <Text style={{ fontWeight: isActive ? "bold" : "normal" }}>Settings</Text>
-      </Pressable>
-    ),
-  },
-];
 
 export default function App() {
   return (
     <Navigation navigation={navigation}>
-      <Tabs id="main-tabs" screens={tabScreens} />
+      <Stack rootScreen={<Home />} />
     </Navigation>
+  );
+}
+
+function Home() {
+  return (
+    <View>
+      <Button
+        title="Push"
+        onPress={() => navigation.push(<Detail />, { id: "detail" })}
+      />
+      <Button
+        title="Present sheet"
+        onPress={() =>
+          navigation.present(
+            <View style={{ padding: 24 }}>
+              <Text>Sheet content</Text>
+            </View>,
+            { id: "edit", snapPoints: [320, 520] },
+          )
+        }
+      />
+      <Button title="Dismiss sheet" onPress={() => navigation.dismiss()} />
+    </View>
+  );
+}
+
+function Detail() {
+  return (
+    <View>
+      <Button title="Back" onPress={() => navigation.pop()} />
+    </View>
   );
 }
 ```

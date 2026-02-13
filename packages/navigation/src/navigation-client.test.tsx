@@ -48,9 +48,13 @@ describe("createNavigation", () => {
     const nav = createNavigation();
     expect(nav.store).toBeDefined();
     expect(nav.renderTreeStore).toBeDefined();
+    expect(nav.sheetsStore).toBeDefined();
     expect(typeof nav.push).toBe("function");
     expect(typeof nav.pop).toBe("function");
     expect(typeof nav.tab).toBe("function");
+    expect(typeof nav.present).toBe("function");
+    expect(typeof nav.dismiss).toBe("function");
+    expect(typeof nav.dismissAll).toBe("function");
   });
 
   it("initializes with empty state by default", () => {
@@ -68,6 +72,33 @@ describe("createNavigation", () => {
     const state = nav.store.getState();
     expect(state.stacks.get("stack-a")).toHaveLength(1);
     expect(state.tabs.get("my-tabs")).toEqual({ activeIndex: 1 });
+  });
+});
+
+describe("sheet methods", () => {
+  it("present returns a key", () => {
+    const nav = createNavigation();
+    const key = nav.present(<span>sheet</span>);
+
+    expect(typeof key).toBe("string");
+  });
+
+  it("present reuses key when id is reused", () => {
+    const nav = createNavigation();
+    const key1 = nav.present(<span>sheet-a</span>, { id: "edit" });
+    const key2 = nav.present(<span>sheet-b</span>, { id: "edit" });
+
+    expect(key2).toBe(key1);
+  });
+
+  it("dismiss and dismissAll are callable via public API", () => {
+    const nav = createNavigation();
+    nav.present(<span>a</span>);
+    nav.present(<span>b</span>);
+
+    expect(() => nav.dismiss()).not.toThrow();
+    nav.dismissAll();
+    expect(() => nav.dismissAll()).not.toThrow();
   });
 });
 

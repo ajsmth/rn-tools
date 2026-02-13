@@ -34,6 +34,7 @@
     "react-native-screens": "*"
   },
   "dependencies": {
+    "@rn-tools/sheets": "*",
     "path-to-regexp": "^6.2.2",
     "zustand": "^4.5.2"
   }

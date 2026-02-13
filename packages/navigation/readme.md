@@ -57,6 +57,9 @@ Push and pop screens imperatively:
 navigation.push(<DetailScreen />, { id: "detail" });
 navigation.pop();
 navigation.tab(1);
+navigation.present(<EditSheet />, { id: "edit", snapPoints: [320, 520] });
+navigation.dismiss();
+navigation.dismissAll();
 ```
 
 When no explicit target is provided, these methods automatically resolve the deepest active stack or tabs instance.

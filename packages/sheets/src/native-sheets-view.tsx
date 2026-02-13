@@ -22,17 +22,17 @@ type ChangeEvent<T extends SheetState, P = unknown> = {
 type OpenChangeEvent = ChangeEvent<"OPEN", { index: number }>;
 type HiddenChangeEvent = ChangeEvent<"HIDDEN">;
 
-type SheetChangeEvent = OpenChangeEvent | HiddenChangeEvent;
+export type SheetChangeEvent = OpenChangeEvent | HiddenChangeEvent;
 
 type NativeOnChangeEvent = NativeSyntheticEvent<SheetChangeEvent>;
 
-type AppearanceIOS = {
+export type AppearanceIOS = {
   grabberVisible?: boolean;
   backgroundColor?: string;
   cornerRadius?: number;
 };
 
-type AppearanceAndroid = {
+export type AppearanceAndroid = {
   dimAmount?: number;
   cornerRadius?: number;
   backgroundColor?: string;
@@ -61,6 +61,7 @@ export type BottomSheetProps = {
   isOpen: boolean;
   initialIndex?: number;
   setIsOpen: (isOpen: boolean) => void;
+  onDismissed?: () => void;
   canDismiss?: boolean;
   onDismissPrevented?: () => void;
   onStateChange?: (event: SheetChangeEvent) => void;
@@ -77,6 +78,7 @@ export function BottomSheet(props: BottomSheetProps) {
     isOpen,
     initialIndex = 0,
     setIsOpen,
+    onDismissed,
     appearanceAndroid,
     appearanceIOS,
     canDismiss = true,
@@ -97,13 +99,15 @@ export function BottomSheet(props: BottomSheetProps) {
     y: 0,
   });
 
+  const hasOpened = React.useRef(false);
+
   const computedSnapPoints = React.useMemo(() => {
     if (snapPoints.length === 0) {
       if (layout.height === 0) {
         return [];
       }
 
-      return [Math.min(layout.height, maxSheetHeight)];
+      return [Math.round(Math.min(layout.height, maxSheetHeight))];
     }
 
     let effectiveSnapPoints =
@@ -122,7 +126,7 @@ export function BottomSheet(props: BottomSheetProps) {
       ];
     }
 
-    return effectiveSnapPoints;
+    return effectiveSnapPoints.map((snapPoint) => Math.round(snapPoint));
   }, [layout.height, maxSheetHeight, snapPoints]);
 
   const maxHeight = React.useMemo(
@@ -143,20 +147,47 @@ export function BottomSheet(props: BottomSheetProps) {
     };
   }, [maxHeight, containerStyle]);
 
+  const computedIsOpen = React.useMemo(
+    () => isOpen && computedSnapPoints.length > 0,
+    [isOpen, computedSnapPoints],
+  );
+
+  const notifyDismissed = React.useCallback(
+    () => {
+      if (hasOpened.current) {
+        setIsOpen(false);
+      }
+      onDismissed?.();
+      hasOpened.current = false;
+    },
+    [setIsOpen, onDismissed],
+  );
+
   const handleOnDismiss = React.useCallback(() => {
-    setIsOpen(false);
-  }, []);
+    notifyDismissed();
+  }, [notifyDismissed]);
 
   const handleStateChange = React.useCallback(
     (event: NativeOnChangeEvent) => {
+      if (event.nativeEvent.type === "OPEN") {
+        hasOpened.current = true;
+      }
+
+      if (event.nativeEvent.type === "HIDDEN") {
+        notifyDismissed();
+      }
+
       onStateChange?.(event.nativeEvent);
     },
-    [onStateChange],
+    [onStateChange, notifyDismissed],
   );
 
-  const handleLayout = React.useCallback((event: LayoutChangeEvent) => {
-    setLayout(event.nativeEvent.layout);
-  }, []);
+  const handleLayout = React.useCallback(
+    (event: LayoutChangeEvent) => {
+      setLayout(event.nativeEvent.layout);
+    },
+    [],
+  );
 
   const handleDismissWithChanges = React.useCallback(() => {
     onDismissPrevented?.();
@@ -168,13 +199,8 @@ export function BottomSheet(props: BottomSheetProps) {
   );
 
   const pointerEvents = React.useMemo(() => {
-    return isOpen ? "box-none" : "none";
+    return isOpen ? "auto" : "none";
   }, [isOpen]);
-
-  const computedIsOpen = React.useMemo(
-    () => isOpen && computedSnapPoints.length > 0,
-    [isOpen, computedSnapPoints],
-  );
 
   const innerStyle = React.useMemo(
     () => (isAutosized ? undefined : StyleSheet.absoluteFill),
