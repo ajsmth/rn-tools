@@ -1,9 +1,19 @@
 import * as React from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { act, render } from "@testing-library/react";
 import { RenderTree, createRenderTreeStore } from "@rn-tools/core";
 import { createSheets } from "./sheets-client";
 import { SheetsProvider } from "./sheets-provider";
+
+vi.mock("./native-sheets-view", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./native-sheets-view")>();
+  return {
+    ...actual,
+    BottomSheet: vi.fn((props: { children?: React.ReactNode }) => (
+      <div data-testid="bottom-sheet">{props.children}</div>
+    )),
+  };
+});
 
 function renderWithProviders() {
   const renderTreeStore = createRenderTreeStore();
@@ -27,26 +37,18 @@ describe("SheetSlot wrapped option", () => {
     });
 
     expect(result.getByText("wrapped-content")).toBeTruthy();
-    // NativeSheetsView mocks as <div>, so a wrapped entry has a <div> ancestor
-    const el = result.getByText("wrapped-content");
-    expect(el.closest("div")).not.toBeNull();
+    expect(result.queryByTestId("bottom-sheet")).not.toBeNull();
   });
 
   it("renders content without BottomSheet wrapper when wrapped is false", () => {
     const { sheets, result } = renderWithProviders();
 
     act(() => {
-      sheets.present(<span data-testid="unwrapped">unwrapped-content</span>, {
-        wrapped: false,
-      });
+      sheets.present(<span>unwrapped-content</span>, { wrapped: false });
     });
 
-    const el = result.getByText("unwrapped-content");
-    expect(el).toBeTruthy();
-    // The only <div> should be the testing-library container, not a NativeSheetsView wrapper.
-    // The element's parentElement chain should not include a <div> between it and the container root.
-    const parentDiv = el.parentElement?.closest("div");
-    expect(parentDiv).toBe(result.container);
+    expect(result.getByText("unwrapped-content")).toBeTruthy();
+    expect(result.queryByTestId("bottom-sheet")).toBeNull();
   });
 
   it("renders both wrapped and unwrapped entries simultaneously", () => {
@@ -59,5 +61,6 @@ describe("SheetSlot wrapped option", () => {
 
     expect(result.getByText("default-sheet")).toBeTruthy();
     expect(result.getByText("bare-sheet")).toBeTruthy();
+    expect(result.queryAllByTestId("bottom-sheet")).toHaveLength(1);
   });
 });

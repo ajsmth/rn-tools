@@ -1,5 +1,7 @@
 export function requireNativeViewManager() {
-  return "div";
+  return function NativeViewMock(props: { children?: unknown }) {
+    return props.children;
+  };
 }
 
 export function requireNativeModule() {
