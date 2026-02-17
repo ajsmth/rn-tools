@@ -9,6 +9,8 @@ import {
   useTabActiveIndex,
   useNavigationStore,
   useNavigation,
+  TABS_TYPE,
+  TAB_SCREEN_TYPE,
 } from "./navigation-client";
 
 import * as RNScreens from "react-native-screens";
@@ -40,7 +42,7 @@ export type TabsProps = {
 const TabsRoot = React.memo(
   React.forwardRef<TabsHandle, TabsProps>(function TabsRoot(props, ref) {
     const tabsId = React.useRef(
-      props.id ?? nextRenderTreeIdForType("tabs"),
+      props.id ?? nextRenderTreeIdForType(TABS_TYPE),
     ).current;
     const navigation = useNavigation();
 
@@ -55,7 +57,7 @@ const TabsRoot = React.memo(
     );
 
     return (
-      <RenderTreeNode type="tabs" id={tabsId} active={props.active}>
+      <RenderTreeNode type={TABS_TYPE} id={tabsId} active={props.active}>
         {props.children}
       </RenderTreeNode>
     );
@@ -127,7 +129,7 @@ const TabsSlot = React.memo(function TabsSlot(props: {
           style={StyleSheet.absoluteFill}
         >
           <RenderTreeNode
-            type="tab-screen"
+            type={TAB_SCREEN_TYPE}
             id={`${tabsId}/${entry.id}`}
             active={index === activeIndex}
           >

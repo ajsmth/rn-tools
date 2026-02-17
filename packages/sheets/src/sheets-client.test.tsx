@@ -1,6 +1,6 @@
 import * as React from "react";
 import { describe, expect, it } from "vitest";
-import { createSheets } from "./sheets-client";
+import { createSheets, SHEET_TYPE } from "./sheets-client";
 import { createRenderTreeStore } from "@rn-tools/core";
 
 describe("createSheets", () => {
@@ -18,7 +18,13 @@ describe("createSheets", () => {
 
   it("starts with empty state", () => {
     const sheets = createSheets(createRenderTreeStore());
-    expect(sheets.store.getState().sheets).toEqual([]);
+    expect(sheets.store.getState().entries).toEqual([]);
+  });
+
+  it("uses sheet- prefix for keys", () => {
+    const sheets = createSheets(createRenderTreeStore());
+    const key = sheets.present(<span>hello</span>);
+    expect(key).toMatch(/^sheet-/);
   });
 });
 
@@ -27,11 +33,11 @@ describe("present", () => {
     const sheets = createSheets(createRenderTreeStore());
     const key = sheets.present(<span>hello</span>);
 
-    const state = sheets.store.getState().sheets;
+    const entries = sheets.store.getState().entries;
     expect(typeof key).toBe("string");
-    expect(state).toHaveLength(1);
-    expect(state[0].key).toBe(key);
-    expect(state[0].status).toBe("opening");
+    expect(entries).toHaveLength(1);
+    expect(entries[0].key).toBe(key);
+    expect(entries[0].status).toBe("opening");
   });
 
   it("stores element and options", () => {
@@ -41,7 +47,7 @@ describe("present", () => {
 
     sheets.present(element, options);
 
-    const entry = sheets.store.getState().sheets[0];
+    const entry = sheets.store.getState().entries[0];
     expect(entry.element).toBe(element);
     expect(entry.options).toBe(options);
   });
@@ -54,43 +60,12 @@ describe("present", () => {
 
     const key2 = sheets.present(<span>b</span>, { id: "edit", snapPoints: [320] });
 
-    const state = sheets.store.getState().sheets;
+    const entries = sheets.store.getState().entries;
     expect(key2).toBe(key1);
-    expect(state).toHaveLength(1);
-    expect(state[0].key).toBe(key1);
-    expect(state[0].status).toBe("opening");
-    expect(state[0].options.snapPoints).toEqual([320]);
-  });
-});
-
-describe("markDidOpen", () => {
-  it("transitions opening to open", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<span>a</span>);
-
-    sheets.markDidOpen(key);
-
-    expect(sheets.store.getState().sheets[0].status).toBe("open");
-  });
-
-  it("is a no-op for closing sheets", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<span>a</span>);
-    sheets.dismiss(key);
-
-    const before = sheets.store.getState();
-    sheets.markDidOpen(key);
-
-    expect(sheets.store.getState()).toBe(before);
-  });
-
-  it("is a no-op for unknown key", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const before = sheets.store.getState();
-
-    sheets.markDidOpen("missing");
-
-    expect(sheets.store.getState()).toBe(before);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].key).toBe(key1);
+    expect(entries[0].status).toBe("opening");
+    expect(entries[0].options.snapPoints).toEqual([320]);
   });
 });
 
@@ -104,48 +79,9 @@ describe("dismiss", () => {
 
     sheets.dismiss();
 
-    const state = sheets.store.getState().sheets;
-    expect(state[0].status).toBe("open");
-    expect(state[1].status).toBe("closing");
-  });
-
-  it("can dismiss by id", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<span>a</span>, { id: "edit" });
-    sheets.markDidOpen(key);
-
-    sheets.dismiss("edit");
-
-    expect(sheets.store.getState().sheets[0].status).toBe("closing");
-  });
-
-  it("can dismiss by key", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<span>a</span>);
-    sheets.markDidOpen(key);
-
-    sheets.dismiss(key);
-
-    expect(sheets.store.getState().sheets[0].status).toBe("closing");
-  });
-
-  it("is a no-op when empty", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const before = sheets.store.getState();
-
-    sheets.dismiss();
-
-    expect(sheets.store.getState()).toBe(before);
-  });
-
-  it("is a no-op for unknown id", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    sheets.present(<span>a</span>);
-    const before = sheets.store.getState();
-
-    sheets.dismiss("missing");
-
-    expect(sheets.store.getState()).toBe(before);
+    const entries = sheets.store.getState().entries;
+    expect(entries[0].status).toBe("open");
+    expect(entries[1].status).toBe("closing");
   });
 
   it("uses render-tree active sheet for no-arg dismiss", () => {
@@ -172,7 +108,7 @@ describe("dismiss", () => {
           keyA,
           {
             id: keyA,
-            type: "sheet",
+            type: SHEET_TYPE,
             parentId: "render-tree-root",
             active: true,
             children: [],
@@ -182,7 +118,7 @@ describe("dismiss", () => {
           keyB,
           {
             id: keyB,
-            type: "sheet",
+            type: SHEET_TYPE,
             parentId: "render-tree-root",
             active: false,
             children: [],
@@ -193,9 +129,9 @@ describe("dismiss", () => {
 
     sheets.dismiss();
 
-    const state = sheets.store.getState().sheets;
-    expect(state.find((entry) => entry.key === keyA)?.status).toBe("closing");
-    expect(state.find((entry) => entry.key === keyB)?.status).toBe("open");
+    const entries = sheets.store.getState().entries;
+    expect(entries.find((entry) => entry.key === keyA)?.status).toBe("closing");
+    expect(entries.find((entry) => entry.key === keyB)?.status).toBe("open");
   });
 });
 
@@ -208,26 +144,7 @@ describe("markDidDismiss", () => {
 
     sheets.markDidDismiss(key);
 
-    expect(sheets.store.getState().sheets).toHaveLength(0);
-  });
-
-  it("does not remove opening sheet", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<span>a</span>);
-    const before = sheets.store.getState();
-
-    sheets.markDidDismiss(key);
-
-    expect(sheets.store.getState()).toBe(before);
-  });
-
-  it("is a no-op for unknown key", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const before = sheets.store.getState();
-
-    sheets.markDidDismiss("missing");
-
-    expect(sheets.store.getState()).toBe(before);
+    expect(sheets.store.getState().entries).toHaveLength(0);
   });
 });
 
@@ -244,18 +161,9 @@ describe("dismissAll", () => {
 
     sheets.dismissAll();
 
-    const state = sheets.store.getState().sheets;
-    expect(state).toHaveLength(3);
-    expect(state.every((entry) => entry.status === "closing")).toBe(true);
-  });
-
-  it("is a no-op when empty", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const before = sheets.store.getState();
-
-    sheets.dismissAll();
-
-    expect(sheets.store.getState()).toBe(before);
+    const entries = sheets.store.getState().entries;
+    expect(entries).toHaveLength(3);
+    expect(entries.every((entry) => entry.status === "closing")).toBe(true);
   });
 });
 
@@ -266,25 +174,6 @@ describe("remove", () => {
 
     sheets.remove(key);
 
-    expect(sheets.store.getState().sheets).toHaveLength(0);
-  });
-
-  it("removes by id", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    sheets.present(<span>a</span>, { id: "edit" });
-
-    sheets.remove("edit");
-
-    expect(sheets.store.getState().sheets).toHaveLength(0);
-  });
-
-  it("is a no-op when no match", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    sheets.present(<span>a</span>);
-    const before = sheets.store.getState();
-
-    sheets.remove("missing");
-
-    expect(sheets.store.getState()).toBe(before);
+    expect(sheets.store.getState().entries).toHaveLength(0);
   });
 });

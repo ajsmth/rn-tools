@@ -7,6 +7,8 @@ import {
 import {
   useStackScreens,
   useNavigation,
+  STACK_TYPE,
+  SCREEN_TYPE,
   type PushOptions,
 } from "./navigation-client";
 
@@ -15,10 +17,7 @@ import * as RNScreens from "react-native-screens";
 import { StyleSheet } from "react-native";
 
 export type StackHandle = {
-  push: (
-    element: React.ReactElement,
-    options?: PushOptions,
-  ) => void;
+  push: (element: React.ReactElement, options?: PushOptions) => void;
   pop: () => void;
 };
 
@@ -32,7 +31,7 @@ export type StackProps = {
 const StackRoot = React.memo(
   React.forwardRef<StackHandle, StackProps>(function StackRoot(props, ref) {
     const stackId = React.useRef(
-      props.id ?? nextRenderTreeIdForType("stack"),
+      props.id ?? nextRenderTreeIdForType(STACK_TYPE),
     ).current;
     const navigation = useNavigation();
 
@@ -50,7 +49,7 @@ const StackRoot = React.memo(
     );
 
     return (
-      <RenderTreeNode type="stack" id={stackId} active={props.active}>
+      <RenderTreeNode type={STACK_TYPE} id={stackId} active={props.active}>
         <RNScreens.ScreenStack style={StyleSheet.absoluteFill}>
           {props.rootScreen && <StackScreen>{props.rootScreen}</StackScreen>}
           {props.children}
@@ -66,10 +65,17 @@ export type StackScreenProps = {
   children: React.ReactNode;
 };
 
+const defaultStyle = StyleSheet.create({
+  screen: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "white",
+  },
+});
+
 const StackScreen = React.memo(function StackScreen(props: StackScreenProps) {
   return (
-    <RNScreens.Screen style={StyleSheet.absoluteFill}>
-      <RenderTreeNode type="screen" id={props.id} active={props.active}>
+    <RNScreens.Screen style={defaultStyle.screen}>
+      <RenderTreeNode type={SCREEN_TYPE} id={props.id} active={props.active}>
         {props.children}
       </RenderTreeNode>
     </RNScreens.Screen>

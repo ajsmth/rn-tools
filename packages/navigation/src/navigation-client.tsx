@@ -10,6 +10,11 @@ import type { Store, RenderTreeStore } from "@rn-tools/core";
 import { createSheets } from "@rn-tools/sheets";
 import type { SheetOptions, SheetsClient } from "@rn-tools/sheets";
 
+export const STACK_TYPE = "stack";
+export const SCREEN_TYPE = "screen";
+export const TABS_TYPE = "tabs";
+export const TAB_SCREEN_TYPE = "tab-screen";
+
 export type PushOptions = {
   id?: string;
   stack?: string;
@@ -99,7 +104,7 @@ export function createNavigation(
   }
 
   function push(element: React.ReactElement, options?: PushOptions) {
-    const stackId = options?.stack ?? getDeepestActiveNodeId("stack");
+    const stackId = options?.stack ?? getDeepestActiveNodeId(STACK_TYPE);
     if (!stackId) {
       throw new Error(
         "push: could not resolve stack. Pass { stack } explicitly or ensure a Stack is mounted and active.",
@@ -120,7 +125,7 @@ export function createNavigation(
   }
 
   function pop(options?: { stack?: string }) {
-    const stackId = options?.stack ?? getDeepestActiveNodeId("stack");
+    const stackId = options?.stack ?? getDeepestActiveNodeId(STACK_TYPE);
     if (!stackId) {
       throw new Error(
         "pop: could not resolve stack. Pass { stack } explicitly or ensure a Stack is mounted and active.",
@@ -137,7 +142,7 @@ export function createNavigation(
   }
 
   function tab(index: number, options?: { tabs?: string }) {
-    const tabsId = options?.tabs ?? getDeepestActiveNodeId("tabs");
+    const tabsId = options?.tabs ?? getDeepestActiveNodeId(TABS_TYPE);
     if (!tabsId) {
       throw new Error(
         "tab: could not resolve tabs. Pass { tabs } explicitly or ensure a Tabs is mounted and active.",

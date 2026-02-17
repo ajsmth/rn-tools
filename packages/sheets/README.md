@@ -104,8 +104,6 @@ function SheetContent() {
 }
 ```
 
-`useSheets()` is still available when you prefer resolving the client from context.
-
 ## `createSheets` client
 
 ```ts

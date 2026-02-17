@@ -2,7 +2,7 @@ import * as React from "react";
 import { RenderTreeNode, useStore } from "@rn-tools/core";
 import { BottomSheet } from "./native-sheets-view";
 import type { SheetChangeEvent } from "./native-sheets-view";
-import { SheetsContext, SheetsStoreContext } from "./sheets-client";
+import { SHEET_TYPE, SheetsContext, SheetsStoreContext } from "./sheets-client";
 import type { SheetEntry } from "./sheets-client";
 
 function SheetSlotEntry({
@@ -44,7 +44,7 @@ function SheetSlotEntry({
   }, [sheets, entry.key]);
 
   return (
-    <RenderTreeNode type="sheet" id={entry.key} active={active}>
+    <RenderTreeNode type={SHEET_TYPE} id={entry.key} active={active}>
       <BottomSheet
         isOpen={isOpen}
         setIsOpen={handleSetIsOpen}
@@ -66,19 +66,19 @@ function SheetSlotEntry({
 
 export function SheetSlot() {
   const store = React.useContext(SheetsStoreContext);
-  const sheets = useStore(store, (state) => state.sheets);
+  const entries = useStore(store, (state) => state.entries);
   const activeKey = React.useMemo(() => {
-    for (let i = sheets.length - 1; i >= 0; i--) {
-      if (sheets[i].status !== "closing") {
-        return sheets[i].key;
+    for (let i = entries.length - 1; i >= 0; i--) {
+      if (entries[i].status !== "closing") {
+        return entries[i].key;
       }
     }
     return null;
-  }, [sheets]);
+  }, [entries]);
 
   return (
     <>
-      {sheets.map((entry) => (
+      {entries.map((entry) => (
         <SheetSlotEntry
           key={entry.key}
           entry={entry}
