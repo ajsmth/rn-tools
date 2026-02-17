@@ -9,8 +9,13 @@ export const Keyboard = {
 
 export const StyleSheet = {
   absoluteFill: {},
+  absoluteFillObject: {},
   create: (styles: Record<string, unknown>) => styles,
 };
+
+export function useWindowDimensions() {
+  return { width: 375, height: 812 };
+}
 
 export function View(props: { children?: unknown }) {
   return props.children;

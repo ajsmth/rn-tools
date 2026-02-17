@@ -89,15 +89,30 @@ const StackSlot = React.memo(function StackSlot() {
 
   return (
     <React.Fragment>
-      {screens.map((screen, index, arr) => (
-        <StackScreen
-          id={screen.options?.id}
-          key={screen.options?.id ?? index}
-          active={index === arr.length - 1}
-        >
-          {screen.element}
-        </StackScreen>
-      ))}
+      {screens.map((screen, index, arr) => {
+        if (screen.options?.wrapped === false) {
+          return (
+            <RenderTreeNode
+              key={screen.options?.id ?? index}
+              type={SCREEN_TYPE}
+              id={screen.options?.id}
+              active={index === arr.length - 1}
+            >
+              {screen.element}
+            </RenderTreeNode>
+          );
+        }
+
+        return (
+          <StackScreen
+            id={screen.options?.id}
+            key={screen.options?.id ?? index}
+            active={index === arr.length - 1}
+          >
+            {screen.element}
+          </StackScreen>
+        );
+      })}
     </React.Fragment>
   );
 });

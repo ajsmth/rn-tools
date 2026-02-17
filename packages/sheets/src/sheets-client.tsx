@@ -3,6 +3,7 @@ import { createOverlayStore } from "@rn-tools/core";
 import type {
   Store,
   RenderTreeStore,
+  BaseOverlayOptions,
   OverlayState,
   OverlayStore,
 } from "@rn-tools/core";
@@ -13,8 +14,7 @@ import type {
 } from "./native-sheets-view";
 import type { ViewStyle } from "react-native";
 
-export type SheetOptions = {
-  id?: string;
+export type SheetOptions = BaseOverlayOptions & {
   snapPoints?: number[];
   initialIndex?: number;
   canDismiss?: boolean;

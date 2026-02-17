@@ -365,6 +365,30 @@ describe("Stack", () => {
     expect(state.stacks.has("outer")).toBe(false);
   });
 
+  it("renders unwrapped screen content when wrapped is false", async () => {
+    const { renderer } = await renderWithProviders(
+      <Stack id="stack-a" />,
+      {
+        stacks: {
+          "stack-a": [
+            {
+              element: (
+                <RenderNodeProbe
+                  render={(data) => (
+                    <span>{`unwrapped:${data.type}:${String(data.active)}`}</span>
+                  )}
+                />
+              ),
+              options: { id: "screen-unwrapped", wrapped: false },
+            },
+          ],
+        },
+      },
+    );
+
+    expect(renderer.getByText("unwrapped:screen:true")).toBeTruthy();
+  });
+
   it("resolves the deepest active stack and falls back when a subtree becomes inactive", async () => {
     const navigation = createNavigation();
 

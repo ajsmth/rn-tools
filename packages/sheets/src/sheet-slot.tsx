@@ -1,70 +1,95 @@
 import * as React from "react";
 import { RenderTreeNode, useStore } from "@rn-tools/core";
+import type { OverlayStatus } from "@rn-tools/core";
 import { BottomSheet } from "./native-sheets-view";
 import type { SheetChangeEvent } from "./native-sheets-view";
 import { SHEET_TYPE, SheetsContext, SheetsStoreContext } from "./sheets-client";
-import type { SheetEntry } from "./sheets-client";
+import type { ViewStyle } from "react-native";
+import type {
+  AppearanceAndroid,
+  AppearanceIOS,
+} from "./native-sheets-view";
 
-function SheetSlotEntry({
-  entry,
-  active,
-}: {
-  entry: SheetEntry;
+type SheetSlotEntryProps = {
+  entryKey: string;
+  element: React.ReactElement;
+  status: OverlayStatus;
   active: boolean;
-}) {
+  wrapped: boolean;
+  snapPoints?: number[];
+  initialIndex?: number;
+  canDismiss?: boolean;
+  onDismissPrevented?: () => void;
+  onStateChange?: (event: SheetChangeEvent) => void;
+  containerStyle?: ViewStyle;
+  appearanceAndroid?: AppearanceAndroid;
+  appearanceIOS?: AppearanceIOS;
+};
+
+const SheetSlotEntry = React.memo(function SheetSlotEntry(
+  props: SheetSlotEntryProps,
+) {
   const sheets = React.useContext(SheetsContext);
-  const isOpen = entry.status !== "closing";
+  const isOpen = props.status !== "closing";
 
   const handleStateChange = React.useCallback(
     (event: SheetChangeEvent) => {
       if (event.type === "OPEN") {
-        sheets?.markDidOpen(entry.key);
+        sheets?.markDidOpen(props.entryKey);
       }
 
       if (event.type === "HIDDEN") {
-        sheets?.markDidDismiss(entry.key);
+        sheets?.markDidDismiss(props.entryKey);
       }
 
-      entry.options.onStateChange?.(event);
+      props.onStateChange?.(event);
     },
-    [sheets, entry.key, entry.options.onStateChange],
+    [sheets, props.entryKey, props.onStateChange],
   );
 
   const handleSetIsOpen = React.useCallback(
     (nextIsOpen: boolean) => {
       if (!nextIsOpen) {
-        sheets?.dismiss(entry.key);
+        sheets?.dismiss(props.entryKey);
       }
     },
-    [sheets, entry.key],
+    [sheets, props.entryKey],
   );
 
   const handleDismissed = React.useCallback(() => {
-    sheets?.markDidDismiss(entry.key);
-  }, [sheets, entry.key]);
+    sheets?.markDidDismiss(props.entryKey);
+  }, [sheets, props.entryKey]);
+
+  if (!props.wrapped) {
+    return (
+      <RenderTreeNode type={SHEET_TYPE} id={props.entryKey} active={props.active}>
+        {props.element}
+      </RenderTreeNode>
+    );
+  }
 
   return (
-    <RenderTreeNode type={SHEET_TYPE} id={entry.key} active={active}>
+    <RenderTreeNode type={SHEET_TYPE} id={props.entryKey} active={props.active}>
       <BottomSheet
         isOpen={isOpen}
         setIsOpen={handleSetIsOpen}
         onDismissed={handleDismissed}
-        snapPoints={entry.options.snapPoints}
-        initialIndex={entry.options.initialIndex}
-        canDismiss={entry.options.canDismiss}
-        onDismissPrevented={entry.options.onDismissPrevented}
+        snapPoints={props.snapPoints}
+        initialIndex={props.initialIndex}
+        canDismiss={props.canDismiss}
+        onDismissPrevented={props.onDismissPrevented}
         onStateChange={handleStateChange}
-        containerStyle={entry.options.containerStyle}
-        appearanceAndroid={entry.options.appearanceAndroid}
-        appearanceIOS={entry.options.appearanceIOS}
+        containerStyle={props.containerStyle}
+        appearanceAndroid={props.appearanceAndroid}
+        appearanceIOS={props.appearanceIOS}
       >
-        {entry.element}
+        {props.element}
       </BottomSheet>
     </RenderTreeNode>
   );
-}
+});
 
-export function SheetSlot() {
+export const SheetSlot = React.memo(function SheetSlot() {
   const store = React.useContext(SheetsStoreContext);
   const entries = useStore(store, (state) => state.entries);
   const activeKey = React.useMemo(() => {
@@ -81,10 +106,21 @@ export function SheetSlot() {
       {entries.map((entry) => (
         <SheetSlotEntry
           key={entry.key}
-          entry={entry}
+          entryKey={entry.key}
+          element={entry.element}
+          status={entry.status}
           active={entry.key === activeKey}
+          wrapped={entry.options.wrapped !== false}
+          snapPoints={entry.options.snapPoints}
+          initialIndex={entry.options.initialIndex}
+          canDismiss={entry.options.canDismiss}
+          onDismissPrevented={entry.options.onDismissPrevented}
+          onStateChange={entry.options.onStateChange}
+          containerStyle={entry.options.containerStyle}
+          appearanceAndroid={entry.options.appearanceAndroid}
+          appearanceIOS={entry.options.appearanceIOS}
         />
       ))}
     </>
   );
-}
+});

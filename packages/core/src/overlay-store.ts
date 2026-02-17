@@ -6,7 +6,7 @@ import type { RenderTreeStore } from "./render-tree";
 
 export type OverlayStatus = "opening" | "open" | "closing";
 
-export type BaseOverlayOptions = { id?: string };
+export type BaseOverlayOptions = { id?: string; wrapped?: boolean };
 
 export type OverlayEntry<TOptions extends BaseOverlayOptions> = {
   key: string;

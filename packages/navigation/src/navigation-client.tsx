@@ -6,7 +6,7 @@ import {
   getRenderNodeActive,
   getRenderNodeDepth,
 } from "@rn-tools/core";
-import type { Store, RenderTreeStore } from "@rn-tools/core";
+import type { Store, RenderTreeStore, BaseOverlayOptions } from "@rn-tools/core";
 import { createSheets } from "@rn-tools/sheets";
 import type { SheetOptions, SheetsClient } from "@rn-tools/sheets";
 
@@ -15,8 +15,7 @@ export const SCREEN_TYPE = "screen";
 export const TABS_TYPE = "tabs";
 export const TAB_SCREEN_TYPE = "tab-screen";
 
-export type PushOptions = {
-  id?: string;
+export type PushOptions = BaseOverlayOptions & {
   stack?: string;
 };
 
