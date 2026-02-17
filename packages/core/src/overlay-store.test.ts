@@ -21,12 +21,12 @@ describe("createOverlayStore", () => {
     const overlay = makeOverlay();
 
     expect(overlay.store).toBeDefined();
-    expect(typeof overlay.present).toBe("function");
-    expect(typeof overlay.dismiss).toBe("function");
-    expect(typeof overlay.dismissAll).toBe("function");
+    expect(typeof overlay.add).toBe("function");
     expect(typeof overlay.remove).toBe("function");
-    expect(typeof overlay.markDidOpen).toBe("function");
-    expect(typeof overlay.markDidDismiss).toBe("function");
+    expect(typeof overlay.removeAll).toBe("function");
+    expect(typeof overlay.destroy).toBe("function");
+    expect(typeof overlay.markOpened).toBe("function");
+    expect(typeof overlay.markClosed).toBe("function");
   });
 
   it("starts with empty entries", () => {
@@ -35,10 +35,10 @@ describe("createOverlayStore", () => {
   });
 });
 
-describe("present", () => {
+describe("add", () => {
   it("adds a new entry in opening state", () => {
     const overlay = makeOverlay();
-    const key = overlay.present(el("hello"));
+    const key = overlay.add(el("hello"));
 
     const entries = overlay.store.getState().entries;
     expect(typeof key).toBe("string");
@@ -49,7 +49,7 @@ describe("present", () => {
 
   it("uses config type as key prefix", () => {
     const overlay = makeOverlay();
-    const key = overlay.present(el("hello"));
+    const key = overlay.add(el("hello"));
     expect(key).toMatch(/^test-/);
   });
 
@@ -58,7 +58,7 @@ describe("present", () => {
     const element = el("content");
     const options = { id: "edit", label: "Edit" };
 
-    overlay.present(element, options);
+    overlay.add(element, options);
 
     const entry = overlay.store.getState().entries[0];
     expect(entry.element).toBe(element);
@@ -68,10 +68,10 @@ describe("present", () => {
   it("reuses key and replaces entry when id already exists", () => {
     const overlay = makeOverlay();
 
-    const key1 = overlay.present(el("a"), { id: "edit", label: "v1" });
-    overlay.markDidOpen(key1);
+    const key1 = overlay.add(el("a"), { id: "edit", label: "v1" });
+    overlay.markOpened(key1);
 
-    const key2 = overlay.present(el("b"), { id: "edit", label: "v2" });
+    const key2 = overlay.add(el("b"), { id: "edit", label: "v2" });
 
     const entries = overlay.store.getState().entries;
     expect(key2).toBe(key1);
@@ -82,23 +82,23 @@ describe("present", () => {
   });
 });
 
-describe("markDidOpen", () => {
+describe("markOpened", () => {
   it("transitions opening to open", () => {
     const overlay = makeOverlay();
-    const key = overlay.present(el("a"));
+    const key = overlay.add(el("a"));
 
-    overlay.markDidOpen(key);
+    overlay.markOpened(key);
 
     expect(overlay.store.getState().entries[0].status).toBe("open");
   });
 
   it("is a no-op for closing entries", () => {
     const overlay = makeOverlay();
-    const key = overlay.present(el("a"));
-    overlay.dismiss(key);
+    const key = overlay.add(el("a"));
+    overlay.remove(key);
 
     const before = overlay.store.getState();
-    overlay.markDidOpen(key);
+    overlay.markOpened(key);
 
     expect(overlay.store.getState()).toBe(before);
   });
@@ -107,43 +107,43 @@ describe("markDidOpen", () => {
     const overlay = makeOverlay();
     const before = overlay.store.getState();
 
-    overlay.markDidOpen("missing");
+    overlay.markOpened("missing");
 
     expect(overlay.store.getState()).toBe(before);
   });
 });
 
-describe("dismiss", () => {
+describe("remove", () => {
   it("marks the top non-closing entry as closing", () => {
     const overlay = makeOverlay();
-    const keyA = overlay.present(el("a"));
-    const keyB = overlay.present(el("b"));
-    overlay.markDidOpen(keyA);
-    overlay.markDidOpen(keyB);
+    const keyA = overlay.add(el("a"));
+    const keyB = overlay.add(el("b"));
+    overlay.markOpened(keyA);
+    overlay.markOpened(keyB);
 
-    overlay.dismiss();
+    overlay.remove();
 
     const entries = overlay.store.getState().entries;
     expect(entries[0].status).toBe("open");
     expect(entries[1].status).toBe("closing");
   });
 
-  it("can dismiss by id", () => {
+  it("can remove by id", () => {
     const overlay = makeOverlay();
-    const key = overlay.present(el("a"), { id: "edit" });
-    overlay.markDidOpen(key);
+    const key = overlay.add(el("a"), { id: "edit" });
+    overlay.markOpened(key);
 
-    overlay.dismiss("edit");
+    overlay.remove("edit");
 
     expect(overlay.store.getState().entries[0].status).toBe("closing");
   });
 
-  it("can dismiss by key", () => {
+  it("can remove by key", () => {
     const overlay = makeOverlay();
-    const key = overlay.present(el("a"));
-    overlay.markDidOpen(key);
+    const key = overlay.add(el("a"));
+    overlay.markOpened(key);
 
-    overlay.dismiss(key);
+    overlay.remove(key);
 
     expect(overlay.store.getState().entries[0].status).toBe("closing");
   });
@@ -152,28 +152,28 @@ describe("dismiss", () => {
     const overlay = makeOverlay();
     const before = overlay.store.getState();
 
-    overlay.dismiss();
+    overlay.remove();
 
     expect(overlay.store.getState()).toBe(before);
   });
 
   it("is a no-op for unknown id", () => {
     const overlay = makeOverlay();
-    overlay.present(el("a"));
+    overlay.add(el("a"));
     const before = overlay.store.getState();
 
-    overlay.dismiss("missing");
+    overlay.remove("missing");
 
     expect(overlay.store.getState()).toBe(before);
   });
 
-  it("uses render-tree active node for no-arg dismiss", () => {
+  it("uses render-tree active node for no-arg remove", () => {
     const renderTreeStore = createRenderTreeStore();
     const overlay = makeOverlay(renderTreeStore);
-    const keyA = overlay.present(el("a"));
-    const keyB = overlay.present(el("b"));
-    overlay.markDidOpen(keyA);
-    overlay.markDidOpen(keyB);
+    const keyA = overlay.add(el("a"));
+    const keyB = overlay.add(el("b"));
+    overlay.markOpened(keyA);
+    overlay.markOpened(keyB);
 
     renderTreeStore.setState({
       nodes: new Map([
@@ -210,7 +210,7 @@ describe("dismiss", () => {
       ]),
     });
 
-    overlay.dismiss();
+    overlay.remove();
 
     const entries = overlay.store.getState().entries;
     expect(entries.find((e) => e.key === keyA)?.status).toBe("closing");
@@ -218,24 +218,24 @@ describe("dismiss", () => {
   });
 });
 
-describe("markDidDismiss", () => {
+describe("markClosed", () => {
   it("removes a closing entry", () => {
     const overlay = makeOverlay();
-    const key = overlay.present(el("a"));
-    overlay.markDidOpen(key);
-    overlay.dismiss(key);
+    const key = overlay.add(el("a"));
+    overlay.markOpened(key);
+    overlay.remove(key);
 
-    overlay.markDidDismiss(key);
+    overlay.markClosed(key);
 
     expect(overlay.store.getState().entries).toHaveLength(0);
   });
 
   it("does not remove opening entry", () => {
     const overlay = makeOverlay();
-    const key = overlay.present(el("a"));
+    const key = overlay.add(el("a"));
     const before = overlay.store.getState();
 
-    overlay.markDidDismiss(key);
+    overlay.markClosed(key);
 
     expect(overlay.store.getState()).toBe(before);
   });
@@ -244,24 +244,24 @@ describe("markDidDismiss", () => {
     const overlay = makeOverlay();
     const before = overlay.store.getState();
 
-    overlay.markDidDismiss("missing");
+    overlay.markClosed("missing");
 
     expect(overlay.store.getState()).toBe(before);
   });
 });
 
-describe("dismissAll", () => {
+describe("removeAll", () => {
   it("marks every non-closing entry as closing", () => {
     const overlay = makeOverlay();
-    const keyA = overlay.present(el("a"));
-    const keyB = overlay.present(el("b"));
-    const keyC = overlay.present(el("c"));
-    overlay.markDidOpen(keyA);
-    overlay.markDidOpen(keyB);
-    overlay.markDidOpen(keyC);
-    overlay.dismiss(keyB);
+    const keyA = overlay.add(el("a"));
+    const keyB = overlay.add(el("b"));
+    const keyC = overlay.add(el("c"));
+    overlay.markOpened(keyA);
+    overlay.markOpened(keyB);
+    overlay.markOpened(keyC);
+    overlay.remove(keyB);
 
-    overlay.dismissAll();
+    overlay.removeAll();
 
     const entries = overlay.store.getState().entries;
     expect(entries).toHaveLength(3);
@@ -272,37 +272,37 @@ describe("dismissAll", () => {
     const overlay = makeOverlay();
     const before = overlay.store.getState();
 
-    overlay.dismissAll();
+    overlay.removeAll();
 
     expect(overlay.store.getState()).toBe(before);
   });
 });
 
-describe("remove", () => {
-  it("removes by key", () => {
+describe("destroy", () => {
+  it("destroys by key", () => {
     const overlay = makeOverlay();
-    const key = overlay.present(el("a"));
+    const key = overlay.add(el("a"));
 
-    overlay.remove(key);
+    overlay.destroy(key);
 
     expect(overlay.store.getState().entries).toHaveLength(0);
   });
 
-  it("removes by id", () => {
+  it("destroys by id", () => {
     const overlay = makeOverlay();
-    overlay.present(el("a"), { id: "edit" });
+    overlay.add(el("a"), { id: "edit" });
 
-    overlay.remove("edit");
+    overlay.destroy("edit");
 
     expect(overlay.store.getState().entries).toHaveLength(0);
   });
 
   it("is a no-op when no match", () => {
     const overlay = makeOverlay();
-    overlay.present(el("a"));
+    overlay.add(el("a"));
     const before = overlay.store.getState();
 
-    overlay.remove("missing");
+    overlay.destroy("missing");
 
     expect(overlay.store.getState()).toBe(before);
   });

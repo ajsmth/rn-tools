@@ -26,12 +26,12 @@ export type OverlayStoreConfig = {
 
 export type OverlayStore<TOptions extends BaseOverlayOptions> = {
   store: Store<OverlayState<TOptions>>;
-  present: (element: React.ReactElement, options?: TOptions) => string;
-  dismiss: (id?: string) => void;
-  dismissAll: () => void;
-  remove: (id: string) => void;
-  markDidOpen: (key: string) => void;
-  markDidDismiss: (key: string) => void;
+  add: (element: React.ReactElement, options?: TOptions) => string;
+  remove: (id?: string) => void;
+  removeAll: () => void;
+  destroy: (id: string) => void;
+  markOpened: (key: string) => void;
+  markClosed: (key: string) => void;
 };
 
 let counter = 0;
@@ -41,7 +41,7 @@ export function createOverlayStore<
 >(config: OverlayStoreConfig): OverlayStore<TOptions> {
   const store = createStore<OverlayState<TOptions>>({ entries: [] });
 
-  function getActiveDismissKey(): string | null {
+  function getActiveRemoveKey(): string | null {
     const tree = config.renderTreeStore.getState();
     let deepestId: string | null = null;
     let deepestDepth = -1;
@@ -60,12 +60,12 @@ export function createOverlayStore<
     return deepestId;
   }
 
-  function present(
+  function add(
     element: React.ReactElement,
     options: TOptions = {} as TOptions,
   ): string {
     const generatedKey = `${config.type}-${++counter}`;
-    let presentedKey = generatedKey;
+    let addedKey = generatedKey;
 
     store.setState((prev) => {
       if (options.id == null) {
@@ -93,7 +93,7 @@ export function createOverlayStore<
       }
 
       const duplicate = prev.entries[duplicateIndex];
-      presentedKey = duplicate.key;
+      addedKey = duplicate.key;
       const nextEntry: OverlayEntry<TOptions> = {
         key: duplicate.key,
         element,
@@ -110,17 +110,17 @@ export function createOverlayStore<
       };
     });
 
-    return presentedKey;
+    return addedKey;
   }
 
-  function dismiss(id?: string) {
+  function remove(id?: string) {
     store.setState((prev) => {
       if (prev.entries.length === 0) return prev;
 
       let targetIndex = -1;
 
       if (id == null) {
-        const activeKey = getActiveDismissKey();
+        const activeKey = getActiveRemoveKey();
         if (activeKey) {
           targetIndex = prev.entries.findIndex(
             (entry) => entry.key === activeKey,
@@ -167,7 +167,7 @@ export function createOverlayStore<
     });
   }
 
-  function dismissAll() {
+  function removeAll() {
     store.setState((prev) => {
       if (prev.entries.length === 0) return prev;
 
@@ -184,7 +184,7 @@ export function createOverlayStore<
     });
   }
 
-  function remove(id: string) {
+  function destroy(id: string) {
     store.setState((prev) => {
       const targetIndex = prev.entries.findIndex(
         (entry) => entry.options.id === id || entry.key === id,
@@ -198,7 +198,7 @@ export function createOverlayStore<
     });
   }
 
-  function markDidOpen(key: string) {
+  function markOpened(key: string) {
     store.setState((prev) => {
       const index = prev.entries.findIndex((entry) => entry.key === key);
       if (index === -1) return prev;
@@ -212,7 +212,7 @@ export function createOverlayStore<
     });
   }
 
-  function markDidDismiss(key: string) {
+  function markClosed(key: string) {
     store.setState((prev) => {
       const index = prev.entries.findIndex((entry) => entry.key === key);
       if (index === -1) return prev;
@@ -231,11 +231,11 @@ export function createOverlayStore<
 
   return {
     store,
-    present,
-    dismiss,
-    dismissAll,
+    add,
     remove,
-    markDidOpen,
-    markDidDismiss,
+    removeAll,
+    destroy,
+    markOpened,
+    markClosed,
   };
 }
