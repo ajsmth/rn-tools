@@ -31,7 +31,7 @@ const tabScreens: TabScreenOptions[] = [
 export default function App() {
   return (
     <Navigation navigation={navigation}>
-      <Tabs id="main-tabs" screens={tabScreens} tabbarPosition="top" />
+      <Tabs id="main-tabs" screens={tabScreens} tabbarPosition="bottom" />
     </Navigation>
   );
 }
@@ -191,6 +191,18 @@ function DetailScreen({ title, count }: { title: string; count: number }) {
         }}
       />
       <Button title="Pop screen" onPress={() => navigation.pop()} />
+      <Button
+        title="Autosized sheet"
+        onPress={() => navigation.present(<SheetContent label="Auto-sized" />)}
+      />
+      <Button
+        title="Snap points sheet"
+        onPress={() =>
+          navigation.present(<SheetContent label="Snap points" />, {
+            snapPoints: [300, 500],
+          })
+        }
+      />
     </View>
   );
 }

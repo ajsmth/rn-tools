@@ -17,7 +17,6 @@ export type PushOptions = {
 
 export type NavigationScreenEntry = {
   element: React.ReactElement;
-  id?: string;
   options?: PushOptions;
 };
 
@@ -32,19 +31,18 @@ export type NavigationState = {
 
 export type NavigationStore = Store<NavigationState>;
 
-export const NavigationContext = React.createContext<NavigationClient | null>(null);
-
-export const NavigationStoreContext = React.createContext<NavigationStore | null>(
+export const NavigationContext = React.createContext<NavigationClient | null>(
   null,
 );
+
+export const NavigationStoreContext =
+  React.createContext<NavigationStore | null>(null);
 
 export type NavigationStateInput = {
   stacks?:
     | Map<string, NavigationScreenEntry[]>
     | Record<string, NavigationScreenEntry[]>;
-  tabs?:
-    | Map<string, TabState>
-    | Record<string, TabState>;
+  tabs?: Map<string, TabState> | Record<string, TabState>;
 };
 
 export function createNavigationState(
@@ -79,7 +77,7 @@ export function createNavigation(
     normalizeNavigationState(initialState ?? { stacks: new Map() }),
   );
   const renderTreeStore = createRenderTreeStore();
-  const sheetsStore = createSheets();
+  const sheetsStore = createSheets(renderTreeStore);
 
   function getDeepestActiveNodeId(type: string): string | null {
     const tree = renderTreeStore.getState();
@@ -100,10 +98,7 @@ export function createNavigation(
     return deepestId;
   }
 
-  function push(
-    element: React.ReactElement,
-    options?: PushOptions,
-  ) {
+  function push(element: React.ReactElement, options?: PushOptions) {
     const stackId = options?.stack ?? getDeepestActiveNodeId("stack");
     if (!stackId) {
       throw new Error(
@@ -115,16 +110,11 @@ export function createNavigation(
       const stacks = new Map(prev.stacks);
       const existing = stacks.get(stackId) ?? [];
 
-      if (
-        options?.id &&
-        existing.some(
-          (s) => s.id === options.id || s.options?.id === options.id,
-        )
-      ) {
+      if (options?.id && existing.some((s) => s.options?.id === options.id)) {
         return prev;
       }
 
-      stacks.set(stackId, [...existing, { element, id: options?.id, options }]);
+      stacks.set(stackId, [...existing, { element, options }]);
       return { ...prev, stacks };
     });
   }
@@ -161,7 +151,10 @@ export function createNavigation(
     });
   }
 
-  function present(element: React.ReactElement, options?: SheetOptions): string {
+  function present(
+    element: React.ReactElement,
+    options?: SheetOptions,
+  ): string {
     return sheetsStore.present(element, options);
   }
 

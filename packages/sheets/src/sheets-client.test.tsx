@@ -5,28 +5,26 @@ import { createRenderTreeStore } from "@rn-tools/core";
 
 describe("createSheets", () => {
   it("returns the expected client API", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
 
     expect(sheets.store).toBeDefined();
-    expect(sheets.renderTreeStore).toBeDefined();
     expect(typeof sheets.present).toBe("function");
     expect(typeof sheets.dismiss).toBe("function");
     expect(typeof sheets.dismissAll).toBe("function");
     expect(typeof sheets.remove).toBe("function");
-    expect(typeof sheets.setRenderTreeStore).toBe("function");
     expect(typeof sheets.markDidOpen).toBe("function");
     expect(typeof sheets.markDidDismiss).toBe("function");
   });
 
   it("starts with empty state", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     expect(sheets.store.getState().sheets).toEqual([]);
   });
 });
 
 describe("present", () => {
   it("adds a new sheet in opening state", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const key = sheets.present(<span>hello</span>);
 
     const state = sheets.store.getState().sheets;
@@ -37,7 +35,7 @@ describe("present", () => {
   });
 
   it("stores element and options", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const element = <span>content</span>;
     const options = { id: "edit", snapPoints: [300, 500] };
 
@@ -49,7 +47,7 @@ describe("present", () => {
   });
 
   it("reuses key and replaces entry when id already exists", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
 
     const key1 = sheets.present(<span>a</span>, { id: "edit", snapPoints: [240] });
     sheets.markDidOpen(key1);
@@ -67,7 +65,7 @@ describe("present", () => {
 
 describe("markDidOpen", () => {
   it("transitions opening to open", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const key = sheets.present(<span>a</span>);
 
     sheets.markDidOpen(key);
@@ -76,7 +74,7 @@ describe("markDidOpen", () => {
   });
 
   it("is a no-op for closing sheets", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const key = sheets.present(<span>a</span>);
     sheets.dismiss(key);
 
@@ -87,7 +85,7 @@ describe("markDidOpen", () => {
   });
 
   it("is a no-op for unknown key", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const before = sheets.store.getState();
 
     sheets.markDidOpen("missing");
@@ -98,7 +96,7 @@ describe("markDidOpen", () => {
 
 describe("dismiss", () => {
   it("marks the top non-closing sheet as closing", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const keyA = sheets.present(<span>a</span>);
     const keyB = sheets.present(<span>b</span>);
     sheets.markDidOpen(keyA);
@@ -112,7 +110,7 @@ describe("dismiss", () => {
   });
 
   it("can dismiss by id", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const key = sheets.present(<span>a</span>, { id: "edit" });
     sheets.markDidOpen(key);
 
@@ -122,7 +120,7 @@ describe("dismiss", () => {
   });
 
   it("can dismiss by key", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const key = sheets.present(<span>a</span>);
     sheets.markDidOpen(key);
 
@@ -132,7 +130,7 @@ describe("dismiss", () => {
   });
 
   it("is a no-op when empty", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const before = sheets.store.getState();
 
     sheets.dismiss();
@@ -141,7 +139,7 @@ describe("dismiss", () => {
   });
 
   it("is a no-op for unknown id", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     sheets.present(<span>a</span>);
     const before = sheets.store.getState();
 
@@ -151,13 +149,14 @@ describe("dismiss", () => {
   });
 
   it("uses render-tree active sheet for no-arg dismiss", () => {
-    const sheets = createSheets();
+    const renderTreeStore = createRenderTreeStore();
+    const sheets = createSheets(renderTreeStore);
     const keyA = sheets.present(<span>a</span>);
     const keyB = sheets.present(<span>b</span>);
     sheets.markDidOpen(keyA);
     sheets.markDidOpen(keyB);
 
-    const customTree = createRenderTreeStore({
+    renderTreeStore.setState({
       nodes: new Map([
         [
           "render-tree-root",
@@ -192,7 +191,6 @@ describe("dismiss", () => {
       ]),
     });
 
-    sheets.setRenderTreeStore(customTree);
     sheets.dismiss();
 
     const state = sheets.store.getState().sheets;
@@ -203,7 +201,7 @@ describe("dismiss", () => {
 
 describe("markDidDismiss", () => {
   it("removes a closing sheet", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const key = sheets.present(<span>a</span>);
     sheets.markDidOpen(key);
     sheets.dismiss(key);
@@ -214,7 +212,7 @@ describe("markDidDismiss", () => {
   });
 
   it("does not remove opening sheet", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const key = sheets.present(<span>a</span>);
     const before = sheets.store.getState();
 
@@ -224,7 +222,7 @@ describe("markDidDismiss", () => {
   });
 
   it("is a no-op for unknown key", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const before = sheets.store.getState();
 
     sheets.markDidDismiss("missing");
@@ -235,7 +233,7 @@ describe("markDidDismiss", () => {
 
 describe("dismissAll", () => {
   it("marks every non-closing sheet as closing", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const keyA = sheets.present(<span>a</span>);
     const keyB = sheets.present(<span>b</span>);
     const keyC = sheets.present(<span>c</span>);
@@ -252,7 +250,7 @@ describe("dismissAll", () => {
   });
 
   it("is a no-op when empty", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const before = sheets.store.getState();
 
     sheets.dismissAll();
@@ -263,7 +261,7 @@ describe("dismissAll", () => {
 
 describe("remove", () => {
   it("removes by key", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     const key = sheets.present(<span>a</span>);
 
     sheets.remove(key);
@@ -272,7 +270,7 @@ describe("remove", () => {
   });
 
   it("removes by id", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     sheets.present(<span>a</span>, { id: "edit" });
 
     sheets.remove("edit");
@@ -281,7 +279,7 @@ describe("remove", () => {
   });
 
   it("is a no-op when no match", () => {
-    const sheets = createSheets();
+    const sheets = createSheets(createRenderTreeStore());
     sheets.present(<span>a</span>);
     const before = sheets.store.getState();
 

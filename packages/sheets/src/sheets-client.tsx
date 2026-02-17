@@ -1,7 +1,6 @@
 import * as React from "react";
 import {
   createStore,
-  createRenderTreeStore,
   getRenderNodeActive,
   getRenderNodeDepth,
 } from "@rn-tools/core";
@@ -42,8 +41,6 @@ export type SheetsStore = Store<SheetsState>;
 
 export type SheetsClient = {
   store: SheetsStore;
-  renderTreeStore: RenderTreeStore;
-  setRenderTreeStore: (store: RenderTreeStore) => void;
   present: (element: React.ReactElement, options?: SheetOptions) => string;
   dismiss: (id?: string) => void;
   dismissAll: () => void;
@@ -57,17 +54,13 @@ export const SheetsStoreContext = React.createContext<SheetsStore | null>(null);
 
 let counter = 0;
 
-export function createSheets(): SheetsClient {
+export function createSheets(
+  renderTreeStore: RenderTreeStore,
+): SheetsClient {
   const store = createStore<SheetsState>({ sheets: [] });
-  const renderTreeStore = createRenderTreeStore();
-  let activeRenderTreeStore: RenderTreeStore = renderTreeStore;
-
-  function setRenderTreeStore(nextStore: RenderTreeStore) {
-    activeRenderTreeStore = nextStore;
-  }
 
   function getActiveSheetKeyFromRenderTree(): string | null {
-    const tree = activeRenderTreeStore.getState();
+    const tree = renderTreeStore.getState();
     let deepestId: string | null = null;
     let deepestDepth = -1;
 
@@ -260,8 +253,6 @@ export function createSheets(): SheetsClient {
 
   return {
     store,
-    renderTreeStore,
-    setRenderTreeStore,
     present,
     dismiss,
     dismissAll,
