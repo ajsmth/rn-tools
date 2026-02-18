@@ -2960,7 +2960,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rn-tools/core@npm:*, @rn-tools/core@npm:3.0.1, @rn-tools/core@workspace:packages/core":
+"@rn-tools/core@npm:*, @rn-tools/core@npm:3.0.3, @rn-tools/core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@rn-tools/core@workspace:packages/core"
   dependencies:
@@ -3001,6 +3001,7 @@ __metadata:
   resolution: "@rn-tools/navigation@workspace:packages/navigation"
   dependencies:
     "@rn-tools/eslint-config": "npm:*"
+    "@rn-tools/sheets": "npm:*"
     "@testing-library/react": "npm:^14.2.1"
     "@types/react": "npm:~18.2.79"
     "@types/react-native": "npm:^0.72.8"
@@ -3028,7 +3029,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rn-tools/sheets@workspace:packages/sheets"
   dependencies:
-    "@rn-tools/core": "npm:3.0.1"
+    "@rn-tools/core": "npm:3.0.3"
     "@testing-library/react": "npm:^14.2.1"
     "@types/react": "npm:18.3.12"
     vitest: "npm:^1.6.0"
@@ -3053,6 +3054,21 @@ __metadata:
     jest: "npm:^27.4.5"
     metro-react-native-babel-preset: "npm:^0.71.3"
     typescript: "npm:~5.3.3"
+  languageName: unknown
+  linkType: soft
+
+"@rn-tools/toasts@npm:*, @rn-tools/toasts@workspace:packages/toasts":
+  version: 0.0.0-use.local
+  resolution: "@rn-tools/toasts@workspace:packages/toasts"
+  dependencies:
+    "@rn-tools/core": "npm:3.0.3"
+    "@testing-library/react": "npm:^14.2.1"
+    "@types/react": "npm:18.3.12"
+    vitest: "npm:^1.6.0"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
   languageName: unknown
   linkType: soft
 
@@ -6847,6 +6863,7 @@ __metadata:
     "@rn-tools/eslint-config": "npm:*"
     "@rn-tools/navigation": "npm:*"
     "@rn-tools/sheets": "npm:*"
+    "@rn-tools/toasts": "npm:*"
     "@types/react": "npm:~18.3.12"
     "@types/react-native": "npm:^0.72.8"
     eslint: "npm:8.57.0"

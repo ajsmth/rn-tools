@@ -1,0 +1,37 @@
+{
+  "name": "@rn-tools/toasts",
+  "version": "3.0.3",
+  "description": "A React Native library for creating and managing native toasts in Expo applications.",
+  "main": "src/index.ts",
+  "scripts": {
+    "open:ios": "xed example/ios",
+    "open:android": "open -a \"Android Studio\" example/android",
+    "test": "NODE_OPTIONS='--no-experimental-detect-module' vitest"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "toasts",
+    "RNToolsToasts"
+  ],
+  "repository": "https://github.com/ajsmth/rn-tools/tree/main/packages/toasts",
+  "bugs": {
+    "url": "https://github.com/ajsmth/rn-tools/issues"
+  },
+  "author": "andy <andydevs123@gmail.com> (ajsmth)",
+  "license": "MIT",
+  "homepage": "https://github.com/ajsmth/rn-tools#readme",
+  "devDependencies": {
+    "@testing-library/react": "^14.2.1",
+    "@types/react": "18.3.12",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "@rn-tools/core": "3.0.3"
+  },
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}

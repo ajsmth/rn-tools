@@ -128,29 +128,19 @@ public class RNToolsSheetsView: ExpoView, RNToolsSheetsViewDelegate {
     }
 
 
-        public override func mountChildComponentView(
-            _ childComponentView: UIView,
-            index: Int
-        ) {
-            sheetVC.insertChild(childComponentView, at: index)
-        }
+    public override func mountChildComponentView(
+        _ childComponentView: UIView,
+        index: Int
+    ) {
+        sheetVC.insertChild(childComponentView, at: index)
+    }
 
-        public override func unmountChildComponentView(
-            _ childComponentView: UIView,
-            index: Int
-        ) {
-            childComponentView.removeFromSuperview()
-        }
-//        public override func insertReactSubview(
-//            _ subview: UIView!, at atIndex: Int
-//        ) {
-//            sheetVC.insertChild(subview, at: atIndex)
-//        }
-//
-//        public override func removeReactSubview(_ subview: UIView!) {
-//            sheetVC.removeChild(subview)
-//        }
-
+    public override func unmountChildComponentView(
+        _ childComponentView: UIView,
+        index: Int
+    ) {
+        childComponentView.removeFromSuperview()
+    }
 }
 
 final class SheetViewController: UIViewController,

@@ -7,6 +7,7 @@ const PACKAGES_DIR = join(ROOT_DIR, "packages");
 const SKIP_DIRS = new Set(["tailwind"]);
 const TEST_FILE_REGEX = /\.(test|spec)\.[cm]?[tj]sx?$/;
 const ANY_CODE_FILE_REGEX = /\.[cm]?[tj]sx?$/;
+const WATCH = process.argv.includes("--watch");
 
 async function hasTestFiles(dir) {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -79,6 +80,37 @@ async function main() {
 
   if (targets.length === 0) {
     console.log("No package tests found.");
+    return;
+  }
+
+  if (WATCH) {
+    console.log(`\nStarting watch mode for: ${targets.map((t) => t.name).join(", ")}\n`);
+
+    const children = targets.map((target) =>
+      spawn("yarn", ["workspace", target.name, "test", "--watch"], {
+        cwd: ROOT_DIR,
+        stdio: "inherit",
+        env: { ...process.env },
+      })
+    );
+
+    const cleanup = () => children.forEach((child) => child.kill("SIGINT"));
+    process.on("SIGINT", cleanup);
+    process.on("SIGTERM", cleanup);
+
+    await Promise.all(
+      children.map(
+        (child) =>
+          new Promise((resolve) => {
+            child.on("exit", (code) => {
+              if (typeof code === "number" && code !== 0) {
+                process.exitCode = code;
+              }
+              resolve();
+            });
+          })
+      )
+    );
     return;
   }
 

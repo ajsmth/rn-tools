@@ -34,11 +34,12 @@ export type OverlayStore<TOptions extends BaseOverlayOptions> = {
   markClosed: (key: string) => void;
 };
 
-let counter = 0;
 
 export function createOverlayStore<
   TOptions extends BaseOverlayOptions = BaseOverlayOptions,
 >(config: OverlayStoreConfig): OverlayStore<TOptions> {
+  let counter = 0;
+
   const store = createStore<OverlayState<TOptions>>({ entries: [] });
 
   function getActiveRemoveKey(): string | null {

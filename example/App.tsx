@@ -5,10 +5,14 @@ import {
   Tabs,
   type TabScreenOptions,
 } from "@rn-tools/navigation";
+import { createRenderTreeStore, RenderTree } from "@rn-tools/core";
+import { createToasts, ToastsProvider } from "@rn-tools/toasts";
 import * as React from "react";
 import { Text, View, Button, Pressable } from "react-native";
 
 const navigation = createNavigation();
+const toastsRenderTreeStore = createRenderTreeStore();
+const toasts = createToasts(toastsRenderTreeStore);
 
 const tabScreens: TabScreenOptions[] = [
   {
@@ -30,9 +34,13 @@ const tabScreens: TabScreenOptions[] = [
 
 export default function App() {
   return (
-    <Navigation navigation={navigation}>
-      <Tabs id="main-tabs" screens={tabScreens} tabbarPosition="bottom" />
-    </Navigation>
+    <RenderTree store={toastsRenderTreeStore}>
+      <ToastsProvider toasts={toasts}>
+        <Navigation navigation={navigation}>
+          <Tabs id="main-tabs" screens={tabScreens} tabbarPosition="bottom" />
+        </Navigation>
+      </ToastsProvider>
+    </RenderTree>
   );
 }
 
@@ -121,6 +129,51 @@ function HomeScreen() {
         />
         <Button title="Dismiss all" onPress={() => navigation.dismissAll()} />
       </View>
+      <View style={{ marginTop: 24 }}>
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: "600",
+            marginBottom: 8,
+            textAlign: "center",
+          }}
+        >
+          Toasts
+        </Text>
+        <Button
+          title="Toast from top (3s)"
+          onPress={() =>
+            toasts.show(<ToastContent message="Hello from the top!" />, {
+              position: "top",
+              duration: 3,
+            })
+          }
+        />
+        <Button
+          title="Toast from bottom (5s)"
+          onPress={() =>
+            toasts.show(<ToastContent message="Hello from the bottom!" />, {
+              position: "bottom",
+              duration: 5,
+            })
+          }
+        />
+        <Button
+          title="Persistent toast (no auto-dismiss)"
+          onPress={() =>
+            toasts.show(<ToastContent message="I won't go away on my own!" />, {
+              position: "top",
+              duration: 0,
+              id: "persistent",
+            })
+          }
+        />
+        <Button title="Dismiss top toast" onPress={() => toasts.dismiss()} />
+        <Button
+          title="Dismiss all toasts"
+          onPress={() => toasts.dismissAll()}
+        />
+      </View>
     </View>
   );
 }
@@ -143,6 +196,24 @@ function SheetContent({ label }: { label: string }) {
         }}
       />
       <Button title="Dismiss this sheet" onPress={() => navigation.dismiss()} />
+    </View>
+  );
+}
+
+function ToastContent({ message }: { message: string }) {
+  return (
+    <View
+      style={{
+        margin: 16,
+        padding: 16,
+        backgroundColor: "#333",
+        borderRadius: 12,
+      }}
+    >
+      <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
+        {message}
+      </Text>
+      <Button title="Dismiss" color="#fff" onPress={() => toasts.dismiss()} />
     </View>
   );
 }
