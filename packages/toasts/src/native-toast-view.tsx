@@ -1,61 +1,45 @@
 import * as React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet } from "react-native";
 import { requireNativeViewManager } from "expo-modules-core";
+import type { ViewProps } from "react-native";
 
-type NativeToastViewProps = {
-  children: React.ReactNode;
+type NativeHostProps = ViewProps & {
   isVisible: boolean;
-  position: "top" | "bottom";
-  duration: number;
-  onShown: () => void;
-  onDismissed: () => void;
+  debugLayout?: boolean;
+  topItemCount?: number;
+  bottomItemCount?: number;
 };
 
-const NativeToastsView =
-  requireNativeViewManager<NativeToastViewProps>("RNToolsToasts");
+const NativeToastsHostView =
+  requireNativeViewManager<NativeHostProps>("RNToolsToasts");
 
-export type ToastProps = {
-  children: React.ReactNode;
+export function ToastHost({
+  isVisible,
+  debugLayout = false,
+  topItemCount = 0,
+  bottomItemCount = 0,
+}: {
   isVisible: boolean;
-  position?: "top" | "bottom";
-  duration?: number;
-  onShown?: () => void;
-  onDismissed?: () => void;
-};
-
-export function Toast(props: ToastProps) {
-  const {
-    children,
-    isVisible,
-    position = "top",
-    duration = 3,
-    onShown,
-    onDismissed,
-  } = props;
-
-  const handleShown = React.useCallback(() => {
-    onShown?.();
-  }, [onShown]);
-
-  const handleDismissed = React.useCallback(() => {
-    onDismissed?.();
-  }, [onDismissed]);
-
-  const pointerEvents = React.useMemo(() => {
-    return isVisible ? "auto" : "none";
-  }, [isVisible]);
-
+  debugLayout?: boolean;
+  topItemCount?: number;
+  bottomItemCount?: number;
+}) {
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents={pointerEvents}>
-      <NativeToastsView
-        isVisible={isVisible}
-        position={position}
-        duration={duration}
-        onShown={handleShown}
-        onDismissed={handleDismissed}
-      >
-        {children}
-      </NativeToastsView>
-    </View>
+    <NativeToastsHostView
+      style={styles.host}
+      isVisible={true}
+      debugLayout={debugLayout && __DEV__}
+      topItemCount={topItemCount}
+      bottomItemCount={bottomItemCount}
+      pointerEvents="none"
+      collapsable={false}
+    />
   );
 }
+
+const styles = StyleSheet.create({
+  host: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "transparent",
+  },
+});

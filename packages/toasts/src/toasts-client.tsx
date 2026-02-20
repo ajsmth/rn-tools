@@ -9,16 +9,18 @@ import type {
 
 export type ToastOptions = BaseOverlayOptions & {
   position?: "top" | "bottom";
-  duration?: number;
+  durationMs?: number;
 };
 
 export type ToastsState = OverlayState<ToastOptions>;
 export type ToastsStore = Store<ToastsState>;
+export type ToastPosition = "top" | "bottom";
+export type ToastDismissTarget = string | ToastPosition;
 
 export type ToastsClient = {
   store: ToastsStore;
   show: (element: React.ReactElement, options?: ToastOptions) => string;
-  dismiss: (id?: string) => void;
+  dismiss: (target?: ToastDismissTarget) => void;
   dismissAll: () => void;
   remove: (id: string) => void;
   markDidShow: (key: string) => void;
@@ -32,20 +34,78 @@ export const TOAST_TYPE = "toast";
 
 export const ToastsContext = React.createContext<ToastsClient | null>(null);
 export const ToastsStoreContext = React.createContext<ToastsStore | null>(null);
+export const ToastEntryKeyContext = React.createContext<string | null>(null);
+
+export function useToasts(): ToastsClient {
+  const toasts = React.useContext(ToastsContext);
+  if (!toasts) {
+    throw new Error("ToastsProvider is missing from the component tree.");
+  }
+  return toasts;
+}
+
+export function useToastEntry() {
+  const toasts = useToasts();
+  const entryKey = React.useContext(ToastEntryKeyContext);
+
+  const dismiss = React.useCallback(() => {
+    if (entryKey) {
+      toasts.dismiss(entryKey);
+      return;
+    }
+    toasts.dismiss();
+  }, [toasts, entryKey]);
+
+  return React.useMemo(
+    () => ({
+      entryKey,
+      dismiss,
+      dismissAll: toasts.dismissAll,
+    }),
+    [entryKey, dismiss, toasts.dismissAll],
+  );
+}
 
 export function createToasts(renderTreeStore: RenderTreeStore): ToastsClient {
-  const overlay = createOverlayStore<ToastOptions>({
+  const { store, ...fns } = createOverlayStore<ToastOptions>({
     type: TOAST_TYPE,
     renderTreeStore,
   });
 
+  const dismiss: ToastsClient["dismiss"] = (target) => {
+    if (target === "top" || target === "bottom") {
+      const entries = store.getState().entries;
+      for (let i = entries.length - 1; i >= 0; i--) {
+        const entry = entries[i];
+        if (entry.status === "closing") {
+          continue;
+        }
+        const position = entry.options.position ?? "top";
+        if (position === target) {
+          fns.remove(entry.key);
+          return;
+        }
+      }
+      return;
+    }
+
+    fns.remove(target);
+  };
+
+  const markDidDismiss: ToastsClient["markDidDismiss"] = (key) => {
+    // Native dismissal (e.g. auto-dismiss timer) can fire without JS first
+    // transitioning the entry to "closing". Ensure the lifecycle is valid.
+    fns.remove(key);
+    fns.markClosed(key);
+  };
+
   return {
-    store: overlay.store,
-    show: overlay.add,
-    dismiss: overlay.remove,
-    dismissAll: overlay.removeAll,
-    remove: overlay.destroy,
-    markDidShow: overlay.markOpened,
-    markDidDismiss: overlay.markClosed,
+    store: store,
+    show: fns.add,
+    dismiss,
+    dismissAll: fns.removeAll,
+    remove: fns.destroy,
+    markDidShow: fns.markOpened,
+    markDidDismiss,
   };
 }

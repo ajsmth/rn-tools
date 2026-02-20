@@ -5,18 +5,20 @@ public class RNToolsToastsModule: Module {
         Name("RNToolsToasts")
 
         View(RNToolsToastsView.self) {
-            Events("onShown", "onDismissed")
-
-            Prop("isVisible") { (view, isVisible: Bool) in
+            Prop("isVisible") { (view: RNToolsToastsView, isVisible: Bool) in
                 view.updateIsVisible(isVisible)
             }
 
-            Prop("position") { (view, position: String) in
-                view.updatePosition(position)
+            Prop("debugLayout") { (view: RNToolsToastsView, debugLayout: Bool?) in
+                view.updateDebugLayout(debugLayout ?? false)
             }
 
-            Prop("duration") { (view, duration: Double) in
-                view.updateDuration(duration)
+            Prop("topItemCount") { (view: RNToolsToastsView, topItemCount: Int?) in
+                view.updateTopItemCount(topItemCount ?? 0)
+            }
+
+            Prop("bottomItemCount") { (view: RNToolsToastsView, bottomItemCount: Int?) in
+                view.updateBottomItemCount(bottomItemCount ?? 0)
             }
         }
     }
