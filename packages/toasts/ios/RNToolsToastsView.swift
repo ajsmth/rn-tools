@@ -11,8 +11,8 @@ private let laneMinimumHeight: CGFloat = 72
 public class RNToolsToastsView: ExpoView {
     private var overlayWindow: PassthroughWindow?
     private let rootView = PassthroughRootView()
-    private let topLaneMountView = UIView()
-    private let bottomLaneMountView = UIView()
+    private let topLaneMountView = PassthroughContainerView()
+    private let bottomLaneMountView = PassthroughContainerView()
     private let topLaneView = ToastDebugLaneView(position: .top)
     private let bottomLaneView = ToastDebugLaneView(position: .bottom)
     private let topGuideView = DebugGuideView(position: .top)
@@ -325,6 +325,14 @@ private final class PassthroughRootView: UIView {
         onLayout?()
     }
 
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        guard let hit = super.hitTest(point, with: event) else { return nil }
+        if hit === self { return nil }
+        return hit
+    }
+}
+
+private final class PassthroughContainerView: UIView {
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         guard let hit = super.hitTest(point, with: event) else { return nil }
         if hit === self { return nil }
