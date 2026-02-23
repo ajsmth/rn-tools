@@ -12,14 +12,6 @@ public class RNToolsToastsModule: Module {
             Prop("debugLayout") { (view: RNToolsToastsView, debugLayout: Bool?) in
                 view.updateDebugLayout(debugLayout ?? false)
             }
-
-            Prop("topItemCount") { (view: RNToolsToastsView, topItemCount: Int?) in
-                view.updateTopItemCount(topItemCount ?? 0)
-            }
-
-            Prop("bottomItemCount") { (view: RNToolsToastsView, bottomItemCount: Int?) in
-                view.updateBottomItemCount(bottomItemCount ?? 0)
-            }
         }
     }
 }

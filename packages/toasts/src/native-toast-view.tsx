@@ -4,10 +4,9 @@ import { requireNativeViewManager } from "expo-modules-core";
 import type { ViewProps } from "react-native";
 
 type NativeHostProps = ViewProps & {
+  children?: React.ReactNode;
   isVisible: boolean;
   debugLayout?: boolean;
-  topItemCount?: number;
-  bottomItemCount?: number;
 };
 
 const NativeToastsHostView =
@@ -16,24 +15,22 @@ const NativeToastsHostView =
 export function ToastHost({
   isVisible,
   debugLayout = false,
-  topItemCount = 0,
-  bottomItemCount = 0,
+  children,
 }: {
   isVisible: boolean;
   debugLayout?: boolean;
-  topItemCount?: number;
-  bottomItemCount?: number;
+  children?: React.ReactNode;
 }) {
   return (
     <NativeToastsHostView
       style={styles.host}
-      isVisible={true}
+      isVisible={isVisible}
       debugLayout={debugLayout && __DEV__}
-      topItemCount={topItemCount}
-      bottomItemCount={bottomItemCount}
-      pointerEvents="none"
+      pointerEvents="box-none"
       collapsable={false}
-    />
+    >
+      {children}
+    </NativeToastsHostView>
   );
 }
 

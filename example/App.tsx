@@ -54,6 +54,7 @@ function TabButton({
   onPress: () => void;
 }) {
   const label = id.charAt(0).toUpperCase() + id.slice(1);
+
   return (
     <Pressable
       onPress={onPress}
@@ -156,7 +157,10 @@ function HomeScreen() {
           title="Toast from bottom (5s)"
           onPress={() =>
             toasts.show(
-              <ToastContent message="Hello from the bottom!" position="bottom" />,
+              <ToastContent
+                message="Hello from the bottom!"
+                position="bottom"
+              />,
               {
                 position: "bottom",
                 durationMs: 5000,

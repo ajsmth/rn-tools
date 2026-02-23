@@ -1,24 +1,24 @@
 import ExpoModulesCore
 import UIKit
 
-private let laneHorizontalInset: CGFloat = 12
-private let laneVerticalSpacing: CGFloat = 8
+private let laneHorizontalInset: CGFloat = 0
+private let laneVerticalSpacing: CGFloat = 0
 private let laneCornerRadius: CGFloat = 16
-private let laneHeaderHeight: CGFloat = 26
-private let laneItemHeight: CGFloat = 36
-private let laneMaxDebugItems = 5
+private let laneAbsoluteMaxHeight: CGFloat = 280
+private let laneRelativeMaxHeightRatio: CGFloat = 0.42
+private let laneMinimumHeight: CGFloat = 72
 
 public class RNToolsToastsView: ExpoView {
     private var overlayWindow: PassthroughWindow?
     private let rootView = PassthroughRootView()
+    private let topLaneMountView = UIView()
+    private let bottomLaneMountView = UIView()
     private let topLaneView = ToastDebugLaneView(position: .top)
     private let bottomLaneView = ToastDebugLaneView(position: .bottom)
     private let topGuideView = DebugGuideView(position: .top)
     private let bottomGuideView = DebugGuideView(position: .bottom)
-
-    private var debugLayoutEnabled = false
-    private var topItemCount = 0
-    private var bottomItemCount = 0
+    private var topLaneTouchHandler: UIGestureRecognizer?
+    private var bottomLaneTouchHandler: UIGestureRecognizer?
 
     private lazy var rootVC: UIViewController = {
         let vc = UIViewController()
@@ -35,20 +35,46 @@ public class RNToolsToastsView: ExpoView {
 
         rootView.backgroundColor = .clear
         rootView.isOpaque = false
-        rootView.isUserInteractionEnabled = false
+        // Keep touch handling enabled so future React children can receive events.
+        rootView.isUserInteractionEnabled = true
         rootView.onLayout = { [weak self] in
-            self?.layoutOverlay(animated: false)
+            self?.layoutOverlay()
         }
 
+        topLaneMountView.backgroundColor = .clear
+        topLaneMountView.isUserInteractionEnabled = true
+        topLaneMountView.clipsToBounds = true
+
+        bottomLaneMountView.backgroundColor = .clear
+        bottomLaneMountView.isUserInteractionEnabled = true
+        bottomLaneMountView.clipsToBounds = true
+
+        topLaneTouchHandler = RNToolsToastsTouchHandler.createAndAttach(
+            for: topLaneMountView
+        )
+        bottomLaneTouchHandler = RNToolsToastsTouchHandler.createAndAttach(
+            for: bottomLaneMountView
+        )
+
+        rootView.addSubview(topLaneMountView)
+        rootView.addSubview(bottomLaneMountView)
         rootView.addSubview(topGuideView)
         rootView.addSubview(bottomGuideView)
         rootView.addSubview(topLaneView)
         rootView.addSubview(bottomLaneView)
 
-        updateDebugLayout(false)
+        updateDebugLayout(true)
     }
 
     deinit {
+        if let topLaneTouchHandler {
+            RNToolsToastsTouchHandler.detach(topLaneTouchHandler, from: topLaneMountView)
+            self.topLaneTouchHandler = nil
+        }
+        if let bottomLaneTouchHandler {
+            RNToolsToastsTouchHandler.detach(bottomLaneTouchHandler, from: bottomLaneMountView)
+            self.bottomLaneTouchHandler = nil
+        }
         hideOverlay()
     }
 
@@ -61,8 +87,6 @@ public class RNToolsToastsView: ExpoView {
     }
 
     func updateDebugLayout(_ debugLayout: Bool) {
-        debugLayoutEnabled = debugLayout
-
         rootView.backgroundColor = debugLayout
             ? UIColor.systemYellow.withAlphaComponent(0.08)
             : .clear
@@ -71,27 +95,33 @@ public class RNToolsToastsView: ExpoView {
         bottomGuideView.isHidden = !debugLayout
         topLaneView.isHidden = !debugLayout
         bottomLaneView.isHidden = !debugLayout
-        topLaneView.setDebugEnabled(debugLayout)
-        bottomLaneView.setDebugEnabled(debugLayout)
 
-        layoutOverlay(animated: false)
-    }
-
-    func updateTopItemCount(_ count: Int) {
-        topItemCount = max(0, count)
-        topLaneView.setItemCount(topItemCount)
-        layoutOverlay(animated: true)
-    }
-
-    func updateBottomItemCount(_ count: Int) {
-        bottomItemCount = max(0, count)
-        bottomLaneView.setItemCount(bottomItemCount)
-        layoutOverlay(animated: true)
+        layoutOverlay()
     }
 
     public override func reactSubviews() -> [UIView]! {
-        // Children integration will come later. For now this host is fully native.
+        // Children are mounted via mount/unmountChildComponentView into lane containers.
         return []
+    }
+
+    public override func mountChildComponentView(
+        _ childComponentView: UIView,
+        index: Int
+    ) {
+        let laneContainer = laneContainerView(for: index)
+
+        childComponentView.removeFromSuperview()
+        childComponentView.frame = laneContainer.bounds
+        childComponentView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        laneContainer.addSubview(childComponentView)
+    }
+
+    public override func unmountChildComponentView(
+        _ childComponentView: UIView,
+        index: Int
+    ) {
+        _ = index
+        childComponentView.removeFromSuperview()
     }
 
     private func showOverlay() {
@@ -116,7 +146,7 @@ public class RNToolsToastsView: ExpoView {
         window.isHidden = false
 
         overlayWindow = window
-        layoutOverlay(animated: false)
+        layoutOverlay()
     }
 
     private func hideOverlay() {
@@ -124,16 +154,33 @@ public class RNToolsToastsView: ExpoView {
         overlayWindow = nil
     }
 
-    private func layoutOverlay(animated: Bool) {
+    private func layoutOverlay() {
         guard rootView.bounds.width > 0, rootView.bounds.height > 0 else { return }
 
         let safeInsets = overlayWindow?.safeAreaInsets ?? rootView.safeAreaInsets
         let rootWidth = rootView.bounds.width
         let rootHeight = rootView.bounds.height
-        let laneWidth = max(0, rootWidth - (laneHorizontalInset * 2))
 
-        let topLaneHeight = topLaneView.preferredHeight(debugEnabled: debugLayoutEnabled)
-        let bottomLaneHeight = bottomLaneView.preferredHeight(debugEnabled: debugLayoutEnabled)
+        let laneWidth = max(0, rootWidth - laneHorizontalInset * 2)
+        let availableHeight = max(0, rootHeight - safeInsets.top - safeInsets.bottom)
+        let laneHeight = max(
+            laneMinimumHeight,
+            min(laneAbsoluteMaxHeight, availableHeight * laneRelativeMaxHeightRatio)
+        )
+
+        let topLaneFrame = CGRect(
+            x: laneHorizontalInset,
+            y: safeInsets.top + laneVerticalSpacing,
+            width: laneWidth,
+            height: laneHeight
+        )
+
+        let bottomLaneFrame = CGRect(
+            x: laneHorizontalInset,
+            y: rootHeight - safeInsets.bottom - laneVerticalSpacing - laneHeight,
+            width: laneWidth,
+            height: laneHeight
+        )
 
         topGuideView.frame = CGRect(
             x: laneHorizontalInset,
@@ -141,6 +188,7 @@ public class RNToolsToastsView: ExpoView {
             width: laneWidth,
             height: 1
         )
+
         bottomGuideView.frame = CGRect(
             x: laneHorizontalInset,
             y: rootHeight - safeInsets.bottom - 1,
@@ -148,35 +196,28 @@ public class RNToolsToastsView: ExpoView {
             height: 1
         )
 
-        topLaneView.frame = CGRect(
-            x: laneHorizontalInset,
-            y: safeInsets.top,
-            width: laneWidth,
-            height: topLaneHeight
-        )
-        bottomLaneView.frame = CGRect(
-            x: laneHorizontalInset,
-            y: rootHeight - safeInsets.bottom - bottomLaneHeight,
-            width: laneWidth,
-            height: bottomLaneHeight
-        )
+        topLaneMountView.frame = topLaneFrame
+        bottomLaneMountView.frame = bottomLaneFrame
+        topLaneView.frame = topLaneFrame
+        bottomLaneView.frame = bottomLaneFrame
 
-        _ = animated
-        topLaneView.transform = .identity
-        bottomLaneView.transform = .identity
-        topLaneView.alpha = 1
-        bottomLaneView.alpha = 1
+        topLaneView.updateDebugFrame(topLaneFrame)
+        bottomLaneView.updateDebugFrame(bottomLaneFrame)
     }
+
+    private func laneContainerView(for index: Int) -> UIView {
+        if index == 0 {
+            return topLaneMountView
+        }
+        return bottomLaneMountView
+    }
+
 }
 
 private final class ToastDebugLaneView: UIView {
     private let position: ToastLanePosition
-    private let headerLabel = UILabel()
-    private let countBadgeLabel = UILabel()
-    private let stackView = UIStackView()
-
-    private var debugEnabled = false
-    private var itemCount = 0
+    private let titleLabel = UILabel()
+    private let frameLabel = UILabel()
 
     init(position: ToastLanePosition) {
         self.position = position
@@ -186,23 +227,16 @@ private final class ToastDebugLaneView: UIView {
         clipsToBounds = true
         isUserInteractionEnabled = false
 
-        headerLabel.font = UIFont.monospacedSystemFont(ofSize: 12, weight: .semibold)
-        headerLabel.textColor = .white
+        titleLabel.font = UIFont.monospacedSystemFont(ofSize: 12, weight: .semibold)
+        titleLabel.textColor = .white
+        titleLabel.text = position == .top ? "TOP LANE" : "BOTTOM LANE"
 
-        countBadgeLabel.font = UIFont.monospacedSystemFont(ofSize: 11, weight: .bold)
-        countBadgeLabel.textAlignment = .right
-        countBadgeLabel.textColor = .white
+        frameLabel.font = UIFont.monospacedSystemFont(ofSize: 11, weight: .regular)
+        frameLabel.textColor = UIColor.white.withAlphaComponent(0.9)
+        frameLabel.numberOfLines = 2
 
-        stackView.axis = .vertical
-        stackView.spacing = 6
-        stackView.alignment = .fill
-        stackView.distribution = .fill
-
-        addSubview(headerLabel)
-        addSubview(countBadgeLabel)
-        addSubview(stackView)
-
-        setItemCount(0)
+        addSubview(titleLabel)
+        addSubview(frameLabel)
         refreshPalette()
     }
 
@@ -211,99 +245,38 @@ private final class ToastDebugLaneView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func setDebugEnabled(_ enabled: Bool) {
-        debugEnabled = enabled
-        refreshPalette()
-    }
-
-    func setItemCount(_ count: Int) {
-        itemCount = max(0, count)
-        rebuildRows()
-        setNeedsLayout()
-    }
-
-    func preferredHeight(debugEnabled: Bool) -> CGFloat {
-        let visibleRows = min(max(itemCount, debugEnabled ? 1 : 0), laneMaxDebugItems)
-        return laneHeaderHeight + CGFloat(visibleRows) * laneItemHeight + laneVerticalSpacing * 2
-    }
-
     override func layoutSubviews() {
         super.layoutSubviews()
 
-        headerLabel.frame = CGRect(
+        titleLabel.frame = CGRect(
             x: 12,
-            y: 8,
-            width: bounds.width * 0.6,
-            height: laneHeaderHeight - 6
+            y: 10,
+            width: max(0, bounds.width - 24),
+            height: 18
         )
 
-        countBadgeLabel.frame = CGRect(
-            x: bounds.width * 0.6,
-            y: 8,
-            width: bounds.width * 0.4 - 12,
-            height: laneHeaderHeight - 6
+        frameLabel.frame = CGRect(
+            x: 12,
+            y: 30,
+            width: max(0, bounds.width - 24),
+            height: max(0, bounds.height - 40)
         )
+    }
 
-        let stackTop = laneHeaderHeight + 4
-        stackView.frame = CGRect(
-            x: 10,
-            y: stackTop,
-            width: bounds.width - 20,
-            height: bounds.height - stackTop - 8
-        )
+    func updateDebugFrame(_ frame: CGRect) {
+        frameLabel.text = [
+            "x:\(Int(frame.minX)) y:\(Int(frame.minY))",
+            "w:\(Int(frame.width)) h:\(Int(frame.height))",
+        ].joined(separator: "\n")
     }
 
     private func refreshPalette() {
-        let isTop = position == .top
-        let tone = isTop ? UIColor.systemRed : UIColor.systemBlue
-
-        backgroundColor = tone.withAlphaComponent(debugEnabled ? 0.32 : 0.22)
-        layer.borderColor = tone.withAlphaComponent(0.85).cgColor
-        layer.borderWidth = debugEnabled ? 2 : 1
-
-        headerLabel.text = isTop ? "TOP LANE" : "BOTTOM LANE"
-        countBadgeLabel.text = "count: \(itemCount)"
-    }
-
-    private func rebuildRows() {
-        while let first = stackView.arrangedSubviews.first {
-            stackView.removeArrangedSubview(first)
-            first.removeFromSuperview()
-        }
-
-        let rowCount = min(max(itemCount, debugEnabled ? 1 : 0), laneMaxDebugItems)
-        for index in 0..<rowCount {
-            let row = UIView()
-            row.layer.cornerRadius = 10
-            row.clipsToBounds = true
-
-            let isTop = position == .top
-            row.backgroundColor = isTop
-                ? UIColor.systemRed.withAlphaComponent(0.25)
-                : UIColor.systemBlue.withAlphaComponent(0.25)
-
-            let label = UILabel()
-            label.frame = CGRect(x: 10, y: 0, width: 240, height: laneItemHeight)
-            label.font = UIFont.monospacedSystemFont(ofSize: 11, weight: .medium)
-            label.textColor = .white
-            label.text = "debug item \(index + 1)"
-
-            row.addSubview(label)
-            row.heightAnchor.constraint(equalToConstant: laneItemHeight).isActive = true
-            stackView.addArrangedSubview(row)
-        }
-
-        if itemCount > laneMaxDebugItems {
-            let overflow = UILabel()
-            overflow.font = UIFont.monospacedSystemFont(ofSize: 11, weight: .semibold)
-            overflow.textColor = .white.withAlphaComponent(0.88)
-            overflow.textAlignment = .center
-            overflow.text = "+\(itemCount - laneMaxDebugItems) more"
-            overflow.heightAnchor.constraint(equalToConstant: 18).isActive = true
-            stackView.addArrangedSubview(overflow)
-        }
-
-        countBadgeLabel.text = "count: \(itemCount)"
+        let tone = position == .top ? UIColor.systemRed : UIColor.systemBlue
+        backgroundColor = .clear
+        layer.borderColor = tone.withAlphaComponent(0.9).cgColor
+        layer.borderWidth = 2
+        titleLabel.textColor = tone.withAlphaComponent(0.95)
+        frameLabel.textColor = tone.withAlphaComponent(0.85)
     }
 }
 
@@ -332,7 +305,7 @@ private final class DebugGuideView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        label.frame = CGRect(x: 0, y: position == .top ? -12 : -12, width: 80, height: 12)
+        label.frame = CGRect(x: 0, y: -12, width: 90, height: 12)
     }
 }
 
