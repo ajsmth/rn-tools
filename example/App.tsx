@@ -6,7 +6,12 @@ import {
   type TabScreenOptions,
 } from "@rn-tools/navigation";
 import { createRenderTreeStore, RenderTree } from "@rn-tools/core";
-import { createToasts, ToastsProvider, useToasts } from "@rn-tools/toasts";
+import {
+  createToasts,
+  ToastsProvider,
+  useToastEntry,
+  useToasts,
+} from "@rn-tools/toasts";
 import * as React from "react";
 import { Text, View, Button, Pressable } from "react-native";
 
@@ -37,7 +42,7 @@ export default function App() {
     <RenderTree store={toastsRenderTreeStore}>
       <ToastsProvider toasts={toasts}>
         <Navigation navigation={navigation}>
-          <Tabs id="main-tabs" screens={tabScreens} tabbarPosition="bottom" />
+          <Tabs screens={tabScreens} tabbarPosition="bottom" />
         </Navigation>
       </ToastsProvider>
     </RenderTree>
@@ -231,23 +236,32 @@ function ToastContent({
   message: string;
   position: "top" | "bottom";
 }) {
-  const toasts = useToasts();
+  const { dismiss, entryKey } = useToastEntry();
 
   return (
     <View
       style={{
-        margin: 16,
-        padding: 16,
+        marginHorizontal: 12,
+        marginVertical: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
         backgroundColor: "#fff",
-        borderRadius: 12,
+        borderRadius: 10,
         borderWidth: 1,
         borderColor: "#ddd",
       }}
     >
-      <Text style={{ color: "#111", fontSize: 16, fontWeight: "600" }}>
+      <Text style={{ color: "#111", fontSize: 14, fontWeight: "600" }}>
         {message}
       </Text>
-      <Button title="Dismiss" onPress={() => toasts.dismiss(position)} />
+      <Pressable
+        onPress={dismiss}
+        style={{ marginTop: 8, alignSelf: "flex-start" }}
+      >
+        <Text style={{ color: "#007AFF", fontSize: 13, fontWeight: "500" }}>
+          Dismiss {position} #{entryKey?.slice(-4)}
+        </Text>
+      </Pressable>
     </View>
   );
 }

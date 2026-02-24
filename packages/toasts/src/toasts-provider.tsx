@@ -12,7 +12,7 @@ export type ToastsProviderProps = {
 export function ToastsProvider({
   toasts,
   children,
-  debugLayout = true,
+  debugLayout = false,
 }: ToastsProviderProps) {
   return (
     <ToastsContext.Provider value={toasts}>

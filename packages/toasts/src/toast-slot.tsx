@@ -1,6 +1,13 @@
 import * as React from "react";
 import { RenderTreeNode, useStore } from "@rn-tools/core";
-import { View } from "react-native";
+import {
+  Animated,
+  Easing,
+  StyleSheet,
+  Text,
+  View,
+  type LayoutChangeEvent,
+} from "react-native";
 import { ToastHost } from "./native-toast-view";
 import {
   TOAST_TYPE,
@@ -10,19 +17,46 @@ import {
 } from "./toasts-client";
 import type { ToastEntry } from "./toasts-client";
 
-const DEBUG_DISMISS_ANIMATION_MS = 280;
+const STACK_GAP = 6;
+const ENTER_EXIT_DURATION_MS = 280;
+const REFLOW_DURATION_MS = 240;
+const ESTIMATED_TOAST_HEIGHT = 48;
+const OFFSCREEN_OFFSET = 20;
+const DEFAULT_LANE_VISIBLE_HEIGHT = 280;
+const TOP_LANE_TEST_ID = "rn-tools-toasts-lane-top";
+const BOTTOM_LANE_TEST_ID = "rn-tools-toasts-lane-bottom";
+
+type LanePosition = "top" | "bottom";
+
+type LaneAnimItem = {
+  y: Animated.Value;
+  opacity: Animated.Value;
+  hasEntered: boolean;
+  isExiting: boolean;
+  didMarkShow: boolean;
+  targetY: number | null;
+};
+
+type LaneDebugSummary = {
+  lane: LanePosition;
+  count: number;
+  layout: { x: number; y: number; width: number; height: number } | null;
+  rows: Array<{
+    key: string;
+    status: ToastEntry["status"];
+    measuredHeight: number;
+    targetY: number | null;
+  }>;
+};
 
 export const ToastSlot = React.memo(function ToastSlot({
-  debugLayout = true,
+  debugLayout = false,
 }: {
   debugLayout?: boolean;
 }) {
   const store = React.useContext(ToastsStoreContext);
   const toasts = React.useContext(ToastsContext);
   const entries = useStore(store, (state) => state.entries);
-  const dismissTimersRef = React.useRef(
-    new Map<string, ReturnType<typeof setTimeout>>(),
-  );
 
   const activeKey = React.useMemo(() => {
     for (let i = entries.length - 1; i >= 0; i--) {
@@ -44,75 +78,417 @@ export const ToastSlot = React.memo(function ToastSlot({
     [entries],
   );
 
-  React.useEffect(() => {
-    if (!toasts) {
+  const [topSummary, setTopSummary] = React.useState<LaneDebugSummary | null>(
+    null,
+  );
+  const [bottomSummary, setBottomSummary] =
+    React.useState<LaneDebugSummary | null>(null);
+
+  const handleLaneSummary = React.useCallback((summary: LaneDebugSummary) => {
+    if (summary.lane === "top") {
+      setTopSummary(summary);
       return;
     }
-
-    const closingKeys = new Set<string>();
-
-    for (const entry of entries) {
-      if (entry.status === "opening") {
-        toasts.markDidShow(entry.key);
-        continue;
-      }
-
-      if (entry.status !== "closing") {
-        continue;
-      }
-
-      closingKeys.add(entry.key);
-      if (dismissTimersRef.current.has(entry.key)) {
-        continue;
-      }
-
-      const timer = setTimeout(() => {
-        dismissTimersRef.current.delete(entry.key);
-        toasts.markDidDismiss(entry.key);
-      }, DEBUG_DISMISS_ANIMATION_MS);
-
-      dismissTimersRef.current.set(entry.key, timer);
-    }
-
-    for (const [key, timer] of dismissTimersRef.current) {
-      if (closingKeys.has(key)) {
-        continue;
-      }
-      clearTimeout(timer);
-      dismissTimersRef.current.delete(key);
-    }
-  }, [entries, toasts]);
-
-  React.useEffect(() => {
-    return () => {
-      for (const timer of dismissTimersRef.current.values()) {
-        clearTimeout(timer);
-      }
-      dismissTimersRef.current.clear();
-    };
+    setBottomSummary(summary);
   }, []);
 
   return (
-    <ToastHost isVisible={true} debugLayout={debugLayout}>
-      <View pointerEvents="box-none" collapsable={false}>
-        {topEntries.map((entry) => (
-          <ToastSlotEntry
-            key={entry.key}
-            entry={entry}
-            active={entry.key === activeKey}
-          />
-        ))}
-      </View>
-      <View pointerEvents="box-none" collapsable={false}>
-        {bottomEntries.map((entry) => (
-          <ToastSlotEntry
-            key={entry.key}
-            entry={entry}
-            active={entry.key === activeKey}
-          />
-        ))}
-      </View>
+    <ToastHost debugLayout={debugLayout}>
+      <AnimatedLane
+        key="toast-lane-top"
+        lane="top"
+        laneTestID={TOP_LANE_TEST_ID}
+        debugLayout={debugLayout}
+        entries={topEntries}
+        activeKey={activeKey}
+        toasts={toasts}
+        onDebugSummary={handleLaneSummary}
+        debugComparison={{
+          top: topSummary,
+          bottom: bottomSummary,
+        }}
+      />
+      <AnimatedLane
+        key="toast-lane-bottom"
+        lane="bottom"
+        laneTestID={BOTTOM_LANE_TEST_ID}
+        debugLayout={debugLayout}
+        entries={bottomEntries}
+        activeKey={activeKey}
+        toasts={toasts}
+        onDebugSummary={handleLaneSummary}
+      />
     </ToastHost>
+  );
+});
+
+const AnimatedLane = React.memo(function AnimatedLane({
+  lane,
+  laneTestID,
+  debugLayout,
+  entries,
+  activeKey,
+  toasts,
+  onDebugSummary,
+  debugComparison,
+}: {
+  lane: LanePosition;
+  laneTestID: string;
+  debugLayout: boolean;
+  entries: ToastEntry[];
+  activeKey: string | null;
+  toasts: React.ContextType<typeof ToastsContext>;
+  onDebugSummary: (summary: LaneDebugSummary) => void;
+  debugComparison?: {
+    top: LaneDebugSummary | null;
+    bottom: LaneDebugSummary | null;
+  };
+}) {
+  const [measuredHeights, setMeasuredHeights] = React.useState<
+    Record<string, number>
+  >({});
+  const [laneLayout, setLaneLayout] = React.useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const animItemsRef = React.useRef(new Map<string, LaneAnimItem>());
+
+  const activeKeysSet = React.useMemo(
+    () => new Set(entries.map((entry) => entry.key)),
+    [entries],
+  );
+
+  const getOrCreateAnimItem = React.useCallback(
+    (key: string) => {
+      const existing = animItemsRef.current.get(key);
+      if (existing) {
+        return existing;
+      }
+
+      const item: LaneAnimItem = {
+        y: new Animated.Value(
+          lane === "top" ? -(ESTIMATED_TOAST_HEIGHT + OFFSCREEN_OFFSET) : 0,
+        ),
+        opacity: new Animated.Value(0),
+        hasEntered: false,
+        isExiting: false,
+        didMarkShow: false,
+        targetY: null,
+      };
+      animItemsRef.current.set(key, item);
+      return item;
+    },
+    [lane],
+  );
+
+  React.useEffect(() => {
+    for (const key of Array.from(animItemsRef.current.keys())) {
+      if (!activeKeysSet.has(key)) {
+        animItemsRef.current.delete(key);
+      }
+    }
+  }, [activeKeysSet]);
+
+  const targetOffsets = React.useMemo(() => {
+    const renderedEntries = entries.filter((entry) => entry.status !== "closing");
+    const next = new Map<string, number>();
+
+    if (renderedEntries.length === 0) {
+      return next;
+    }
+
+    const heights = renderedEntries.map(
+      (entry) => measuredHeights[entry.key] ?? ESTIMATED_TOAST_HEIGHT,
+    );
+
+    if (lane === "top") {
+      let cursor = 0;
+      for (let i = renderedEntries.length - 1; i >= 0; i--) {
+        const entry = renderedEntries[i];
+        next.set(entry.key, cursor);
+        cursor += heights[i] + STACK_GAP;
+      }
+      return next;
+    }
+
+    const stackHeight =
+      heights.reduce((sum, height) => sum + height, 0) +
+      Math.max(0, renderedEntries.length - 1) * STACK_GAP;
+    const laneVisibleHeight = Math.min(
+      laneLayout?.height ?? DEFAULT_LANE_VISIBLE_HEIGHT,
+      DEFAULT_LANE_VISIBLE_HEIGHT,
+    );
+
+    let cursor = Math.max(0, laneVisibleHeight - stackHeight);
+    for (let i = 0; i < renderedEntries.length; i++) {
+      const entry = renderedEntries[i];
+      next.set(entry.key, cursor);
+      cursor += heights[i] + STACK_GAP;
+    }
+
+    return next;
+  }, [entries, lane, laneLayout?.height, measuredHeights]);
+
+  React.useEffect(() => {
+    if (!debugLayout) {
+      return;
+    }
+
+    const summary: LaneDebugSummary = {
+      lane,
+      count: entries.length,
+      layout: laneLayout,
+      rows: entries.map((entry) => ({
+        key: entry.key,
+        status: entry.status,
+        measuredHeight: measuredHeights[entry.key] ?? ESTIMATED_TOAST_HEIGHT,
+        targetY: targetOffsets.get(entry.key) ?? null,
+      })),
+    };
+    onDebugSummary(summary);
+
+    if (!__DEV__) {
+      return;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log(`[toasts][${lane}] entries`, summary.rows);
+  }, [
+    debugLayout,
+    entries,
+    lane,
+    laneLayout,
+    measuredHeights,
+    onDebugSummary,
+    targetOffsets,
+  ]);
+
+  React.useEffect(() => {
+    for (const entry of entries) {
+      const key = entry.key;
+      const item = getOrCreateAnimItem(key);
+
+      const knownHeight = measuredHeights[key] ?? ESTIMATED_TOAST_HEIGHT;
+      const targetY = targetOffsets.get(key);
+      const enterFromY =
+        lane === "top"
+          ? -(knownHeight + OFFSCREEN_OFFSET)
+          : DEFAULT_LANE_VISIBLE_HEIGHT + OFFSCREEN_OFFSET;
+      const exitY =
+        lane === "top"
+          ? -(knownHeight + OFFSCREEN_OFFSET)
+          : DEFAULT_LANE_VISIBLE_HEIGHT + knownHeight + OFFSCREEN_OFFSET;
+
+      if (entry.status === "closing") {
+        if (item.isExiting) {
+          continue;
+        }
+        item.isExiting = true;
+        item.targetY = null;
+
+        Animated.parallel([
+          Animated.timing(item.opacity, {
+            toValue: 0,
+            duration: ENTER_EXIT_DURATION_MS,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(item.y, {
+            toValue: exitY,
+            duration: ENTER_EXIT_DURATION_MS,
+            easing: Easing.in(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]).start(({ finished }) => {
+          if (finished) {
+            toasts?.markDidDismiss(key);
+          }
+        });
+        continue;
+      }
+
+      if (typeof targetY !== "number") {
+        continue;
+      }
+
+      if (!item.hasEntered) {
+        item.hasEntered = true;
+        item.isExiting = false;
+        item.y.setValue(enterFromY);
+        item.opacity.setValue(0);
+        item.targetY = targetY;
+
+        Animated.parallel([
+          Animated.timing(item.opacity, {
+            toValue: 1,
+            duration: ENTER_EXIT_DURATION_MS,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(item.y, {
+            toValue: targetY,
+            duration: ENTER_EXIT_DURATION_MS,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]).start(({ finished }) => {
+          if (finished && entry.status === "opening" && !item.didMarkShow) {
+            item.didMarkShow = true;
+            toasts?.markDidShow(key);
+          }
+        });
+        continue;
+      }
+
+      if (item.targetY === targetY && !item.isExiting) {
+        continue;
+      }
+
+      item.isExiting = false;
+      item.targetY = targetY;
+
+      Animated.parallel([
+        Animated.timing(item.opacity, {
+          toValue: 1,
+          duration: REFLOW_DURATION_MS,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(item.y, {
+          toValue: targetY,
+          duration: REFLOW_DURATION_MS,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
+        if (finished && entry.status === "opening" && !item.didMarkShow) {
+          item.didMarkShow = true;
+          toasts?.markDidShow(key);
+        }
+      });
+    }
+  }, [entries, getOrCreateAnimItem, lane, measuredHeights, targetOffsets, toasts]);
+
+  const handleToastLayout = React.useCallback((key: string, height: number) => {
+    const nextHeight = Math.round(height);
+    setMeasuredHeights((current) => {
+      if (current[key] === nextHeight) {
+        return current;
+      }
+      return {
+        ...current,
+        [key]: nextHeight,
+      };
+    });
+  }, []);
+
+  const handleLaneLayout = React.useCallback((event: LayoutChangeEvent) => {
+    const next = event.nativeEvent.layout;
+    setLaneLayout((current) => {
+      if (
+        current &&
+        current.x === next.x &&
+        current.y === next.y &&
+        current.width === next.width &&
+        current.height === next.height
+      ) {
+        return current;
+      }
+      return next;
+    });
+  }, []);
+
+  return (
+    <View
+      pointerEvents="box-none"
+      collapsable={false}
+      style={[
+        styles.lane,
+        debugLayout && (lane === "top" ? styles.laneTopDebug : styles.laneBottomDebug),
+      ]}
+      testID={laneTestID}
+      onLayout={handleLaneLayout}
+    >
+      {debugLayout && (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.laneDebugBadge,
+            lane === "top" ? styles.laneDebugBadgeTop : styles.laneDebugBadgeTop,
+          ]}
+        >
+          <Text style={styles.laneDebugBadgeText}>
+            {lane.toUpperCase()} entries: {entries.length}{" "}
+            {laneLayout
+              ? `(${Math.round(laneLayout.width)}x${Math.round(laneLayout.height)})`
+              : "(no layout)"}
+          </Text>
+        </View>
+      )}
+      {debugLayout && lane === "top" && debugComparison && (
+        <View pointerEvents="none" style={styles.debugPanel}>
+          <Text style={styles.debugPanelTitle}>JS Lane Snapshot</Text>
+          <Text style={styles.debugPanelLine}>
+            TOP: {debugComparison.top?.count ?? 0}{" "}
+            {debugComparison.top?.rows[0]
+              ? `firstY=${debugComparison.top.rows[0].targetY ?? "na"}`
+              : ""}
+          </Text>
+          <Text style={styles.debugPanelLine}>
+            TOP layout:{" "}
+            {debugComparison.top?.layout
+              ? `${Math.round(debugComparison.top.layout.width)}x${Math.round(
+                  debugComparison.top.layout.height,
+                )}`
+              : "none"}
+          </Text>
+          <Text style={styles.debugPanelLine}>
+            BOTTOM: {debugComparison.bottom?.count ?? 0}{" "}
+            {debugComparison.bottom?.rows[0]
+              ? `firstY=${debugComparison.bottom.rows[0].targetY ?? "na"}`
+              : ""}
+          </Text>
+          <Text style={styles.debugPanelLine}>
+            BOTTOM layout:{" "}
+            {debugComparison.bottom?.layout
+              ? `${Math.round(debugComparison.bottom.layout.width)}x${Math.round(
+                  debugComparison.bottom.layout.height,
+                )}`
+              : "none"}
+          </Text>
+          <Text style={styles.debugPanelLine}>
+            Bottom keys:{" "}
+            {debugComparison.bottom?.rows.map((row) => row.key).join(", ") ||
+              "none"}
+          </Text>
+        </View>
+      )}
+      {entries.map((entry) => {
+        const item = getOrCreateAnimItem(entry.key);
+
+        return (
+          <Animated.View
+            key={entry.key}
+            pointerEvents="box-none"
+            style={[
+              styles.toastItem,
+              styles.toastItemTop,
+              {
+                opacity: item.opacity,
+                transform: [{ translateY: item.y }],
+              },
+            ]}
+            onLayout={(event) =>
+              handleToastLayout(entry.key, event.nativeEvent.layout.height)
+            }
+          >
+            <ToastSlotEntry entry={entry} active={entry.key === activeKey} />
+          </Animated.View>
+        );
+      })}
+    </View>
   );
 });
 
@@ -130,4 +506,65 @@ const ToastSlotEntry = React.memo(function ToastSlotEntry({
       </ToastEntryKeyContext.Provider>
     </RenderTreeNode>
   );
+});
+
+const styles = StyleSheet.create({
+  lane: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  toastItem: {
+    left: 0,
+    position: "absolute",
+    right: 0,
+  },
+  toastItemTop: {
+    top: 0,
+  },
+  laneTopDebug: {
+    borderColor: "rgba(255, 59, 48, 0.7)",
+    borderWidth: 1,
+  },
+  laneBottomDebug: {
+    borderColor: "rgba(10, 132, 255, 0.7)",
+    borderWidth: 1,
+  },
+  laneDebugBadge: {
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    position: "absolute",
+    right: 8,
+    zIndex: 1000,
+  },
+  laneDebugBadgeTop: {
+    top: 8,
+  },
+  laneDebugBadgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  debugPanel: {
+    backgroundColor: "rgba(0, 0, 0, 0.72)",
+    borderRadius: 8,
+    left: 8,
+    maxWidth: "92%",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    position: "absolute",
+    top: 36,
+    zIndex: 1200,
+  },
+  debugPanelTitle: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  debugPanelLine: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "500",
+  },
 });
