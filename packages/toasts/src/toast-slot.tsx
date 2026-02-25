@@ -4,11 +4,15 @@ import {
   Animated,
   Easing,
   StyleSheet,
-  Text,
   View,
   type LayoutChangeEvent,
 } from "react-native";
 import { ToastHost } from "./native-toast-view";
+import {
+  LaneDebugOverlay,
+  type LaneDebugComparison,
+  type LaneDebugSummary,
+} from "./toast-debug-ui";
 import {
   TOAST_TYPE,
   ToastEntryKeyContext,
@@ -35,18 +39,6 @@ type LaneAnimItem = {
   isExiting: boolean;
   didMarkShow: boolean;
   targetY: number | null;
-};
-
-type LaneDebugSummary = {
-  lane: LanePosition;
-  count: number;
-  layout: { x: number; y: number; width: number; height: number } | null;
-  rows: Array<{
-    key: string;
-    status: ToastEntry["status"];
-    measuredHeight: number;
-    targetY: number | null;
-  }>;
 };
 
 export const ToastSlot = React.memo(function ToastSlot({
@@ -95,7 +87,6 @@ export const ToastSlot = React.memo(function ToastSlot({
   return (
     <ToastHost debugLayout={debugLayout}>
       <AnimatedLane
-        key="toast-lane-top"
         lane="top"
         laneTestID={TOP_LANE_TEST_ID}
         debugLayout={debugLayout}
@@ -109,7 +100,6 @@ export const ToastSlot = React.memo(function ToastSlot({
         }}
       />
       <AnimatedLane
-        key="toast-lane-bottom"
         lane="bottom"
         laneTestID={BOTTOM_LANE_TEST_ID}
         debugLayout={debugLayout}
@@ -139,10 +129,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
   activeKey: string | null;
   toasts: React.ContextType<typeof ToastsContext>;
   onDebugSummary: (summary: LaneDebugSummary) => void;
-  debugComparison?: {
-    top: LaneDebugSummary | null;
-    bottom: LaneDebugSummary | null;
-  };
+  debugComparison?: LaneDebugComparison;
 }) {
   const [measuredHeights, setMeasuredHeights] = React.useState<
     Record<string, number>
@@ -192,7 +179,9 @@ const AnimatedLane = React.memo(function AnimatedLane({
   }, [activeKeysSet]);
 
   const targetOffsets = React.useMemo(() => {
-    const renderedEntries = entries.filter((entry) => entry.status !== "closing");
+    const renderedEntries = entries.filter(
+      (entry) => entry.status !== "closing",
+    );
     const next = new Map<string, number>();
 
     if (renderedEntries.length === 0) {
@@ -369,7 +358,14 @@ const AnimatedLane = React.memo(function AnimatedLane({
         }
       });
     }
-  }, [entries, getOrCreateAnimItem, lane, measuredHeights, targetOffsets, toasts]);
+  }, [
+    entries,
+    getOrCreateAnimItem,
+    lane,
+    measuredHeights,
+    targetOffsets,
+    toasts,
+  ]);
 
   const handleToastLayout = React.useCallback((key: string, height: number) => {
     const nextHeight = Math.round(height);
@@ -406,65 +402,19 @@ const AnimatedLane = React.memo(function AnimatedLane({
       collapsable={false}
       style={[
         styles.lane,
-        debugLayout && (lane === "top" ? styles.laneTopDebug : styles.laneBottomDebug),
+        debugLayout &&
+          (lane === "top" ? styles.laneTopDebug : styles.laneBottomDebug),
       ]}
       testID={laneTestID}
       onLayout={handleLaneLayout}
     >
-      {debugLayout && (
-        <View
-          pointerEvents="none"
-          style={[
-            styles.laneDebugBadge,
-            lane === "top" ? styles.laneDebugBadgeTop : styles.laneDebugBadgeTop,
-          ]}
-        >
-          <Text style={styles.laneDebugBadgeText}>
-            {lane.toUpperCase()} entries: {entries.length}{" "}
-            {laneLayout
-              ? `(${Math.round(laneLayout.width)}x${Math.round(laneLayout.height)})`
-              : "(no layout)"}
-          </Text>
-        </View>
-      )}
-      {debugLayout && lane === "top" && debugComparison && (
-        <View pointerEvents="none" style={styles.debugPanel}>
-          <Text style={styles.debugPanelTitle}>JS Lane Snapshot</Text>
-          <Text style={styles.debugPanelLine}>
-            TOP: {debugComparison.top?.count ?? 0}{" "}
-            {debugComparison.top?.rows[0]
-              ? `firstY=${debugComparison.top.rows[0].targetY ?? "na"}`
-              : ""}
-          </Text>
-          <Text style={styles.debugPanelLine}>
-            TOP layout:{" "}
-            {debugComparison.top?.layout
-              ? `${Math.round(debugComparison.top.layout.width)}x${Math.round(
-                  debugComparison.top.layout.height,
-                )}`
-              : "none"}
-          </Text>
-          <Text style={styles.debugPanelLine}>
-            BOTTOM: {debugComparison.bottom?.count ?? 0}{" "}
-            {debugComparison.bottom?.rows[0]
-              ? `firstY=${debugComparison.bottom.rows[0].targetY ?? "na"}`
-              : ""}
-          </Text>
-          <Text style={styles.debugPanelLine}>
-            BOTTOM layout:{" "}
-            {debugComparison.bottom?.layout
-              ? `${Math.round(debugComparison.bottom.layout.width)}x${Math.round(
-                  debugComparison.bottom.layout.height,
-                )}`
-              : "none"}
-          </Text>
-          <Text style={styles.debugPanelLine}>
-            Bottom keys:{" "}
-            {debugComparison.bottom?.rows.map((row) => row.key).join(", ") ||
-              "none"}
-          </Text>
-        </View>
-      )}
+      <LaneDebugOverlay
+        enabled={debugLayout}
+        lane={lane}
+        entriesCount={entries.length}
+        laneLayout={laneLayout}
+        debugComparison={debugComparison}
+      />
       {entries.map((entry) => {
         const item = getOrCreateAnimItem(entry.key);
 
@@ -527,44 +477,5 @@ const styles = StyleSheet.create({
   laneBottomDebug: {
     borderColor: "rgba(10, 132, 255, 0.7)",
     borderWidth: 1,
-  },
-  laneDebugBadge: {
-    backgroundColor: "rgba(0, 0, 0, 0.65)",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    position: "absolute",
-    right: 8,
-    zIndex: 1000,
-  },
-  laneDebugBadgeTop: {
-    top: 8,
-  },
-  laneDebugBadgeText: {
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  debugPanel: {
-    backgroundColor: "rgba(0, 0, 0, 0.72)",
-    borderRadius: 8,
-    left: 8,
-    maxWidth: "92%",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    position: "absolute",
-    top: 36,
-    zIndex: 1200,
-  },
-  debugPanelTitle: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  debugPanelLine: {
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: "500",
   },
 });

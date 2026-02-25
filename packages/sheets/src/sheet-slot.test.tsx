@@ -1,16 +1,21 @@
 import * as React from "react";
-import { describe, expect, it, vi } from "vitest";
-import { act, render } from "@testing-library/react";
+import { act, render } from "@testing-library/react-native";
+import { Text, View } from "react-native";
 import { RenderTree, createRenderTreeStore } from "@rn-tools/core";
 import { createSheets } from "./sheets-client";
 import { SheetsProvider } from "./sheets-provider";
 
-vi.mock("./native-sheets-view", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./native-sheets-view")>();
+jest.mock("./native-sheets-view", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+  const actual = jest.requireActual<typeof import("./native-sheets-view")>(
+    "./native-sheets-view",
+  );
+
   return {
     ...actual,
-    BottomSheet: vi.fn((props: { children?: React.ReactNode }) => (
-      <div data-testid="bottom-sheet">{props.children}</div>
+    BottomSheet: jest.fn((props: { children?: React.ReactNode }) => (
+      React.createElement(View, { testID: "bottom-sheet" }, props.children)
     )),
   };
 });
@@ -21,7 +26,7 @@ function renderWithProviders() {
   const result = render(
     <RenderTree store={renderTreeStore}>
       <SheetsProvider sheets={sheets}>
-        <span>app</span>
+        <Text>app</Text>
       </SheetsProvider>
     </RenderTree>,
   );
@@ -33,7 +38,7 @@ describe("SheetSlot wrapped option", () => {
     const { sheets, result } = renderWithProviders();
 
     act(() => {
-      sheets.present(<span>wrapped-content</span>);
+      sheets.present(<Text>wrapped-content</Text>);
     });
 
     expect(result.getByText("wrapped-content")).toBeTruthy();
@@ -44,7 +49,7 @@ describe("SheetSlot wrapped option", () => {
     const { sheets, result } = renderWithProviders();
 
     act(() => {
-      sheets.present(<span>unwrapped-content</span>, { wrapped: false });
+      sheets.present(<Text>unwrapped-content</Text>, { wrapped: false });
     });
 
     expect(result.getByText("unwrapped-content")).toBeTruthy();
@@ -55,8 +60,8 @@ describe("SheetSlot wrapped option", () => {
     const { sheets, result } = renderWithProviders();
 
     act(() => {
-      sheets.present(<span>default-sheet</span>);
-      sheets.present(<span>bare-sheet</span>, { wrapped: false });
+      sheets.present(<Text>default-sheet</Text>);
+      sheets.present(<Text>bare-sheet</Text>, { wrapped: false });
     });
 
     expect(result.getByText("default-sheet")).toBeTruthy();

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { describe, expect, it } from "vitest";
+import { Text } from "react-native";
 import {
   createNavigation,
   createNavigationState,
@@ -18,7 +18,7 @@ describe("createNavigationState", () => {
   it("normalizes Record inputs into Maps", () => {
     const state = createNavigationState({
       stacks: {
-        "stack-a": [{ element: <span>a</span> }],
+        "stack-a": [{ element: <Text>a</Text> }],
       },
       tabs: {
         "my-tabs": { activeIndex: 2 },
@@ -33,7 +33,7 @@ describe("createNavigationState", () => {
 
   it("accepts Map inputs directly", () => {
     const stacks = new Map([
-      ["stack-a", [{ element: <span>a</span> }]],
+      ["stack-a", [{ element: <Text>a</Text> }]],
     ]);
     const tabs = new Map([["my-tabs", { activeIndex: 1 }]]);
     const state = createNavigationState({ stacks, tabs });
@@ -66,7 +66,7 @@ describe("createNavigation", () => {
 
   it("initializes with the provided state", () => {
     const nav = createNavigation({
-      stacks: { "stack-a": [{ element: <span>a</span> }] },
+      stacks: { "stack-a": [{ element: <Text>a</Text> }] },
       tabs: { "my-tabs": { activeIndex: 1 } },
     });
     const state = nav.store.getState();
@@ -78,23 +78,23 @@ describe("createNavigation", () => {
 describe("sheet methods", () => {
   it("present returns a key", () => {
     const nav = createNavigation();
-    const key = nav.present(<span>sheet</span>);
+    const key = nav.present(<Text>sheet</Text>);
 
     expect(typeof key).toBe("string");
   });
 
   it("present reuses key when id is reused", () => {
     const nav = createNavigation();
-    const key1 = nav.present(<span>sheet-a</span>, { id: "edit" });
-    const key2 = nav.present(<span>sheet-b</span>, { id: "edit" });
+    const key1 = nav.present(<Text>sheet-a</Text>, { id: "edit" });
+    const key2 = nav.present(<Text>sheet-b</Text>, { id: "edit" });
 
     expect(key2).toBe(key1);
   });
 
   it("dismiss and dismissAll are callable via public API", () => {
     const nav = createNavigation();
-    nav.present(<span>a</span>);
-    nav.present(<span>b</span>);
+    nav.present(<Text>a</Text>);
+    nav.present(<Text>b</Text>);
 
     expect(() => nav.dismiss()).not.toThrow();
     nav.dismissAll();
@@ -105,11 +105,11 @@ describe("sheet methods", () => {
 describe("loadNavigationState", () => {
   it("replaces the store state with normalized input", () => {
     const nav = createNavigation({
-      stacks: { "stack-a": [{ element: <span>old</span> }] },
+      stacks: { "stack-a": [{ element: <Text>old</Text> }] },
     });
 
     loadNavigationState(nav.store, {
-      stacks: { "stack-b": [{ element: <span>new</span> }] },
+      stacks: { "stack-b": [{ element: <Text>new</Text> }] },
     });
 
     const state = nav.store.getState();
@@ -124,7 +124,7 @@ describe("push", () => {
       stacks: { "stack-a": [] },
     });
 
-    nav.push(<span>pushed</span>, { stack: "stack-a" });
+    nav.push(<Text>pushed</Text>, { stack: "stack-a" });
 
     const screens = nav.store.getState().stacks.get("stack-a");
     expect(screens).toHaveLength(1);
@@ -133,7 +133,7 @@ describe("push", () => {
   it("creates the stack entry if it did not exist", () => {
     const nav = createNavigation();
 
-    nav.push(<span>pushed</span>, { stack: "stack-new" });
+    nav.push(<Text>pushed</Text>, { stack: "stack-new" });
 
     const screens = nav.store.getState().stacks.get("stack-new");
     expect(screens).toHaveLength(1);
@@ -142,11 +142,11 @@ describe("push", () => {
   it("does not push a duplicate screen with the same id", () => {
     const nav = createNavigation({
       stacks: {
-        "stack-a": [{ element: <span>a</span>, options: { id: "screen-1" } }],
+        "stack-a": [{ element: <Text>a</Text>, options: { id: "screen-1" } }],
       },
     });
 
-    nav.push(<span>dup</span>, { id: "screen-1", stack: "stack-a" });
+    nav.push(<Text>dup</Text>, { id: "screen-1", stack: "stack-a" });
 
     expect(nav.store.getState().stacks.get("stack-a")).toHaveLength(1);
   });
@@ -154,20 +154,20 @@ describe("push", () => {
   it("allows pushing after a screen with the same id was popped", () => {
     const nav = createNavigation({
       stacks: {
-        "stack-a": [{ element: <span>a</span>, options: { id: "screen-1" } }],
+        "stack-a": [{ element: <Text>a</Text>, options: { id: "screen-1" } }],
       },
     });
 
     nav.pop({ stack: "stack-a" });
     expect(nav.store.getState().stacks.get("stack-a")).toHaveLength(0);
 
-    nav.push(<span>new</span>, { id: "screen-1", stack: "stack-a" });
+    nav.push(<Text>new</Text>, { id: "screen-1", stack: "stack-a" });
     expect(nav.store.getState().stacks.get("stack-a")).toHaveLength(1);
   });
 
   it("throws when no stack is provided and no stack is mounted", () => {
     const nav = createNavigation();
-    expect(() => nav.push(<span>x</span>)).toThrow(
+    expect(() => nav.push(<Text>x</Text>)).toThrow(
       "could not resolve stack",
     );
   });
@@ -178,8 +178,8 @@ describe("pop", () => {
     const nav = createNavigation({
       stacks: {
         "stack-a": [
-          { element: <span>a</span> },
-          { element: <span>b</span> },
+          { element: <Text>a</Text> },
+          { element: <Text>b</Text> },
         ],
       },
     });

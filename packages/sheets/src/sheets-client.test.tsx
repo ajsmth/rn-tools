@@ -1,5 +1,5 @@
 import * as React from "react";
-import { describe, expect, it } from "vitest";
+import { Text } from "react-native";
 import { createSheets, SHEET_TYPE } from "./sheets-client";
 import { createRenderTreeStore } from "@rn-tools/core";
 
@@ -23,7 +23,7 @@ describe("createSheets", () => {
 
   it("uses sheet- prefix for keys", () => {
     const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<span>hello</span>);
+    const key = sheets.present(<Text>hello</Text>);
     expect(key).toMatch(/^sheet-/);
   });
 });
@@ -31,7 +31,7 @@ describe("createSheets", () => {
 describe("present", () => {
   it("adds a new sheet in opening state", () => {
     const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<span>hello</span>);
+    const key = sheets.present(<Text>hello</Text>);
 
     const entries = sheets.store.getState().entries;
     expect(typeof key).toBe("string");
@@ -42,7 +42,7 @@ describe("present", () => {
 
   it("stores element and options", () => {
     const sheets = createSheets(createRenderTreeStore());
-    const element = <span>content</span>;
+    const element = <Text>content</Text>;
     const options = { id: "edit", snapPoints: [300, 500] };
 
     sheets.present(element, options);
@@ -55,10 +55,10 @@ describe("present", () => {
   it("reuses key and replaces entry when id already exists", () => {
     const sheets = createSheets(createRenderTreeStore());
 
-    const key1 = sheets.present(<span>a</span>, { id: "edit", snapPoints: [240] });
+    const key1 = sheets.present(<Text>a</Text>, { id: "edit", snapPoints: [240] });
     sheets.markDidOpen(key1);
 
-    const key2 = sheets.present(<span>b</span>, { id: "edit", snapPoints: [320] });
+    const key2 = sheets.present(<Text>b</Text>, { id: "edit", snapPoints: [320] });
 
     const entries = sheets.store.getState().entries;
     expect(key2).toBe(key1);
@@ -72,8 +72,8 @@ describe("present", () => {
 describe("dismiss", () => {
   it("marks the top non-closing sheet as closing", () => {
     const sheets = createSheets(createRenderTreeStore());
-    const keyA = sheets.present(<span>a</span>);
-    const keyB = sheets.present(<span>b</span>);
+    const keyA = sheets.present(<Text>a</Text>);
+    const keyB = sheets.present(<Text>b</Text>);
     sheets.markDidOpen(keyA);
     sheets.markDidOpen(keyB);
 
@@ -87,8 +87,8 @@ describe("dismiss", () => {
   it("uses render-tree active sheet for no-arg dismiss", () => {
     const renderTreeStore = createRenderTreeStore();
     const sheets = createSheets(renderTreeStore);
-    const keyA = sheets.present(<span>a</span>);
-    const keyB = sheets.present(<span>b</span>);
+    const keyA = sheets.present(<Text>a</Text>);
+    const keyB = sheets.present(<Text>b</Text>);
     sheets.markDidOpen(keyA);
     sheets.markDidOpen(keyB);
 
@@ -138,7 +138,7 @@ describe("dismiss", () => {
 describe("markDidDismiss", () => {
   it("removes a closing sheet", () => {
     const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<span>a</span>);
+    const key = sheets.present(<Text>a</Text>);
     sheets.markDidOpen(key);
     sheets.dismiss(key);
 
@@ -151,9 +151,9 @@ describe("markDidDismiss", () => {
 describe("dismissAll", () => {
   it("marks every non-closing sheet as closing", () => {
     const sheets = createSheets(createRenderTreeStore());
-    const keyA = sheets.present(<span>a</span>);
-    const keyB = sheets.present(<span>b</span>);
-    const keyC = sheets.present(<span>c</span>);
+    const keyA = sheets.present(<Text>a</Text>);
+    const keyB = sheets.present(<Text>b</Text>);
+    const keyC = sheets.present(<Text>c</Text>);
     sheets.markDidOpen(keyA);
     sheets.markDidOpen(keyB);
     sheets.markDidOpen(keyC);
@@ -170,7 +170,7 @@ describe("dismissAll", () => {
 describe("remove", () => {
   it("removes by key", () => {
     const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<span>a</span>);
+    const key = sheets.present(<Text>a</Text>);
 
     sheets.remove(key);
 
