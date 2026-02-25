@@ -2,7 +2,7 @@
 
 Root component and client for the `@rn-tools/navigation` system.
 
-`Navigation` provides context for `Stack` and `Tabs`, and now also mounts sheet support internally so you can present sheets directly from the navigation client.
+`Navigation` provides context for `Stack` and `Tabs`, and also mounts sheets + notifications support internally so you can present both from the navigation client.
 
 ## Setup
 
@@ -27,6 +27,7 @@ export default function App() {
 - a root `Stack` (`__root__`)
 - navigation context/providers
 - a sheets provider (for `navigation.present(...)`)
+- a notifications provider (for `navigation.notify(...)`)
 
 ## `createNavigation`
 
@@ -43,6 +44,7 @@ type NavigationClient = {
   store: NavigationStore;
   renderTreeStore: RenderTreeStore;
   sheetsStore: SheetsClient;
+  notificationsStore: NotificationsClient;
 
   push: (element: React.ReactElement, options?: PushOptions) => void;
   pop: (options?: { stack?: string }) => void;
@@ -51,6 +53,12 @@ type NavigationClient = {
   present: (element: React.ReactElement, options?: SheetOptions) => string;
   dismiss: (id?: string) => void;
   dismissAll: () => void;
+
+  notify: (
+    element: React.ReactElement,
+    options?: NotificationOptions,
+  ) => string;
+  dismissNotification: (target?: NotificationDismissTarget) => void;
 };
 ```
 
@@ -121,6 +129,29 @@ navigation.dismissAll()
 ```
 
 Dismisses all active sheets.
+
+## Notification methods
+
+### `notify`
+
+```ts
+navigation.notify(element, options?)
+```
+
+Shows a notification and returns its key.
+
+`options` is the same `NotificationOptions` used by `@rn-tools/notifications`:
+- `id?`
+- `position?` (`"top"` | `"bottom"`)
+- `durationMs?`
+
+### `dismissNotification`
+
+```ts
+navigation.dismissNotification(target?)
+```
+
+Dismisses a notification by key/id, lane (`"top"` or `"bottom"`), or the latest top-lane notification when omitted.
 
 ## Example
 

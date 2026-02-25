@@ -5,18 +5,11 @@ import {
   Tabs,
   type TabScreenOptions,
 } from "@rn-tools/navigation";
-import { createRenderTreeStore, RenderTree } from "@rn-tools/core";
-import {
-  createNotifications,
-  NotificationsProvider,
-  useNotificationEntry,
-  useNotifications,
-} from "@rn-tools/notifications";
+import { useNotificationEntry } from "@rn-tools/notifications";
 import * as React from "react";
 import { Text, View, Button, Pressable } from "react-native";
 
 const navigation = createNavigation();
-const notifications = createNotifications();
 
 const tabScreens: TabScreenOptions[] = [
   {
@@ -38,11 +31,9 @@ const tabScreens: TabScreenOptions[] = [
 
 export default function App() {
   return (
-    <NotificationsProvider notifications={notifications} debugLayout={false}>
-      <Navigation navigation={navigation}>
-        <Tabs screens={tabScreens} tabbarPosition="bottom" />
-      </Navigation>
-    </NotificationsProvider>
+    <Navigation navigation={navigation}>
+      <Tabs screens={tabScreens} tabbarPosition="bottom" />
+    </Navigation>
   );
 }
 
@@ -146,7 +137,7 @@ function HomeScreen() {
         <Button
           title="Notification from top (3s)"
           onPress={() =>
-            notifications.show(
+            navigation.notify(
               <NotificationContent
                 message="Hello from the top!"
                 position="top"
@@ -161,7 +152,7 @@ function HomeScreen() {
         <Button
           title="Notification from bottom (5s)"
           onPress={() =>
-            notifications.show(
+            navigation.notify(
               <NotificationContent
                 message="Hello from the bottom!"
                 position="bottom"
@@ -176,7 +167,7 @@ function HomeScreen() {
         <Button
           title="Persistent notification (no auto-dismiss)"
           onPress={() =>
-            notifications.show(
+            navigation.notify(
               <NotificationContent
                 message="I won't go away on my own!"
                 position="top"
@@ -191,19 +182,19 @@ function HomeScreen() {
         />
         <Button
           title="Dismiss top notification"
-          onPress={() => notifications.dismiss()}
+          onPress={() => navigation.dismissNotification()}
         />
         <Button
           title='Dismiss latest "top" notification'
-          onPress={() => notifications.dismiss("top")}
+          onPress={() => navigation.dismissNotification("top")}
         />
         <Button
           title='Dismiss latest "bottom" notification'
-          onPress={() => notifications.dismiss("bottom")}
+          onPress={() => navigation.dismissNotification("bottom")}
         />
         <Button
           title="Dismiss all notifications"
-          onPress={() => notifications.dismissAll()}
+          onPress={() => navigation.notificationsStore.dismissAll()}
         />
       </View>
     </View>

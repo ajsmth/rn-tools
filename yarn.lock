@@ -3021,6 +3021,7 @@ __metadata:
   resolution: "@rn-tools/navigation@workspace:packages/navigation"
   dependencies:
     "@rn-tools/eslint-config": "npm:*"
+    "@rn-tools/notifications": "npm:*"
     "@rn-tools/sheets": "npm:*"
     "@testing-library/react-native": "npm:^13.3.3"
     "@types/jest": "npm:^29.5.14"
