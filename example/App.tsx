@@ -3,9 +3,10 @@ import {
   Navigation,
   Stack,
   Tabs,
+  type NotificationInjectedProps,
+  type SheetInjectedProps,
   type TabScreenOptions,
 } from "@rn-tools/navigation";
-import { useNotificationEntry } from "@rn-tools/notifications";
 import * as React from "react";
 import { Text, View, Button, Pressable } from "react-native";
 
@@ -201,7 +202,12 @@ function HomeScreen() {
   );
 }
 
-function SheetContent({ label }: { label: string }) {
+function SheetContent({
+  label,
+  dismiss,
+}: {
+  label: string;
+} & SheetInjectedProps) {
   return (
     <View style={{ padding: 24 }}>
       <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 12 }}>
@@ -218,7 +224,10 @@ function SheetContent({ label }: { label: string }) {
           });
         }}
       />
-      <Button title="Dismiss this sheet" onPress={() => navigation.dismiss()} />
+      <Button
+        title="Dismiss this sheet"
+        onPress={() => dismiss?.() ?? navigation.dismiss()}
+      />
     </View>
   );
 }
@@ -226,11 +235,11 @@ function SheetContent({ label }: { label: string }) {
 function NotificationContent({
   message,
   position,
+  dismiss,
 }: {
   message: string;
   position: "top" | "bottom";
-}) {
-  const { dismiss, entryKey } = useNotificationEntry();
+} & NotificationInjectedProps) {
 
   return (
     <View
@@ -253,7 +262,7 @@ function NotificationContent({
         style={{ marginTop: 8, alignSelf: "flex-start" }}
       >
         <Text style={{ color: "#007AFF", fontSize: 13, fontWeight: "500" }}>
-          Dismiss {position} #{entryKey?.slice(-4)}
+          Dismiss {position}
         </Text>
       </Pressable>
     </View>

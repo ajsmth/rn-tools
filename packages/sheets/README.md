@@ -69,7 +69,11 @@ You do not need a hook for this pattern; you can call the external sheets store 
 ```tsx
 import * as React from "react";
 import { Button, View } from "react-native";
-import { createSheets, SheetsProvider } from "@rn-tools/sheets";
+import {
+  createSheets,
+  SheetsProvider,
+  type SheetInjectedProps,
+} from "@rn-tools/sheets";
 
 const sheets = createSheets();
 
@@ -99,8 +103,12 @@ function Screen() {
   );
 }
 
-function SheetContent() {
-  return <View style={{ padding: 24 }} />;
+function SheetContent({ dismiss }: SheetInjectedProps) {
+  return (
+    <View style={{ padding: 24 }}>
+      <Button title="Dismiss" onPress={() => dismiss?.()} />
+    </View>
+  );
 }
 ```
 
@@ -115,10 +123,17 @@ type SheetsClient = {
 };
 ```
 
+```ts
+type SheetInjectedProps = {
+  dismiss?: () => void;
+};
+```
+
 - `present` returns a sheet key.
 - `options.id` lets you target a logical sheet instance.
 - `dismiss(id?)` closes by key/id, or top-most if omitted.
 - `dismissAll()` closes all active sheets.
+- each rendered element receives an injected optional `dismiss?: () => void` prop.
 
 ## `BottomSheet` props
 

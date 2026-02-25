@@ -16,7 +16,7 @@ import { Button, Text, View } from "react-native";
 import {
   createNotifications,
   NotificationsProvider,
-  useNotificationEntry,
+  type NotificationInjectedProps,
 } from "@rn-tools/notifications";
 
 const notifications = createNotifications();
@@ -39,8 +39,10 @@ export default function App() {
   );
 }
 
-function NotificationCard({ message }: { message: string }) {
-  const { dismiss } = useNotificationEntry();
+function NotificationCard({
+  message,
+  dismiss,
+}: { message: string } & NotificationInjectedProps) {
   return (
     <View style={{ padding: 12, backgroundColor: "#111827", borderRadius: 12 }}>
       <Text style={{ color: "white" }}>{message}</Text>
@@ -81,6 +83,12 @@ type NotificationsClient = {
 };
 ```
 
+```ts
+type NotificationInjectedProps = {
+  dismiss?: () => void;
+};
+```
+
 ### `show(element, options?)`
 
 Presents a notification and returns its key.
@@ -89,6 +97,7 @@ Presents a notification and returns its key.
 - `id?`: stable id to replace/reuse an existing notification key.
 - `position?`: `"top"` (default) or `"bottom"`.
 - `durationMs?`: auto-dismiss duration in ms.
+- each rendered element receives an injected optional `dismiss?: () => void` prop.
 
 ### `dismiss(target?)`
 
@@ -114,6 +123,8 @@ Returns controls scoped to the currently rendered notification entry:
 ```ts
 const { entryKey, dismiss, dismissAll } = useNotificationEntry();
 ```
+
+Use this as a fallback when prop injection is not convenient.
 
 ## Using with `@rn-tools/navigation`
 

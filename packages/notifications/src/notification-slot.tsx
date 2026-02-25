@@ -12,6 +12,7 @@ import { LaneDebugProvider, LaneDebugOverlay } from "./notification-debug-ui";
 import {
   NOTIFICATION_TYPE,
   NotificationEntryKeyContext,
+  type NotificationInjectedProps,
   NotificationsContext,
   NotificationsStoreContext,
 } from "./notifications-client";
@@ -424,10 +425,23 @@ const NotificationSlotEntry = React.memo(function NotificationSlotEntry({
   element: React.ReactNode;
   active: boolean;
 }) {
+  const notifications = React.useContext(NotificationsContext);
+  const handleDismiss = React.useCallback(() => {
+    notifications?.dismiss(entryKey);
+  }, [notifications, entryKey]);
+
+  const injectedElement = React.useMemo(() => {
+    if (!React.isValidElement<NotificationInjectedProps>(element)) {
+      return element;
+    }
+
+    return React.cloneElement(element, { dismiss: handleDismiss });
+  }, [element, handleDismiss]);
+
   return (
     <RenderTreeNode type={NOTIFICATION_TYPE} id={entryKey} active={active}>
       <NotificationEntryKeyContext.Provider value={entryKey}>
-        {element}
+        {injectedElement}
       </NotificationEntryKeyContext.Provider>
     </RenderTreeNode>
   );

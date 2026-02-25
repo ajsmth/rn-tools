@@ -16,6 +16,9 @@ export type NotificationsState = OverlayState<NotificationOptions>;
 export type NotificationsStore = Store<NotificationsState>;
 export type NotificationPosition = "top" | "bottom";
 export type NotificationDismissTarget = string | NotificationPosition;
+export type NotificationInjectedProps = {
+  dismiss?: () => void;
+};
 
 export type NotificationsClient = {
   store: NotificationsStore;

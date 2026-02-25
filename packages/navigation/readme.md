@@ -66,10 +66,20 @@ navigation.dismissNotification("bottom");
 navigation.dismissNotification("saved");
 ```
 
+Presented sheet and notification elements receive an injected optional `dismiss?: () => void` prop.
+
 When no explicit target is provided:
 - `push/pop/tab` resolve the deepest active stack/tabs node.
 - `dismiss()` resolves the active sheet.
 - `dismissNotification()` resolves the latest non-closing top-lane notification.
+
+Hooks are also re-exported for convenience:
+- `useSheetEntry` (from `@rn-tools/sheets`)
+- `useNotificationEntry` (from `@rn-tools/notifications`)
+
+Injected-prop typings are re-exported as well:
+- `SheetInjectedProps`
+- `NotificationInjectedProps`
 
 ## Docs
 

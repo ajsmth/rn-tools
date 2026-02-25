@@ -114,6 +114,8 @@ Presents a bottom sheet and returns a sheet key.
 - `appearanceAndroid?`
 - `appearanceIOS?`
 
+The rendered element also receives an injected optional `dismiss?: () => void` prop.
+
 ### `dismiss`
 
 ```ts
@@ -145,6 +147,8 @@ Shows a notification and returns its key.
 - `position?` (`"top"` | `"bottom"`)
 - `durationMs?`
 
+The rendered element also receives an injected optional `dismiss?: () => void` prop.
+
 ### `dismissNotification`
 
 ```ts
@@ -152,6 +156,14 @@ navigation.dismissNotification(target?)
 ```
 
 Dismisses a notification by key/id, lane (`"top"` or `"bottom"`), or the latest top-lane notification when omitted.
+
+## Re-exported hooks
+
+`@rn-tools/navigation` re-exports:
+- `useSheetEntry`
+- `useNotificationEntry`
+- `SheetInjectedProps`
+- `NotificationInjectedProps`
 
 ## Example
 

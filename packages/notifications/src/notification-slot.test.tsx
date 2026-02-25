@@ -15,6 +15,18 @@ function DismissibleNotification() {
   );
 }
 
+function DismissibleViaInjectedProp({
+  dismiss,
+}: {
+  dismiss?: () => void;
+}) {
+  return (
+    <Pressable testID="dismiss-notification-button-injected" onPress={dismiss}>
+      <Text>dismiss-via-injected-prop</Text>
+    </Pressable>
+  );
+}
+
 function renderWithProviders() {
   const renderTreeStore = createRenderTreeStore();
   const notifications = createNotifications(renderTreeStore);
@@ -45,6 +57,26 @@ describe("NotificationSlot dismiss interaction", () => {
 
     await waitFor(() => {
       expect(result.queryByText("dismiss-me-notification")).toBeNull();
+      expect(notifications.store.getState().entries).toHaveLength(0);
+    });
+  });
+
+  it("removes notification when using injected dismiss prop", async () => {
+    const { notifications, result } = renderWithProviders();
+
+    act(() => {
+      notifications.show(<DismissibleViaInjectedProp />);
+    });
+
+    expect(result.getByText("dismiss-via-injected-prop")).toBeTruthy();
+    expect(notifications.store.getState().entries).toHaveLength(1);
+
+    act(() => {
+      fireEvent.press(result.getByTestId("dismiss-notification-button-injected"));
+    });
+
+    await waitFor(() => {
+      expect(result.queryByText("dismiss-via-injected-prop")).toBeNull();
       expect(notifications.store.getState().entries).toHaveLength(0);
     });
   });

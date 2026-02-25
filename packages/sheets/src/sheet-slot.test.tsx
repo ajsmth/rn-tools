@@ -1,6 +1,6 @@
 import * as React from "react";
-import { act, render } from "@testing-library/react-native";
-import { Text, View } from "react-native";
+import { act, fireEvent, render } from "@testing-library/react-native";
+import { Pressable, Text, View } from "react-native";
 import { RenderTree, createRenderTreeStore } from "@rn-tools/core";
 import { SHEET_TYPE, createSheets } from "./sheets-client";
 import { SheetsProvider } from "./sheets-provider";
@@ -31,6 +31,14 @@ function renderWithProviders() {
     </RenderTree>,
   );
   return { sheets, result };
+}
+
+function DismissibleSheet({ dismiss }: { dismiss?: () => void }) {
+  return (
+    <Pressable testID="dismiss-sheet-button" onPress={dismiss}>
+      <Text>dismiss-sheet</Text>
+    </Pressable>
+  );
 }
 
 describe("SheetSlot wrapped option", () => {
@@ -67,6 +75,26 @@ describe("SheetSlot wrapped option", () => {
     expect(result.getByText("default-sheet")).toBeTruthy();
     expect(result.getByText("bare-sheet")).toBeTruthy();
     expect(result.queryAllByTestId("bottom-sheet")).toHaveLength(1);
+  });
+});
+
+describe("SheetSlot injected dismiss prop", () => {
+  it("injects dismiss prop into sheet content", () => {
+    const { sheets, result } = renderWithProviders();
+
+    let key = "";
+    act(() => {
+      key = sheets.present(<DismissibleSheet />, { wrapped: false });
+      sheets.markDidOpen(key);
+    });
+
+    act(() => {
+      fireEvent.press(result.getByTestId("dismiss-sheet-button"));
+    });
+
+    expect(
+      sheets.store.getState().entries.find((entry) => entry.key === key)?.status,
+    ).toBe("closing");
   });
 });
 
