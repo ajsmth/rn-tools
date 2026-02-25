@@ -16,6 +16,43 @@ export const StyleSheet = {
   flatten: (style: unknown) => style,
 };
 
+class AnimatedValue {
+  private value: number;
+
+  constructor(initialValue: number) {
+    this.value = initialValue;
+  }
+
+  setValue(nextValue: number) {
+    this.value = nextValue;
+  }
+}
+
+function completeAnimation(
+  callback?: (result: { finished: boolean }) => void,
+) {
+  callback?.({ finished: true });
+}
+
+export const Animated = {
+  Value: AnimatedValue,
+  View: function AnimatedView(props: { children?: unknown }) {
+    return React.createElement("AnimatedView", props, props.children);
+  },
+  timing: () => ({
+    start: completeAnimation,
+  }),
+  parallel: () => ({
+    start: completeAnimation,
+  }),
+};
+
+export const Easing = {
+  cubic: "cubic",
+  out: () => "out",
+  in: () => "in",
+};
+
 export function useWindowDimensions() {
   return { width: 375, height: 812 };
 }

@@ -35,10 +35,7 @@ type LanePosition = "top" | "bottom";
 type LaneAnimItem = {
   y: Animated.Value;
   opacity: Animated.Value;
-  hasEntered: boolean;
-  isExiting: boolean;
-  didMarkShow: boolean;
-  targetY: number | null;
+  targetY: number | null | undefined;
 };
 
 export const ToastSlot = React.memo(function ToastSlot({
@@ -159,10 +156,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
           lane === "top" ? -(ESTIMATED_TOAST_HEIGHT + OFFSCREEN_OFFSET) : 0,
         ),
         opacity: new Animated.Value(0),
-        hasEntered: false,
-        isExiting: false,
-        didMarkShow: false,
-        targetY: null,
+        targetY: undefined,
       };
       animItemsRef.current.set(key, item);
       return item;
@@ -271,10 +265,9 @@ const AnimatedLane = React.memo(function AnimatedLane({
           : DEFAULT_LANE_VISIBLE_HEIGHT + knownHeight + OFFSCREEN_OFFSET;
 
       if (entry.status === "closing") {
-        if (item.isExiting) {
+        if (item.targetY === null) {
           continue;
         }
-        item.isExiting = true;
         item.targetY = null;
 
         Animated.parallel([
@@ -302,9 +295,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
         continue;
       }
 
-      if (!item.hasEntered) {
-        item.hasEntered = true;
-        item.isExiting = false;
+      if (typeof item.targetY !== "number") {
         item.y.setValue(enterFromY);
         item.opacity.setValue(0);
         item.targetY = targetY;
@@ -323,19 +314,17 @@ const AnimatedLane = React.memo(function AnimatedLane({
             useNativeDriver: true,
           }),
         ]).start(({ finished }) => {
-          if (finished && entry.status === "opening" && !item.didMarkShow) {
-            item.didMarkShow = true;
+          if (finished) {
             toasts?.markDidShow(key);
           }
         });
         continue;
       }
 
-      if (item.targetY === targetY && !item.isExiting) {
+      if (item.targetY === targetY) {
         continue;
       }
 
-      item.isExiting = false;
       item.targetY = targetY;
 
       Animated.parallel([
@@ -352,8 +341,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
           useNativeDriver: true,
         }),
       ]).start(({ finished }) => {
-        if (finished && entry.status === "opening" && !item.didMarkShow) {
-          item.didMarkShow = true;
+        if (finished) {
           toasts?.markDidShow(key);
         }
       });
