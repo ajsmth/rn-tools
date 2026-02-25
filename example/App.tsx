@@ -40,7 +40,7 @@ const tabScreens: TabScreenOptions[] = [
 export default function App() {
   return (
     <RenderTree store={toastsRenderTreeStore}>
-      <ToastsProvider toasts={toasts}>
+      <ToastsProvider toasts={toasts} debugLayout={false}>
         <Navigation navigation={navigation}>
           <Tabs screens={tabScreens} tabbarPosition="bottom" />
         </Navigation>

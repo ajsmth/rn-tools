@@ -4,7 +4,9 @@
   ],
   "apple": {
     "modules": [
-      "RNToolsToastsModule"
+      "RNToolsToastsModule",
+      "RNToolsToastsTopLaneModule",
+      "RNToolsToastsBottomLaneModule"
     ]
   }
 }

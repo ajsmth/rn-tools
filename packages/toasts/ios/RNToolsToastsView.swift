@@ -7,8 +7,6 @@ private let laneCornerRadius: CGFloat = 16
 private let laneAbsoluteMaxHeight: CGFloat = 280
 private let laneRelativeMaxHeightRatio: CGFloat = 0.42
 private let laneMinimumHeight: CGFloat = 72
-private let topLaneChildIdentifier = "rn-tools-toasts-lane-top"
-private let bottomLaneChildIdentifier = "rn-tools-toasts-lane-bottom"
 
 public class RNToolsToastsView: ExpoView {
     private var overlayWindow: PassthroughWindow?
@@ -21,7 +19,6 @@ public class RNToolsToastsView: ExpoView {
     private let bottomGuideView = DebugGuideView(position: .bottom)
     private var topLaneTouchHandler: UIGestureRecognizer?
     private var bottomLaneTouchHandler: UIGestureRecognizer?
-    private var childLaneAssignments: [ObjectIdentifier: ToastLanePosition] = [:]
     private var isDebugLayoutEnabled = false
 
     private lazy var rootVC: UIViewController = {
@@ -106,13 +103,14 @@ public class RNToolsToastsView: ExpoView {
         _ childComponentView: UIView,
         index: Int
     ) {
-        let childID = ObjectIdentifier(childComponentView)
-        let assignedLane = resolvedLaneAssignment(
-            for: childComponentView,
-            preferredIndex: index,
-            existing: childLaneAssignments[childID]
-        )
-        childLaneAssignments[childID] = assignedLane
+        guard let assignedLane = resolvedLaneAssignment(for: childComponentView) else {
+            #if DEBUG
+                assertionFailure(
+                    "[RNToolsToasts] Unexpected child type mounted into host: \(String(describing: type(of: childComponentView)))"
+                )
+            #endif
+            return
+        }
         let laneContainer = laneContainerView(for: assignedLane)
 
         childComponentView.removeFromSuperview()
@@ -139,7 +137,6 @@ public class RNToolsToastsView: ExpoView {
         index: Int
     ) {
         _ = index
-        childLaneAssignments.removeValue(forKey: ObjectIdentifier(childComponentView))
         childComponentView.removeFromSuperview()
 
         #if DEBUG
@@ -236,31 +233,16 @@ public class RNToolsToastsView: ExpoView {
         bottomLaneView.updateDebugFrame(bottomLaneFrame)
     }
 
-    private func nextLaneAssignment(preferredIndex index: Int) -> ToastLanePosition {
-        if topLaneMountView.subviews.isEmpty {
-            return .top
-        }
-        if bottomLaneMountView.subviews.isEmpty {
-            return .bottom
-        }
-        return index == 0 ? .top : .bottom
-    }
-
     private func resolvedLaneAssignment(
-        for childComponentView: UIView,
-        preferredIndex index: Int,
-        existing: ToastLanePosition?
-    ) -> ToastLanePosition {
-        if childComponentView.accessibilityIdentifier == topLaneChildIdentifier {
+        for childComponentView: UIView
+    ) -> ToastLanePosition? {
+        if childComponentView is RNToolsToastsTopLaneView {
             return .top
         }
-        if childComponentView.accessibilityIdentifier == bottomLaneChildIdentifier {
+        if childComponentView is RNToolsToastsBottomLaneView {
             return .bottom
         }
-        if let existing {
-            return existing
-        }
-        return nextLaneAssignment(preferredIndex: index)
+        return nil
     }
 
     private func laneContainerView(for position: ToastLanePosition) -> UIView {
@@ -401,4 +383,20 @@ private final class PassthroughContainerView: UIView {
 private enum ToastLanePosition {
     case top
     case bottom
+}
+
+public final class RNToolsToastsTopLaneView: ExpoView {
+    required init(appContext: AppContext? = nil) {
+        super.init(appContext: appContext)
+        backgroundColor = .clear
+        isOpaque = false
+    }
+}
+
+public final class RNToolsToastsBottomLaneView: ExpoView {
+    required init(appContext: AppContext? = nil) {
+        super.init(appContext: appContext)
+        backgroundColor = .clear
+        isOpaque = false
+    }
 }

@@ -7,7 +7,7 @@ import {
   View,
   type LayoutChangeEvent,
 } from "react-native";
-import { ToastHost } from "./native-toast-view";
+import { NativeBottomLane, NativeTopLane, ToastHost } from "./native-toast-view";
 import { LaneDebugProvider, LaneDebugOverlay } from "./toast-debug-ui";
 import {
   TOAST_TYPE,
@@ -73,20 +73,24 @@ export const ToastSlot = React.memo(function ToastSlot({
   return (
     <ToastHost debugLayout={debugLayout}>
       <LaneDebugProvider enabled={debugLayout}>
-        <AnimatedLane
-          lane="top"
-          debugLayout={debugLayout}
-          entries={topEntries}
-          activeKey={activeKey}
-          toasts={toasts}
-        />
-        <AnimatedLane
-          lane="bottom"
-          debugLayout={debugLayout}
-          entries={bottomEntries}
-          activeKey={activeKey}
-          toasts={toasts}
-        />
+        <NativeTopLane>
+          <AnimatedLane
+            lane="top"
+            debugLayout={debugLayout}
+            entries={topEntries}
+            activeKey={activeKey}
+            toasts={toasts}
+          />
+        </NativeTopLane>
+        <NativeBottomLane>
+          <AnimatedLane
+            lane="bottom"
+            debugLayout={debugLayout}
+            entries={bottomEntries}
+            activeKey={activeKey}
+            toasts={toasts}
+          />
+        </NativeBottomLane>
       </LaneDebugProvider>
     </ToastHost>
   );
@@ -154,6 +158,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
     }
   }, [activeKeysSet]);
 
+  // Measures the heights of sibling items and gaps between them to determine the target offset for each item. This is used to drive the animations.
   const targetOffsets = React.useMemo(() => {
     const renderedEntries = entries.filter(
       (entry) => entry.status !== "closing",
@@ -389,17 +394,20 @@ const ToastLaneItem = React.memo(function ToastLaneItem({
     [entryKey, onMeasureHeight],
   );
 
+  const style = React.useMemo(() => {
+    return [
+      styles.toastItem,
+      {
+        opacity,
+        transform: [{ translateY }],
+      },
+    ];
+  }, [opacity, translateY]);
+
   return (
     <Animated.View
       pointerEvents="box-none"
-      style={[
-        styles.toastItem,
-        styles.toastItemTop,
-        {
-          opacity,
-          transform: [{ translateY }],
-        },
-      ]}
+      style={style}
       onLayout={handleLayout}
     >
       <ToastSlotEntry entryKey={entryKey} element={element} active={active} />
@@ -433,8 +441,6 @@ const styles = StyleSheet.create({
     left: 0,
     position: "absolute",
     right: 0,
-  },
-  toastItemTop: {
     top: 0,
   },
 });
