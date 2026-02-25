@@ -107,23 +107,29 @@ describe("sheet methods", () => {
 describe("notification methods", () => {
   it("notify returns a key", () => {
     const nav = createNavigation();
-    const key = nav.notify(<Text>notification</Text>);
+    const key = nav.notify(<Text>notification</Text>, { durationMs: null });
 
     expect(typeof key).toBe("string");
   });
 
   it("notify reuses key when id is reused", () => {
     const nav = createNavigation();
-    const key1 = nav.notify(<Text>notification-a</Text>, { id: "welcome" });
-    const key2 = nav.notify(<Text>notification-b</Text>, { id: "welcome" });
+    const key1 = nav.notify(<Text>notification-a</Text>, {
+      id: "welcome",
+      durationMs: null,
+    });
+    const key2 = nav.notify(<Text>notification-b</Text>, {
+      id: "welcome",
+      durationMs: null,
+    });
 
     expect(key2).toBe(key1);
   });
 
   it("dismissNotification is callable via public API", () => {
     const nav = createNavigation();
-    nav.notify(<Text>a</Text>);
-    nav.notify(<Text>b</Text>, { position: "bottom" });
+    nav.notify(<Text>a</Text>, { durationMs: null });
+    nav.notify(<Text>b</Text>, { position: "bottom", durationMs: null });
 
     expect(() => nav.dismissNotification()).not.toThrow();
     expect(() => nav.dismissNotification("bottom")).not.toThrow();

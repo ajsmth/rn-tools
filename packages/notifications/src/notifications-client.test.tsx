@@ -1,7 +1,19 @@
 import * as React from "react";
 import { Text } from "react-native";
 import { createRenderTreeStore } from "@rn-tools/core";
-import { createNotifications } from "./notifications-client";
+import {
+  createNotifications,
+  DEFAULT_NOTIFICATION_DURATION_MS,
+} from "./notifications-client";
+
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+
+afterEach(() => {
+  jest.runOnlyPendingTimers();
+  jest.useRealTimers();
+});
 
 describe("createNotifications", () => {
   it("returns the expected client API", () => {
@@ -34,6 +46,67 @@ describe("show", () => {
     expect(entries[0].options.position).toBeUndefined();
     expect(entries[1].key).toBe(bottomKey);
     expect(entries[1].options.position).toBe("bottom");
+  });
+
+  it("auto-dismisses after durationMs", () => {
+    const notifications = createNotifications(createRenderTreeStore());
+    const key = notifications.show(<Text>auto</Text>, { durationMs: 1000 });
+
+    expect(notifications.store.getState().entries[0]?.status).toBe("opening");
+
+    jest.advanceTimersByTime(999);
+    expect(notifications.store.getState().entries[0]?.status).toBe("opening");
+
+    jest.advanceTimersByTime(1);
+    expect(
+      notifications.store.getState().entries.find((entry) => entry.key === key)?.status,
+    ).toBe("closing");
+  });
+
+  it("auto-dismisses at the default duration when durationMs is omitted", () => {
+    const notifications = createNotifications(createRenderTreeStore());
+    const key = notifications.show(<Text>auto</Text>);
+
+    jest.advanceTimersByTime(DEFAULT_NOTIFICATION_DURATION_MS - 1);
+    expect(
+      notifications.store.getState().entries.find((entry) => entry.key === key)?.status,
+    ).toBe("opening");
+
+    jest.advanceTimersByTime(1);
+    expect(
+      notifications.store.getState().entries.find((entry) => entry.key === key)?.status,
+    ).toBe("closing");
+  });
+
+  it("does not auto-dismiss when durationMs is null", () => {
+    const notifications = createNotifications(createRenderTreeStore());
+    const key = notifications.show(<Text>persistent</Text>, { durationMs: null });
+
+    jest.advanceTimersByTime(10_000);
+    expect(
+      notifications.store.getState().entries.find((entry) => entry.key === key)?.status,
+    ).toBe("opening");
+  });
+
+  it("replaces the auto-dismiss timer when a duplicate id is shown again", () => {
+    const notifications = createNotifications(createRenderTreeStore());
+    const keyA = notifications.show(<Text>a</Text>, { id: "welcome", durationMs: 1000 });
+    const keyB = notifications.show(<Text>b</Text>, {
+      id: "welcome",
+      durationMs: DEFAULT_NOTIFICATION_DURATION_MS,
+    });
+
+    expect(keyB).toBe(keyA);
+
+    jest.advanceTimersByTime(1000);
+    expect(
+      notifications.store.getState().entries.find((entry) => entry.key === keyB)?.status,
+    ).toBe("opening");
+
+    jest.advanceTimersByTime(DEFAULT_NOTIFICATION_DURATION_MS - 1000);
+    expect(
+      notifications.store.getState().entries.find((entry) => entry.key === keyB)?.status,
+    ).toBe("closing");
   });
 });
 
@@ -101,6 +174,19 @@ describe("markDidDismiss", () => {
 
     notifications.markDidDismiss(key);
 
+    expect(notifications.store.getState().entries).toHaveLength(0);
+  });
+
+  it("clears auto-dismiss when dismissAll is called", () => {
+    const notifications = createNotifications(createRenderTreeStore());
+    const keyA = notifications.show(<Text>a</Text>, { durationMs: 1000 });
+    const keyB = notifications.show(<Text>b</Text>, { durationMs: 2000 });
+
+    notifications.dismissAll();
+    notifications.markDidDismiss(keyA);
+    notifications.markDidDismiss(keyB);
+
+    jest.advanceTimersByTime(5000);
     expect(notifications.store.getState().entries).toHaveLength(0);
   });
 });

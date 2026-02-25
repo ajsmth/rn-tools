@@ -175,7 +175,7 @@ function HomeScreen() {
               />,
               {
                 position: "top",
-                durationMs: 0,
+                durationMs: null,
                 id: "persistent",
               },
             )
@@ -224,10 +224,7 @@ function SheetContent({
           });
         }}
       />
-      <Button
-        title="Dismiss this sheet"
-        onPress={() => dismiss?.() ?? navigation.dismiss()}
-      />
+      <Button title="Dismiss this sheet" onPress={() => dismiss?.()} />
     </View>
   );
 }
@@ -240,7 +237,6 @@ function NotificationContent({
   message: string;
   position: "top" | "bottom";
 } & NotificationInjectedProps) {
-
   return (
     <View
       style={{

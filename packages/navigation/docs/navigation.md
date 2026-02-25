@@ -145,7 +145,7 @@ Shows a notification and returns its key.
 `options` is the same `NotificationOptions` used by `@rn-tools/notifications`:
 - `id?`
 - `position?` (`"top"` | `"bottom"`)
-- `durationMs?`
+- `durationMs?` (`3000` by default, `null` for persistent)
 
 The rendered element also receives an injected optional `dismiss?: () => void` prop.
 

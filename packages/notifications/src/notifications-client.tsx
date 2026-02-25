@@ -9,7 +9,7 @@ import type {
 
 export type NotificationOptions = BaseOverlayOptions & {
   position?: "top" | "bottom";
-  durationMs?: number;
+  durationMs?: number | null;
 };
 
 export type NotificationsState = OverlayState<NotificationOptions>;
@@ -36,6 +36,7 @@ export type NotificationEntry = NotificationsState["entries"][number];
 export type NotificationStatus = NotificationEntry["status"];
 
 export const NOTIFICATION_TYPE = "notification";
+export const DEFAULT_NOTIFICATION_DURATION_MS = 3000;
 
 export const NotificationsContext = React.createContext<NotificationsClient | null>(null);
 export const NotificationsStoreContext = React.createContext<NotificationsStore | null>(null);
@@ -79,17 +80,74 @@ export function createNotifications(
     renderTreeStore,
   });
   const { store, ...fns } = overlay;
+  const autoDismissTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  const clearAutoDismissTimer = (key: string) => {
+    const timer = autoDismissTimers.get(key);
+    if (timer == null) {
+      return;
+    }
+    clearTimeout(timer);
+    autoDismissTimers.delete(key);
+  };
+
+  const clearTimersForClosingTransitions = (
+    beforeEntries: NotificationsState["entries"],
+    afterEntries: NotificationsState["entries"],
+  ) => {
+    const beforeByKey = new Map(beforeEntries.map((entry) => [entry.key, entry]));
+    for (const after of afterEntries) {
+      const before = beforeByKey.get(after.key);
+      if (!before) {
+        continue;
+      }
+      if (before.status !== "closing" && after.status === "closing") {
+        clearAutoDismissTimer(after.key);
+      }
+    }
+  };
+
+  const resolveDurationMs = (options?: NotificationOptions) => {
+    if (options?.durationMs === null) {
+      return null;
+    }
+    if (typeof options?.durationMs === "number") {
+      return options.durationMs;
+    }
+    return DEFAULT_NOTIFICATION_DURATION_MS;
+  };
+
+  const scheduleAutoDismiss = (key: string, options?: NotificationOptions) => {
+    clearAutoDismissTimer(key);
+    const duration = resolveDurationMs(options);
+    if (duration == null || !Number.isFinite(duration) || duration <= 0) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      autoDismissTimers.delete(key);
+      dismiss(key);
+    }, duration);
+    autoDismissTimers.set(key, timeout);
+  };
+
+  const show: NotificationsClient["show"] = (element, options) => {
+    const key = fns.add(element, options);
+    scheduleAutoDismiss(key, options);
+    return key;
+  };
 
   const dismiss: NotificationsClient["dismiss"] = (target) => {
+    const beforeEntries = store.getState().entries;
     if (target === "top" || target === "bottom") {
-      const entries = store.getState().entries;
-      for (let i = entries.length - 1; i >= 0; i--) {
-        const entry = entries[i];
+      for (let i = beforeEntries.length - 1; i >= 0; i--) {
+        const entry = beforeEntries[i];
         if (entry.status === "closing") {
           continue;
         }
         const position = entry.options.position ?? "top";
         if (position === target) {
+          clearAutoDismissTimer(entry.key);
           fns.remove(entry.key);
           return;
         }
@@ -98,11 +156,31 @@ export function createNotifications(
     }
 
     fns.remove(target);
+    const afterEntries = store.getState().entries;
+    clearTimersForClosingTransitions(beforeEntries, afterEntries);
+  };
+
+  const dismissAll: NotificationsClient["dismissAll"] = () => {
+    const beforeEntries = store.getState().entries;
+    fns.removeAll();
+    const afterEntries = store.getState().entries;
+    clearTimersForClosingTransitions(beforeEntries, afterEntries);
+  };
+
+  const remove: NotificationsClient["remove"] = (id) => {
+    const target = store
+      .getState()
+      .entries.find((entry) => entry.key === id || entry.options.id === id);
+    if (target) {
+      clearAutoDismissTimer(target.key);
+    }
+    fns.destroy(id);
   };
 
   const markDidDismiss: NotificationsClient["markDidDismiss"] = (key) => {
     // Native dismissal (e.g. auto-dismiss timer) can fire without JS first
     // transitioning the entry to "closing". Ensure the lifecycle is valid.
+    clearAutoDismissTimer(key);
     fns.remove(key);
     fns.markClosed(key);
   };
@@ -113,10 +191,10 @@ export function createNotifications(
       return overlay.renderTreeStore;
     },
     setRenderTreeStore: overlay.setRenderTreeStore,
-    show: fns.add,
+    show,
     dismiss,
-    dismissAll: fns.removeAll,
-    remove: fns.destroy,
+    dismissAll,
+    remove,
     markDidShow: fns.markOpened,
     markDidDismiss,
   };

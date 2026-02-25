@@ -66,6 +66,8 @@ navigation.dismissNotification("bottom");
 navigation.dismissNotification("saved");
 ```
 
+`durationMs` defaults to `3000`; pass `null` for persistent notifications.
+
 Presented sheet and notification elements receive an injected optional `dismiss?: () => void` prop.
 
 When no explicit target is provided:

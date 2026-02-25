@@ -45,7 +45,7 @@ describe("NotificationSlot dismiss interaction", () => {
     const { notifications, result } = renderWithProviders();
 
     act(() => {
-      notifications.show(<DismissibleNotification />);
+      notifications.show(<DismissibleNotification />, { durationMs: null });
     });
 
     expect(result.getByText("dismiss-me-notification")).toBeTruthy();
@@ -65,7 +65,7 @@ describe("NotificationSlot dismiss interaction", () => {
     const { notifications, result } = renderWithProviders();
 
     act(() => {
-      notifications.show(<DismissibleViaInjectedProp />);
+      notifications.show(<DismissibleViaInjectedProp />, { durationMs: null });
     });
 
     expect(result.getByText("dismiss-via-injected-prop")).toBeTruthy();
@@ -92,7 +92,9 @@ describe("NotificationsProvider render-tree behavior", () => {
     );
 
     act(() => {
-      notifications.show(<Text>auto-tree-notification</Text>);
+      notifications.show(<Text>auto-tree-notification</Text>, {
+        durationMs: null,
+      });
     });
 
     expect(result.getByText("auto-tree-notification")).toBeTruthy();
@@ -111,7 +113,9 @@ describe("NotificationsProvider render-tree behavior", () => {
     );
 
     act(() => {
-      notifications.show(<Text>parent-tree-notification</Text>);
+      notifications.show(<Text>parent-tree-notification</Text>, {
+        durationMs: null,
+      });
     });
 
     expect(result.getByText("parent-tree-notification")).toBeTruthy();
@@ -133,8 +137,8 @@ describe("NotificationsProvider render-tree behavior", () => {
     let keyB = "";
 
     act(() => {
-      keyA = notifications.show(<Text>a</Text>);
-      keyB = notifications.show(<Text>b</Text>);
+      keyA = notifications.show(<Text>a</Text>, { durationMs: null });
+      keyB = notifications.show(<Text>b</Text>, { durationMs: null });
       notifications.markDidShow(keyA);
       notifications.markDidShow(keyB);
     });

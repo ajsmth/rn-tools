@@ -96,7 +96,7 @@ Presents a notification and returns its key.
 `NotificationOptions`:
 - `id?`: stable id to replace/reuse an existing notification key.
 - `position?`: `"top"` (default) or `"bottom"`.
-- `durationMs?`: auto-dismiss duration in ms.
+- `durationMs?`: auto-dismiss duration in ms. Defaults to `3000`. Set to `null` for a persistent notification.
 - each rendered element receives an injected optional `dismiss?: () => void` prop.
 
 ### `dismiss(target?)`
