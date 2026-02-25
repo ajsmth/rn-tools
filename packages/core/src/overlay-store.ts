@@ -26,6 +26,8 @@ export type OverlayStoreConfig = {
 
 export type OverlayStore<TOptions extends BaseOverlayOptions> = {
   store: Store<OverlayState<TOptions>>;
+  renderTreeStore: RenderTreeStore;
+  setRenderTreeStore: (renderTreeStore: RenderTreeStore) => void;
   add: (element: React.ReactElement, options?: TOptions) => string;
   remove: (id?: string) => void;
   removeAll: () => void;
@@ -39,11 +41,14 @@ export function createOverlayStore<
   TOptions extends BaseOverlayOptions = BaseOverlayOptions,
 >(config: OverlayStoreConfig): OverlayStore<TOptions> {
   let counter = 0;
+  const renderTreeStoreRef = {
+    current: config.renderTreeStore,
+  };
 
   const store = createStore<OverlayState<TOptions>>({ entries: [] });
 
   function getActiveRemoveKey(): string | null {
-    const tree = config.renderTreeStore.getState();
+    const tree = renderTreeStoreRef.current.getState();
     let deepestId: string | null = null;
     let deepestDepth = -1;
 
@@ -230,8 +235,16 @@ export function createOverlayStore<
     });
   }
 
+  function setRenderTreeStore(renderTreeStore: RenderTreeStore) {
+    renderTreeStoreRef.current = renderTreeStore;
+  }
+
   return {
     store,
+    get renderTreeStore() {
+      return renderTreeStoreRef.current;
+    },
+    setRenderTreeStore,
     add,
     remove,
     removeAll,

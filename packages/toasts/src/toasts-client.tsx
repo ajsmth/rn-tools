@@ -1,5 +1,5 @@
 import * as React from "react";
-import { createOverlayStore } from "@rn-tools/core";
+import { createOverlayStore, createRenderTreeStore } from "@rn-tools/core";
 import type {
   Store,
   RenderTreeStore,
@@ -19,6 +19,8 @@ export type ToastDismissTarget = string | ToastPosition;
 
 export type ToastsClient = {
   store: ToastsStore;
+  renderTreeStore: RenderTreeStore;
+  setRenderTreeStore: (renderTreeStore: RenderTreeStore) => void;
   show: (element: React.ReactElement, options?: ToastOptions) => string;
   dismiss: (target?: ToastDismissTarget) => void;
   dismissAll: () => void;
@@ -66,11 +68,14 @@ export function useToastEntry() {
   );
 }
 
-export function createToasts(renderTreeStore: RenderTreeStore): ToastsClient {
-  const { store, ...fns } = createOverlayStore<ToastOptions>({
+export function createToasts(
+  renderTreeStore: RenderTreeStore = createRenderTreeStore(),
+): ToastsClient {
+  const overlay = createOverlayStore<ToastOptions>({
     type: TOAST_TYPE,
     renderTreeStore,
   });
+  const { store, ...fns } = overlay;
 
   const dismiss: ToastsClient["dismiss"] = (target) => {
     if (target === "top" || target === "bottom") {
@@ -101,6 +106,10 @@ export function createToasts(renderTreeStore: RenderTreeStore): ToastsClient {
 
   return {
     store: store,
+    get renderTreeStore() {
+      return overlay.renderTreeStore;
+    },
+    setRenderTreeStore: overlay.setRenderTreeStore,
     show: fns.add,
     dismiss,
     dismissAll: fns.removeAll,

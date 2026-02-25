@@ -1,4 +1,5 @@
 import * as React from "react";
+import { RenderTree, RenderTreeStoreContext } from "@rn-tools/core";
 import { ToastsContext, ToastsStoreContext } from "./toasts-client";
 import type { ToastsClient } from "./toasts-client";
 import { ToastSlot } from "./toast-slot";
@@ -14,7 +15,13 @@ export function ToastsProvider({
   children,
   debugLayout = false,
 }: ToastsProviderProps) {
-  return (
+  const parentRenderTreeStore = React.useContext(RenderTreeStoreContext);
+
+  if (parentRenderTreeStore) {
+    toasts.setRenderTreeStore(parentRenderTreeStore);
+  }
+
+  const content = (
     <ToastsContext.Provider value={toasts}>
       <ToastsStoreContext.Provider value={toasts.store}>
         {children}
@@ -22,4 +29,10 @@ export function ToastsProvider({
       </ToastsStoreContext.Provider>
     </ToastsContext.Provider>
   );
+
+  if (parentRenderTreeStore) {
+    return content;
+  }
+
+  return <RenderTree store={toasts.renderTreeStore}>{content}</RenderTree>;
 }

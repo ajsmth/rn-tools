@@ -1,5 +1,5 @@
 import * as React from "react";
-import { createOverlayStore } from "@rn-tools/core";
+import { createOverlayStore, createRenderTreeStore } from "@rn-tools/core";
 import type {
   Store,
   RenderTreeStore,
@@ -29,6 +29,8 @@ export type SheetsStore = Store<SheetsState>;
 
 export type SheetsClient = {
   store: SheetsStore;
+  renderTreeStore: RenderTreeStore;
+  setRenderTreeStore: (renderTreeStore: RenderTreeStore) => void;
   present: (element: React.ReactElement, options?: SheetOptions) => string;
   dismiss: (id?: string) => void;
   dismissAll: () => void;
@@ -45,7 +47,9 @@ export const SHEET_TYPE = "sheet";
 export const SheetsContext = React.createContext<SheetsClient | null>(null);
 export const SheetsStoreContext = React.createContext<SheetsStore | null>(null);
 
-export function createSheets(renderTreeStore: RenderTreeStore): SheetsClient {
+export function createSheets(
+  renderTreeStore: RenderTreeStore = createRenderTreeStore(),
+): SheetsClient {
   const overlay = createOverlayStore<SheetOptions>({
     type: SHEET_TYPE,
     renderTreeStore,
@@ -53,6 +57,10 @@ export function createSheets(renderTreeStore: RenderTreeStore): SheetsClient {
 
   return {
     store: overlay.store,
+    get renderTreeStore() {
+      return overlay.renderTreeStore;
+    },
+    setRenderTreeStore: overlay.setRenderTreeStore,
     present: overlay.add,
     dismiss: overlay.remove,
     dismissAll: overlay.removeAll,
