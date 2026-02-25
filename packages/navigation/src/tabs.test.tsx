@@ -1,6 +1,6 @@
 import * as React from "react";
-import { describe, expect, it } from "vitest";
-import { act, render, waitFor, fireEvent } from "@testing-library/react";
+import { act, render, waitFor, fireEvent } from "@testing-library/react-native";
+import { Pressable, Text } from "react-native";
 import { RenderNodeProbe } from "@rn-tools/core/mocks/render-node-probe";
 
 import {
@@ -11,20 +11,47 @@ import { Navigation } from "./navigation";
 import { Tabs, type TabScreenOptions, type TabsHandle } from "./tabs";
 import { Stack } from "./stack";
 
+function collectTextNodes(node: unknown, output: string[]) {
+  if (typeof node === "string") {
+    output.push(node);
+    return;
+  }
+
+  if (!node || typeof node !== "object") {
+    return;
+  }
+
+  if (Array.isArray(node)) {
+    node.forEach((item) => collectTextNodes(item, output));
+    return;
+  }
+
+  const children = (node as { children?: unknown[] }).children;
+  if (children) {
+    children.forEach((child) => collectTextNodes(child, output));
+  }
+}
+
+function textOrder(renderer: ReturnType<typeof render>) {
+  const text: string[] = [];
+  collectTextNodes(renderer.toJSON(), text);
+  return text;
+}
+
 function makeScreens(count: number): TabScreenOptions[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `tab-${i}`,
     screen: (
       <RenderNodeProbe
         render={(data) => (
-          <span>{`tab-${i}:${data.type}:${String(data.active)}`}</span>
+          <Text>{`tab-${i}:${data.type}:${String(data.active)}`}</Text>
         )}
       />
     ),
     tab: ({ isActive, onPress }) => (
-      <span data-testid={`tab-btn-${i}`} onClick={onPress}>
-        {`tab-btn-${i}:${String(isActive)}`}
-      </span>
+      <Pressable testID={`tab-btn-${i}`} onPress={onPress}>
+        <Text>{`tab-btn-${i}:${String(isActive)}`}</Text>
+      </Pressable>
     ),
   }));
 }
@@ -129,7 +156,6 @@ describe("Tabs", () => {
       expect(renderer.getByText("tab-2:tab-screen:true")).toBeTruthy();
     });
 
-    // The tab state should be set on the auto-generated tabs id
     const state = store.getState();
     expect(state.tabs.size).toBe(1);
     const [, tabState] = [...state.tabs.entries()][0];
@@ -143,13 +169,13 @@ describe("Tabs", () => {
     const tabScreens: TabScreenOptions[] = [
       {
         id: "tab-a",
-        screen: <span>tab-a-content</span>,
-        tab: () => <span>tab-a</span>,
+        screen: <Text>tab-a-content</Text>,
+        tab: () => <Text>tab-a</Text>,
       },
       {
         id: "tab-b",
-        screen: <span>tab-b-content</span>,
-        tab: () => <span>tab-b</span>,
+        screen: <Text>tab-b-content</Text>,
+        tab: () => <Text>tab-b</Text>,
       },
     ];
 
@@ -170,7 +196,6 @@ describe("Tabs", () => {
       ref.current!.setActive(1);
     });
 
-    // The tab switch should target the auto-generated tabs id, not "outer-stack"
     const state = navigation.store.getState();
     expect(state.tabs.has("outer-stack")).toBe(false);
     expect(state.tabs.size).toBe(1);
@@ -210,7 +235,7 @@ describe("TabBar", () => {
       <Tabs id="my-tabs" screens={screens} />,
     );
 
-    fireEvent.click(renderer.getByTestId("tab-btn-2"));
+    fireEvent.press(renderer.getByTestId("tab-btn-2"));
 
     await waitFor(() => {
       expect(renderer.getByText("tab-btn-0:false")).toBeTruthy();
@@ -226,12 +251,10 @@ describe("TabBar", () => {
       <Tabs id="my-tabs" screens={screens} />,
     );
 
-    // Screen content should appear before the tab bar in the DOM
-    const screenNode = renderer.getByText("tab-0:tab-screen:true");
-    const tabNode = renderer.getByText("tab-btn-0:true");
-    const order = screenNode.compareDocumentPosition(tabNode);
-    // DOCUMENT_POSITION_FOLLOWING = 4
-    expect(order & 4).toBe(4);
+    const order = textOrder(renderer);
+    expect(order.indexOf("tab-0:tab-screen:true")).toBeLessThan(
+      order.indexOf("tab-btn-0:true"),
+    );
   });
 
   it("renders tabbar at top when tabbarPosition is top", () => {
@@ -240,12 +263,10 @@ describe("TabBar", () => {
       <Tabs id="my-tabs" screens={screens} tabbarPosition="top" />,
     );
 
-    // Tab bar should appear before screen content in the DOM
-    const tabNode = renderer.getByText("tab-btn-0:true");
-    const screenNode = renderer.getByText("tab-0:tab-screen:true");
-    const order = tabNode.compareDocumentPosition(screenNode);
-    // DOCUMENT_POSITION_FOLLOWING = 4
-    expect(order & 4).toBe(4);
+    const order = textOrder(renderer);
+    expect(order.indexOf("tab-btn-0:true")).toBeLessThan(
+      order.indexOf("tab-0:tab-screen:true"),
+    );
   });
 });
 
@@ -256,13 +277,13 @@ describe("Nested Stack + Tabs", () => {
     const screens: TabScreenOptions[] = [
       {
         id: "tab-a",
-        screen: <Stack id="stack-a" rootScreen={<span>stack-a-root</span>} />,
-        tab: () => <span>tab-a</span>,
+        screen: <Stack id="stack-a" rootScreen={<Text>stack-a-root</Text>} />,
+        tab: () => <Text>tab-a</Text>,
       },
       {
         id: "tab-b",
-        screen: <Stack id="stack-b" rootScreen={<span>stack-b-root</span>} />,
-        tab: () => <span>tab-b</span>,
+        screen: <Stack id="stack-b" rootScreen={<Text>stack-b-root</Text>} />,
+        tab: () => <Text>tab-b</Text>,
       },
     ];
 
@@ -276,9 +297,8 @@ describe("Nested Stack + Tabs", () => {
       expect(result.getByText("stack-a-root")).toBeTruthy();
     });
 
-    // Tab 0 (stack-a) is active — push should target stack-a
     act(() => {
-      navigation.push(<span>pushed-to-a</span>);
+      navigation.push(<Text>pushed-to-a</Text>);
     });
 
     const stateAfterFirst = navigation.store.getState();
@@ -292,13 +312,13 @@ describe("Nested Stack + Tabs", () => {
     const screens: TabScreenOptions[] = [
       {
         id: "tab-a",
-        screen: <Stack id="stack-a" rootScreen={<span>stack-a-root</span>} />,
-        tab: () => <span>tab-a</span>,
+        screen: <Stack id="stack-a" rootScreen={<Text>stack-a-root</Text>} />,
+        tab: () => <Text>tab-a</Text>,
       },
       {
         id: "tab-b",
-        screen: <Stack id="stack-b" rootScreen={<span>stack-b-root</span>} />,
-        tab: () => <span>tab-b</span>,
+        screen: <Stack id="stack-b" rootScreen={<Text>stack-b-root</Text>} />,
+        tab: () => <Text>tab-b</Text>,
       },
     ];
 
@@ -308,13 +328,12 @@ describe("Nested Stack + Tabs", () => {
       </Navigation>,
     );
 
-    // Switch to tab 1 (stack-b)
     act(() => {
       navigation.tab(1);
     });
 
     act(() => {
-      navigation.push(<span>pushed-to-b</span>);
+      navigation.push(<Text>pushed-to-b</Text>);
     });
 
     const state = navigation.store.getState();
@@ -328,19 +347,22 @@ describe("Nested Stack + Tabs", () => {
     const tabScreens: TabScreenOptions[] = [
       {
         id: "tab-a",
-        screen: <span>tab-a-content</span>,
-        tab: () => <span>tab-a</span>,
+        screen: <Text>tab-a-content</Text>,
+        tab: () => <Text>tab-a</Text>,
       },
       {
         id: "tab-b",
-        screen: <span>tab-b-content</span>,
-        tab: () => <span>tab-b</span>,
+        screen: <Text>tab-b-content</Text>,
+        tab: () => <Text>tab-b</Text>,
       },
     ];
 
     const result = render(
       <Navigation navigation={navigation}>
-        <Stack id="outer-stack" rootScreen={<Tabs id="inner-tabs" screens={tabScreens} />} />
+        <Stack
+          id="outer-stack"
+          rootScreen={<Tabs id="inner-tabs" screens={tabScreens} />}
+        />
       </Navigation>,
     );
 
@@ -348,7 +370,6 @@ describe("Nested Stack + Tabs", () => {
       expect(result.getByText("tab-a-content")).toBeTruthy();
     });
 
-    // tab with no explicit tabs should resolve inner-tabs
     act(() => {
       navigation.tab(1);
     });

@@ -1,6 +1,5 @@
 import * as React from "react";
-import { render, waitFor } from "@testing-library/react/pure";
-import { expect, it } from "vitest";
+import { render, waitFor } from "@testing-library/react-native";
 import {
   RenderTreeNode,
   RenderTree,

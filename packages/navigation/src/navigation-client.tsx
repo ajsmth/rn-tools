@@ -9,6 +9,12 @@ import {
 import type { Store, RenderTreeStore, BaseOverlayOptions } from "@rn-tools/core";
 import { createSheets } from "@rn-tools/sheets";
 import type { SheetOptions, SheetsClient } from "@rn-tools/sheets";
+import { createNotifications } from "@rn-tools/notifications";
+import type {
+  NotificationDismissTarget,
+  NotificationOptions,
+  NotificationsClient,
+} from "@rn-tools/notifications";
 
 export const STACK_TYPE = "stack";
 export const SCREEN_TYPE = "screen";
@@ -66,12 +72,18 @@ export type NavigationClient = {
   store: NavigationStore;
   renderTreeStore: RenderTreeStore;
   sheetsStore: SheetsClient;
+  notificationsStore: NotificationsClient;
   push: (element: React.ReactElement, options?: PushOptions) => void;
   pop: (options?: { stack?: string }) => void;
   tab: (index: number, options?: { tabs?: string }) => void;
   present: (element: React.ReactElement, options?: SheetOptions) => string;
   dismiss: (id?: string) => void;
   dismissAll: () => void;
+  notify: (
+    element: React.ReactElement,
+    options?: NotificationOptions,
+  ) => string;
+  dismissNotification: (target?: NotificationDismissTarget) => void;
 };
 
 export function createNavigation(
@@ -82,6 +94,7 @@ export function createNavigation(
   );
   const renderTreeStore = createRenderTreeStore();
   const sheetsStore = createSheets(renderTreeStore);
+  const notificationsStore = createNotifications(renderTreeStore);
 
   function getDeepestActiveNodeId(type: string): string | null {
     const tree = renderTreeStore.getState();
@@ -170,16 +183,30 @@ export function createNavigation(
     sheetsStore.dismissAll();
   }
 
+  function notify(
+    element: React.ReactElement,
+    options?: NotificationOptions,
+  ): string {
+    return notificationsStore.show(element, options);
+  }
+
+  function dismissNotification(target?: NotificationDismissTarget) {
+    notificationsStore.dismiss(target);
+  }
+
   return {
     store: navStore,
     renderTreeStore,
     sheetsStore,
+    notificationsStore,
     push,
     pop,
     tab,
     present,
     dismiss,
     dismissAll,
+    notify,
+    dismissNotification,
   };
 }
 

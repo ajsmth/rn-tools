@@ -1,6 +1,6 @@
 import * as React from "react";
-import { describe, expect, it } from "vitest";
-import { act, render, waitFor } from "@testing-library/react";
+import { act, render, waitFor } from "@testing-library/react-native";
+import { Text } from "react-native";
 import { RenderNodeProbe } from "@rn-tools/core/mocks/render-node-probe";
 
 import {
@@ -25,7 +25,7 @@ async function renderWithProviders(
 describe("Stack", () => {
   it("renders the rootScreen inside a screen node", async () => {
     const { renderer } = await renderWithProviders(
-      <Stack rootScreen={<RenderNodeProbe render={(data) => data.type} />} />,
+      <Stack rootScreen={<RenderNodeProbe render={(data) => <Text>{data.type}</Text>} />} />,
     );
 
     expect(renderer.getByText("screen")).toBeTruthy();
@@ -35,7 +35,7 @@ describe("Stack", () => {
     const { renderer } = await renderWithProviders(
       <Stack
         active={false}
-        rootScreen={<RenderNodeProbe render={(data) => String(data.active)} />}
+        rootScreen={<RenderNodeProbe render={(data) => <Text>{String(data.active)}</Text>} />}
       />,
     );
 
@@ -54,7 +54,7 @@ describe("Stack", () => {
             {
               element: (
                 <RenderNodeProbe
-                  render={(data) => <span>{`a:${data.node.parentId}`}</span>}
+                  render={(data) => <Text>{`a:${data.node.parentId}`}</Text>}
                 />
               ),
               options: { id: "screen-a" },
@@ -64,7 +64,7 @@ describe("Stack", () => {
             {
               element: (
                 <RenderNodeProbe
-                  render={(data) => <span>{`b:${data.node.parentId}`}</span>}
+                  render={(data) => <Text>{`b:${data.node.parentId}`}</Text>}
                 />
               ),
               options: { id: "screen-b" },
@@ -86,7 +86,7 @@ describe("Stack", () => {
             element: (
               <RenderNodeProbe
                 render={(data) => (
-                  <span>{`screen-a:${String(data.active)}`}</span>
+                  <Text>{`screen-a:${String(data.active)}`}</Text>
                 )}
               />
             ),
@@ -96,7 +96,7 @@ describe("Stack", () => {
             element: (
               <RenderNodeProbe
                 render={(data) => (
-                  <span>{`screen-b:${String(data.active)}`}</span>
+                  <Text>{`screen-b:${String(data.active)}`}</Text>
                 )}
               />
             ),
@@ -120,7 +120,7 @@ describe("Stack", () => {
               element: (
                 <RenderNodeProbe
                   render={(data) => (
-                    <span>{`screen-a:${String(data.active)}`}</span>
+                    <Text>{`screen-a:${String(data.active)}`}</Text>
                   )}
                 />
               ),
@@ -134,7 +134,7 @@ describe("Stack", () => {
     act(() => {
       navigation.push(
         <RenderNodeProbe
-          render={(data) => <span>{`screen-b:${String(data.active)}`}</span>}
+          render={(data) => <Text>{`screen-b:${String(data.active)}`}</Text>}
         />,
         {
           id: "screen-b",
@@ -162,7 +162,7 @@ describe("Stack", () => {
               element: (
                 <RenderNodeProbe
                   render={(data) => (
-                    <span>{`a1:${data.type}:${String(data.active)}`}</span>
+                    <Text>{`a1:${data.type}:${String(data.active)}`}</Text>
                   )}
                 />
               ),
@@ -172,7 +172,7 @@ describe("Stack", () => {
               element: (
                 <RenderNodeProbe
                   render={(data) => (
-                    <span>{`a2:${data.type}:${String(data.active)}`}</span>
+                    <Text>{`a2:${data.type}:${String(data.active)}`}</Text>
                   )}
                 />
               ),
@@ -184,7 +184,7 @@ describe("Stack", () => {
               element: (
                 <RenderNodeProbe
                   render={(data) => (
-                    <span>{`b1:${data.type}:${String(data.active)}`}</span>
+                    <Text>{`b1:${data.type}:${String(data.active)}`}</Text>
                   )}
                 />
               ),
@@ -209,7 +209,7 @@ describe("Stack", () => {
           {
             element: (
               <RenderNodeProbe
-                render={(data) => <span>{`a1:${String(data.active)}`}</span>}
+                render={(data) => <Text>{`a1:${String(data.active)}`}</Text>}
               />
             ),
             options: { id: "screen-a1" },
@@ -234,7 +234,7 @@ describe("Stack", () => {
         stacks: {
           "stack-a": [
             {
-              element: <span>screen-a</span>,
+              element: <Text>screen-a</Text>,
               options: { id: "screen-a" },
             },
           ],
@@ -243,7 +243,7 @@ describe("Stack", () => {
     );
 
     act(() => {
-      navigation.push(<span>screen-a-dup</span>, {
+      navigation.push(<Text>screen-a-dup</Text>, {
         id: "screen-a",
         stack: "stack-a",
       });
@@ -260,7 +260,7 @@ describe("Stack", () => {
     expect(renderer.queryByText("screen-a")).toBeNull();
 
     act(() => {
-      navigation.push(<span>screen-a-again</span>, {
+      navigation.push(<Text>screen-a-again</Text>, {
         id: "screen-a",
         stack: "stack-a",
       });
@@ -273,13 +273,13 @@ describe("Stack", () => {
   it("ref.push adds a screen and ref.pop removes it", async () => {
     const ref = React.createRef<StackHandle>();
     const { renderer, store } = await renderWithProviders(
-      <Stack ref={ref} id="stack-a" rootScreen={<span>root</span>} />,
+      <Stack ref={ref} id="stack-a" rootScreen={<Text>root</Text>} />,
     );
 
     expect(renderer.getByText("root")).toBeTruthy();
 
     act(() => {
-      ref.current!.push(<span>pushed</span>, { id: "pushed-screen" });
+      ref.current!.push(<Text>pushed</Text>, { id: "pushed-screen" });
     });
 
     await waitFor(() => {
@@ -303,13 +303,13 @@ describe("Stack", () => {
   it("ref.push targets the correct stack when id is not provided", async () => {
     const ref = React.createRef<StackHandle>();
     const { renderer, store } = await renderWithProviders(
-      <Stack ref={ref} rootScreen={<span>root</span>} />,
+      <Stack ref={ref} rootScreen={<Text>root</Text>} />,
     );
 
     expect(renderer.getByText("root")).toBeTruthy();
 
     act(() => {
-      ref.current!.push(<span>pushed</span>, { id: "pushed-screen" });
+      ref.current!.push(<Text>pushed</Text>, { id: "pushed-screen" });
     });
 
     await waitFor(() => {
@@ -339,7 +339,7 @@ describe("Stack", () => {
     const innerRef = React.createRef<StackHandle>();
 
     function InnerStack() {
-      return <Stack ref={innerRef} rootScreen={<span>inner-root</span>} />;
+      return <Stack ref={innerRef} rootScreen={<Text>inner-root</Text>} />;
     }
 
     const { renderer, store } = await renderWithProviders(
@@ -351,7 +351,7 @@ describe("Stack", () => {
     });
 
     act(() => {
-      innerRef.current!.push(<span>inner-pushed</span>, {
+      innerRef.current!.push(<Text>inner-pushed</Text>, {
         id: "inner-screen",
       });
     });
@@ -375,7 +375,7 @@ describe("Stack", () => {
               element: (
                 <RenderNodeProbe
                   render={(data) => (
-                    <span>{`unwrapped:${data.type}:${String(data.active)}`}</span>
+                    <Text>{`unwrapped:${data.type}:${String(data.active)}`}</Text>
                   )}
                 />
               ),
@@ -393,12 +393,12 @@ describe("Stack", () => {
     const navigation = createNavigation();
 
     function NestedRight() {
-      return <Stack id="right-nested" rootScreen={<span>nested-root</span>} />;
+      return <Stack id="right-nested" rootScreen={<Text>nested-root</Text>} />;
     }
 
     const result = render(
       <Navigation navigation={navigation}>
-        <Stack id="left" rootScreen={<span>left-root</span>} />
+        <Stack id="left" rootScreen={<Text>left-root</Text>} />
         <Stack id="right" active={true} rootScreen={<NestedRight />} />
       </Navigation>,
     );
@@ -409,7 +409,7 @@ describe("Stack", () => {
 
     // push with no stack should target the deepest active stack: right-nested
     act(() => {
-      navigation.push(<span>first-push</span>);
+      navigation.push(<Text>first-push</Text>);
     });
 
     const stateAfterFirst = navigation.store.getState();
@@ -419,13 +419,13 @@ describe("Stack", () => {
     // Deactivate the right subtree — left should become the active stack
     result.rerender(
       <Navigation navigation={navigation}>
-        <Stack id="left" rootScreen={<span>left-root</span>} />
+        <Stack id="left" rootScreen={<Text>left-root</Text>} />
         <Stack id="right" active={false} rootScreen={<NestedRight />} />
       </Navigation>,
     );
 
     act(() => {
-      navigation.push(<span>second-push</span>);
+      navigation.push(<Text>second-push</Text>);
     });
 
     const stateAfterSecond = navigation.store.getState();

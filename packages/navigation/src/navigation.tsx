@@ -1,5 +1,6 @@
 import * as React from "react";
 import { RenderTree } from "@rn-tools/core";
+import { NotificationsProvider } from "@rn-tools/notifications";
 import { SheetsProvider } from "@rn-tools/sheets";
 import {
   NavigationContext,
@@ -31,13 +32,15 @@ export const Navigation = React.memo(function Navigation(
 ) {
   return (
     <RenderTree store={props.navigation.renderTreeStore}>
-      <SheetsProvider sheets={props.navigation.sheetsStore}>
-        <NavigationContext.Provider value={props.navigation}>
-          <NavigationStoreContext.Provider value={props.navigation.store}>
-            <RootStack>{props.children}</RootStack>
-          </NavigationStoreContext.Provider>
-        </NavigationContext.Provider>
-      </SheetsProvider>
+      <NotificationsProvider notifications={props.navigation.notificationsStore}>
+        <SheetsProvider sheets={props.navigation.sheetsStore}>
+          <NavigationContext.Provider value={props.navigation}>
+            <NavigationStoreContext.Provider value={props.navigation.store}>
+              <RootStack>{props.children}</RootStack>
+            </NavigationStoreContext.Provider>
+          </NavigationContext.Provider>
+        </SheetsProvider>
+      </NotificationsProvider>
     </RenderTree>
   );
 });

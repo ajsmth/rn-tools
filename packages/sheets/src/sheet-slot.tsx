@@ -3,7 +3,13 @@ import { RenderTreeNode, useStore } from "@rn-tools/core";
 import type { OverlayStatus } from "@rn-tools/core";
 import { BottomSheet } from "./native-sheets-view";
 import type { SheetChangeEvent } from "./native-sheets-view";
-import { SHEET_TYPE, SheetsContext, SheetsStoreContext } from "./sheets-client";
+import {
+  SHEET_TYPE,
+  SheetEntryKeyContext,
+  type SheetInjectedProps,
+  SheetsContext,
+  SheetsStoreContext,
+} from "./sheets-client";
 import type { ViewStyle } from "react-native";
 import type {
   AppearanceAndroid,
@@ -60,10 +66,24 @@ const SheetSlotEntry = React.memo(function SheetSlotEntry(
     sheets?.markDidDismiss(props.entryKey);
   }, [sheets, props.entryKey]);
 
+  const handleDismiss = React.useCallback(() => {
+    sheets?.dismiss(props.entryKey);
+  }, [sheets, props.entryKey]);
+
+  const injectedElement = React.useMemo(() => {
+    if (!React.isValidElement<SheetInjectedProps>(props.element)) {
+      return props.element;
+    }
+
+    return React.cloneElement(props.element, { dismiss: handleDismiss });
+  }, [props.element, handleDismiss]);
+
   if (!props.wrapped) {
     return (
       <RenderTreeNode type={SHEET_TYPE} id={props.entryKey} active={props.active}>
-        {props.element}
+        <SheetEntryKeyContext.Provider value={props.entryKey}>
+          {injectedElement}
+        </SheetEntryKeyContext.Provider>
       </RenderTreeNode>
     );
   }
@@ -83,7 +103,9 @@ const SheetSlotEntry = React.memo(function SheetSlotEntry(
         appearanceAndroid={props.appearanceAndroid}
         appearanceIOS={props.appearanceIOS}
       >
-        {props.element}
+        <SheetEntryKeyContext.Provider value={props.entryKey}>
+          {injectedElement}
+        </SheetEntryKeyContext.Provider>
       </BottomSheet>
     </RenderTreeNode>
   );

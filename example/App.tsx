@@ -3,16 +3,14 @@ import {
   Navigation,
   Stack,
   Tabs,
+  type NotificationInjectedProps,
+  type SheetInjectedProps,
   type TabScreenOptions,
 } from "@rn-tools/navigation";
-import { createRenderTreeStore, RenderTree } from "@rn-tools/core";
-import { createToasts, ToastsProvider } from "@rn-tools/toasts";
 import * as React from "react";
 import { Text, View, Button, Pressable } from "react-native";
 
 const navigation = createNavigation();
-const toastsRenderTreeStore = createRenderTreeStore();
-const toasts = createToasts(toastsRenderTreeStore);
 
 const tabScreens: TabScreenOptions[] = [
   {
@@ -34,13 +32,9 @@ const tabScreens: TabScreenOptions[] = [
 
 export default function App() {
   return (
-    <RenderTree store={toastsRenderTreeStore}>
-      <ToastsProvider toasts={toasts}>
-        <Navigation navigation={navigation}>
-          <Tabs id="main-tabs" screens={tabScreens} tabbarPosition="bottom" />
-        </Navigation>
-      </ToastsProvider>
-    </RenderTree>
+    <Navigation navigation={navigation}>
+      <Tabs screens={tabScreens} tabbarPosition="bottom" />
+    </Navigation>
   );
 }
 
@@ -54,6 +48,7 @@ function TabButton({
   onPress: () => void;
 }) {
   const label = id.charAt(0).toUpperCase() + id.slice(1);
+
   return (
     <Pressable
       onPress={onPress}
@@ -138,47 +133,81 @@ function HomeScreen() {
             textAlign: "center",
           }}
         >
-          Toasts
+          Notifications
         </Text>
         <Button
-          title="Toast from top (3s)"
+          title="Notification from top (3s)"
           onPress={() =>
-            toasts.show(<ToastContent message="Hello from the top!" />, {
-              position: "top",
-              duration: 3,
-            })
+            navigation.notify(
+              <NotificationContent
+                message="Hello from the top!"
+                position="top"
+              />,
+              {
+                position: "top",
+                durationMs: 3000,
+              },
+            )
           }
         />
         <Button
-          title="Toast from bottom (5s)"
+          title="Notification from bottom (5s)"
           onPress={() =>
-            toasts.show(<ToastContent message="Hello from the bottom!" />, {
-              position: "bottom",
-              duration: 5,
-            })
+            navigation.notify(
+              <NotificationContent
+                message="Hello from the bottom!"
+                position="bottom"
+              />,
+              {
+                position: "bottom",
+                durationMs: 5000,
+              },
+            )
           }
         />
         <Button
-          title="Persistent toast (no auto-dismiss)"
+          title="Persistent notification (no auto-dismiss)"
           onPress={() =>
-            toasts.show(<ToastContent message="I won't go away on my own!" />, {
-              position: "top",
-              duration: 0,
-              id: "persistent",
-            })
+            navigation.notify(
+              <NotificationContent
+                message="I won't go away on my own!"
+                position="top"
+              />,
+              {
+                position: "top",
+                durationMs: 0,
+                id: "persistent",
+              },
+            )
           }
         />
-        <Button title="Dismiss top toast" onPress={() => toasts.dismiss()} />
         <Button
-          title="Dismiss all toasts"
-          onPress={() => toasts.dismissAll()}
+          title="Dismiss top notification"
+          onPress={() => navigation.dismissNotification()}
+        />
+        <Button
+          title='Dismiss latest "top" notification'
+          onPress={() => navigation.dismissNotification("top")}
+        />
+        <Button
+          title='Dismiss latest "bottom" notification'
+          onPress={() => navigation.dismissNotification("bottom")}
+        />
+        <Button
+          title="Dismiss all notifications"
+          onPress={() => navigation.notificationsStore.dismissAll()}
         />
       </View>
     </View>
   );
 }
 
-function SheetContent({ label }: { label: string }) {
+function SheetContent({
+  label,
+  dismiss,
+}: {
+  label: string;
+} & SheetInjectedProps) {
   return (
     <View style={{ padding: 24 }}>
       <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 12 }}>
@@ -195,25 +224,47 @@ function SheetContent({ label }: { label: string }) {
           });
         }}
       />
-      <Button title="Dismiss this sheet" onPress={() => navigation.dismiss()} />
+      <Button
+        title="Dismiss this sheet"
+        onPress={() => dismiss?.() ?? navigation.dismiss()}
+      />
     </View>
   );
 }
 
-function ToastContent({ message }: { message: string }) {
+function NotificationContent({
+  message,
+  position,
+  dismiss,
+}: {
+  message: string;
+  position: "top" | "bottom";
+} & NotificationInjectedProps) {
+
   return (
     <View
       style={{
-        margin: 16,
-        padding: 16,
-        backgroundColor: "#333",
-        borderRadius: 12,
+        marginHorizontal: 12,
+        marginVertical: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        backgroundColor: "#fff",
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: "#ddd",
       }}
     >
-      <Text style={{ color: "#fff", fontSize: 16, fontWeight: "600" }}>
+      <Text style={{ color: "#111", fontSize: 14, fontWeight: "600" }}>
         {message}
       </Text>
-      <Button title="Dismiss" color="#fff" onPress={() => toasts.dismiss()} />
+      <Pressable
+        onPress={dismiss}
+        style={{ marginTop: 8, alignSelf: "flex-start" }}
+      >
+        <Text style={{ color: "#007AFF", fontSize: 13, fontWeight: "500" }}>
+          Dismiss {position}
+        </Text>
+      </Pressable>
     </View>
   );
 }

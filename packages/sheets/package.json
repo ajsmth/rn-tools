@@ -6,7 +6,7 @@
   "scripts": {
     "open:ios": "xed example/ios",
     "open:android": "open -a \"Android Studio\" example/android",
-    "test": "NODE_OPTIONS='--no-experimental-detect-module' vitest"
+    "test": "jest"
   },
   "keywords": [
     "react-native",
@@ -22,9 +22,11 @@
   "license": "MIT",
   "homepage": "https://github.com/ajsmth/rn-tools#readme",
   "devDependencies": {
-    "@testing-library/react": "^14.2.1",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^29.5.14",
     "@types/react": "18.3.12",
-    "vitest": "^1.6.0"
+    "jest": "^29.7.0",
+    "jest-expo": "~52.0.4"
   },
   "dependencies": {
     "@rn-tools/core": "3.0.3"

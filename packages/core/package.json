@@ -4,7 +4,7 @@
   "description": "Core utilities for rn-tools",
   "main": "src/index.ts",
   "scripts": {
-    "test": "vitest"
+    "test": "jest"
   },
   "keywords": [
     "react-native",
@@ -20,11 +20,11 @@
   "license": "MIT",
   "homepage": "https://github.com/ajsmth/rn-tools#readme",
   "devDependencies": {
-    "@testing-library/react": "^14.2.1",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^29.5.14",
     "@types/react": "18.3.12",
-    "@types/react-test-renderer": "^18.0.0",
-    "react-test-renderer": "^18.2.0",
-    "vitest": "^1.6.0"
+    "jest": "^29.7.0",
+    "jest-expo": "~52.0.4"
   },
   "dependencies": {
     "use-sync-external-store": "^1.2.2"
