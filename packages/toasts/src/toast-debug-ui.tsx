@@ -27,6 +27,107 @@ export type LaneDebugComparison = {
   bottom: LaneDebugSummary | null;
 };
 
+const EMPTY_DEBUG_COMPARISON: LaneDebugComparison = {
+  top: null,
+  bottom: null,
+};
+
+const LaneDebugContext = React.createContext<{
+  enabled: boolean;
+  comparison: LaneDebugComparison;
+  publishSummary: (summary: LaneDebugSummary) => void;
+}>({
+  enabled: false,
+  comparison: EMPTY_DEBUG_COMPARISON,
+  publishSummary: () => {},
+});
+
+export const LaneDebugProvider = React.memo(function LaneDebugProvider({
+  enabled,
+  children,
+}: {
+  enabled: boolean;
+  children: React.ReactNode;
+}) {
+  const [comparison, setComparison] = React.useState<LaneDebugComparison>(
+    EMPTY_DEBUG_COMPARISON,
+  );
+
+  const publishSummary = React.useCallback(
+    (summary: LaneDebugSummary) => {
+      if (!enabled) {
+        return;
+      }
+
+      setComparison((current) => {
+        if (summary.lane === "top") {
+          return {
+            ...current,
+            top: summary,
+          };
+        }
+        return {
+          ...current,
+          bottom: summary,
+        };
+      });
+    },
+    [enabled],
+  );
+
+  React.useEffect(() => {
+    if (!enabled) {
+      setComparison(EMPTY_DEBUG_COMPARISON);
+    }
+  }, [enabled]);
+
+  const value = React.useMemo(
+    () => ({
+      enabled,
+      comparison,
+      publishSummary,
+    }),
+    [comparison, enabled, publishSummary],
+  );
+
+  return (
+    <LaneDebugContext.Provider value={value}>
+      {children}
+    </LaneDebugContext.Provider>
+  );
+});
+
+export function createLaneDebugSummary({
+  lane,
+  entries,
+  laneLayout,
+  measuredHeights,
+  targetOffsets,
+  estimatedHeight,
+}: {
+  lane: LanePosition;
+  entries: Array<{
+    key: string;
+    status: string;
+  }>;
+  laneLayout: LaneDebugLayout;
+  measuredHeights: Record<string, number>;
+  targetOffsets: Map<string, number>;
+  estimatedHeight: number;
+}): LaneDebugSummary {
+  return {
+    lane,
+    count: entries.length,
+    layout: laneLayout,
+    rows: entries.map((entry) => ({
+      key: entry.key,
+      status: entry.status,
+      measuredHeight: measuredHeights[entry.key] ?? estimatedHeight,
+      targetY: targetOffsets.get(entry.key) ?? null,
+    })),
+  };
+}
+
 function formatLayout(layout: LaneDebugLayout): string {
   if (!layout) {
     return "none";
@@ -42,27 +143,59 @@ function formatLaneBadgeLayout(layout: LaneDebugLayout): string {
 }
 
 export const LaneDebugOverlay = React.memo(function LaneDebugOverlay({
-  enabled,
   lane,
-  entriesCount,
+  entries,
   laneLayout,
-  debugComparison,
+  measuredHeights,
+  targetOffsets,
+  estimatedHeight,
 }: {
-  enabled: boolean;
   lane: LanePosition;
-  entriesCount: number;
+  entries: Array<{
+    key: string;
+    status: string;
+  }>;
   laneLayout: LaneDebugLayout;
-  debugComparison?: LaneDebugComparison;
+  measuredHeights: Record<string, number>;
+  targetOffsets: Map<string, number>;
+  estimatedHeight: number;
 }) {
-  if (!enabled) {
-    return null;
-  }
+  const { enabled, comparison: debugComparison, publishSummary } =
+    React.useContext(LaneDebugContext);
+
+  const summary = React.useMemo(
+    () =>
+      createLaneDebugSummary({
+        lane,
+        entries,
+        laneLayout,
+        measuredHeights,
+        targetOffsets,
+        estimatedHeight,
+      }),
+    [entries, estimatedHeight, lane, laneLayout, measuredHeights, targetOffsets],
+  );
+
+  React.useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    publishSummary(summary);
+
+    if (!__DEV__) {
+      return;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log(`[toasts][${lane}] entries`, summary.rows);
+  }, [enabled, lane, publishSummary, summary]);
 
   return (
     <>
       <View pointerEvents="none" style={[styles.laneDebugBadge, styles.laneBadgeTop]}>
         <Text style={styles.laneDebugBadgeText}>
-          {lane.toUpperCase()} entries: {entriesCount}{" "}
+          {lane.toUpperCase()} entries: {entries.length}{" "}
           {formatLaneBadgeLayout(laneLayout)}
         </Text>
       </View>
