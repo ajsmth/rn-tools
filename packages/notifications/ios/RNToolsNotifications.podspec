@@ -6,7 +6,7 @@ new_arch_enabled = ENV['RCT_NEW_ARCH_ENABLED'] == '1'
 
 
 Pod::Spec.new do |s|
-  s.name           = 'RNToolsToasts'
+  s.name           = 'RNToolsNotifications'
   s.version        = package['version']
   s.summary        = package['description']
   s.description    = package['description']
@@ -22,7 +22,7 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
-  s.public_header_files = 'RNToolsToastsTouchHandler.h'
+  s.public_header_files = 'RNToolsNotificationsTouchHandler.h'
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'OTHER_SWIFT_FLAGS' => '$(inherited)'

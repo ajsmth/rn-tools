@@ -3,7 +3,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface RNToolsToastsTouchHandler : NSObject
+@interface RNToolsNotificationsTouchHandler : NSObject
 
 + (nullable UIGestureRecognizer *)createAndAttachTouchHandlerForView:(UIView *)view;
 + (void)detachTouchHandler:(nullable UIGestureRecognizer *)handler fromView:(UIView *)view;

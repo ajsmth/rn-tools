@@ -1,7 +1,7 @@
-#import "RNToolsToastsTouchHandler.h"
+#import "RNToolsNotificationsTouchHandler.h"
 #import <React/RCTSurfaceTouchHandler.h>
 
-@implementation RNToolsToastsTouchHandler
+@implementation RNToolsNotificationsTouchHandler
 
 + (nullable UIGestureRecognizer *)createAndAttachTouchHandlerForView:(UIView *)view {
   for (UIGestureRecognizer *recognizer in [view.gestureRecognizers copy]) {

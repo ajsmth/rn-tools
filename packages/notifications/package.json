@@ -1,7 +1,7 @@
 {
-  "name": "@rn-tools/toasts",
+  "name": "@rn-tools/notifications",
   "version": "3.0.3",
-  "description": "A React Native library for creating and managing native toasts in Expo applications.",
+  "description": "A React Native library for creating and managing native notifications in Expo applications.",
   "main": "src/index.ts",
   "scripts": {
     "open:ios": "xed example/ios",
@@ -11,10 +11,10 @@
   "keywords": [
     "react-native",
     "expo",
-    "toasts",
-    "RNToolsToasts"
+    "notifications",
+    "RNToolsNotifications"
   ],
-  "repository": "https://github.com/ajsmth/rn-tools/tree/main/packages/toasts",
+  "repository": "https://github.com/ajsmth/rn-tools/tree/main/packages/notifications",
   "bugs": {
     "url": "https://github.com/ajsmth/rn-tools/issues"
   },

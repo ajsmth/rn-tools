@@ -7,20 +7,20 @@ import {
   View,
   type LayoutChangeEvent,
 } from "react-native";
-import { NativeBottomLane, NativeTopLane, ToastHost } from "./native-toast-view";
-import { LaneDebugProvider, LaneDebugOverlay } from "./toast-debug-ui";
+import { NativeBottomLane, NativeTopLane, NotificationHost } from "./native-notification-view";
+import { LaneDebugProvider, LaneDebugOverlay } from "./notification-debug-ui";
 import {
-  TOAST_TYPE,
-  ToastEntryKeyContext,
-  ToastsContext,
-  ToastsStoreContext,
-} from "./toasts-client";
-import type { ToastEntry } from "./toasts-client";
+  NOTIFICATION_TYPE,
+  NotificationEntryKeyContext,
+  NotificationsContext,
+  NotificationsStoreContext,
+} from "./notifications-client";
+import type { NotificationEntry } from "./notifications-client";
 
 const STACK_GAP = 6;
 const ENTER_EXIT_DURATION_MS = 280;
 const REFLOW_DURATION_MS = 240;
-const ESTIMATED_TOAST_HEIGHT = 48;
+const ESTIMATED_NOTIFICATION_HEIGHT = 48;
 const OFFSCREEN_OFFSET = 20;
 const DEFAULT_LANE_VISIBLE_HEIGHT = 280;
 
@@ -32,7 +32,7 @@ type LaneAnimItem = {
   targetY: number | null | undefined;
 };
 
-type ToastLaneItemProps = {
+type NotificationLaneItemProps = {
   entryKey: string;
   element: React.ReactNode;
   active: boolean;
@@ -41,13 +41,13 @@ type ToastLaneItemProps = {
   onMeasureHeight: (key: string, height: number) => void;
 };
 
-export const ToastSlot = React.memo(function ToastSlot({
+export const NotificationSlot = React.memo(function NotificationSlot({
   debugLayout = false,
 }: {
   debugLayout?: boolean;
 }) {
-  const store = React.useContext(ToastsStoreContext);
-  const toasts = React.useContext(ToastsContext);
+  const store = React.useContext(NotificationsStoreContext);
+  const notifications = React.useContext(NotificationsContext);
   const entries = useStore(store, (state) => state.entries);
 
   const activeKey = React.useMemo(() => {
@@ -71,7 +71,7 @@ export const ToastSlot = React.memo(function ToastSlot({
   );
 
   return (
-    <ToastHost debugLayout={debugLayout}>
+    <NotificationHost debugLayout={debugLayout}>
       <LaneDebugProvider enabled={debugLayout}>
         <NativeTopLane>
           <AnimatedLane
@@ -79,7 +79,7 @@ export const ToastSlot = React.memo(function ToastSlot({
             debugLayout={debugLayout}
             entries={topEntries}
             activeKey={activeKey}
-            toasts={toasts}
+            notifications={notifications}
           />
         </NativeTopLane>
         <NativeBottomLane>
@@ -88,19 +88,19 @@ export const ToastSlot = React.memo(function ToastSlot({
             debugLayout={debugLayout}
             entries={bottomEntries}
             activeKey={activeKey}
-            toasts={toasts}
+            notifications={notifications}
           />
         </NativeBottomLane>
       </LaneDebugProvider>
-    </ToastHost>
+    </NotificationHost>
   );
 });
 type AnimatedLaneProps = {
   lane: LanePosition;
   debugLayout: boolean;
-  entries: ToastEntry[];
+  entries: NotificationEntry[];
   activeKey: string | null;
-  toasts: React.ContextType<typeof ToastsContext>;
+  notifications: React.ContextType<typeof NotificationsContext>;
 };
 
 const AnimatedLane = React.memo(function AnimatedLane({
@@ -108,7 +108,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
   debugLayout,
   entries,
   activeKey,
-  toasts,
+  notifications,
 }: AnimatedLaneProps) {
   const [measuredHeights, setMeasuredHeights] = React.useState<
     Record<string, number>
@@ -138,7 +138,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
 
       const item: LaneAnimItem = {
         y: new Animated.Value(
-          lane === "top" ? -(ESTIMATED_TOAST_HEIGHT + OFFSCREEN_OFFSET) : 0,
+          lane === "top" ? -(ESTIMATED_NOTIFICATION_HEIGHT + OFFSCREEN_OFFSET) : 0,
         ),
         opacity: new Animated.Value(0),
         targetY: undefined,
@@ -171,7 +171,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
     }
 
     const heights = renderedEntries.map(
-      (entry) => measuredHeights[entry.key] ?? ESTIMATED_TOAST_HEIGHT,
+      (entry) => measuredHeights[entry.key] ?? ESTIMATED_NOTIFICATION_HEIGHT,
     );
 
     if (lane === "top") {
@@ -209,7 +209,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
       const key = entry.key;
       const item = getOrCreateAnimItem(key);
 
-      const knownHeight = measuredHeights[key] ?? ESTIMATED_TOAST_HEIGHT;
+      const knownHeight = measuredHeights[key] ?? ESTIMATED_NOTIFICATION_HEIGHT;
       const targetY = targetOffsets.get(key);
       const enterFromY =
         lane === "top"
@@ -241,7 +241,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
           }),
         ]).start(({ finished }) => {
           if (finished) {
-            toasts?.markDidDismiss(key);
+            notifications?.markDidDismiss(key);
           }
         });
         continue;
@@ -271,7 +271,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
           }),
         ]).start(({ finished }) => {
           if (finished) {
-            toasts?.markDidShow(key);
+            notifications?.markDidShow(key);
           }
         });
         continue;
@@ -298,7 +298,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
         }),
       ]).start(({ finished }) => {
         if (finished) {
-          toasts?.markDidShow(key);
+          notifications?.markDidShow(key);
         }
       });
     }
@@ -308,10 +308,10 @@ const AnimatedLane = React.memo(function AnimatedLane({
     lane,
     measuredHeights,
     targetOffsets,
-    toasts,
+    notifications,
   ]);
 
-  const handleToastLayout = React.useCallback((key: string, height: number) => {
+  const handleNotificationLayout = React.useCallback((key: string, height: number) => {
     const nextHeight = Math.round(height);
 
     setMeasuredHeights((current) => {
@@ -356,7 +356,7 @@ const AnimatedLane = React.memo(function AnimatedLane({
           laneLayout={laneLayout}
           measuredHeights={measuredHeights}
           targetOffsets={targetOffsets}
-          estimatedHeight={ESTIMATED_TOAST_HEIGHT}
+          estimatedHeight={ESTIMATED_NOTIFICATION_HEIGHT}
         />
       ) : null}
 
@@ -364,14 +364,14 @@ const AnimatedLane = React.memo(function AnimatedLane({
         const item = getOrCreateAnimItem(entry.key);
 
         return (
-          <ToastLaneItem
+          <NotificationLaneItem
             key={entry.key}
             entryKey={entry.key}
             element={entry.element}
             active={entry.key === activeKey}
             opacity={item.opacity}
             translateY={item.y}
-            onMeasureHeight={handleToastLayout}
+            onMeasureHeight={handleNotificationLayout}
           />
         );
       })}
@@ -379,14 +379,14 @@ const AnimatedLane = React.memo(function AnimatedLane({
   );
 });
 
-const ToastLaneItem = React.memo(function ToastLaneItem({
+const NotificationLaneItem = React.memo(function NotificationLaneItem({
   entryKey,
   element,
   active,
   opacity,
   translateY,
   onMeasureHeight,
-}: ToastLaneItemProps) {
+}: NotificationLaneItemProps) {
   const handleLayout = React.useCallback(
     (event: LayoutChangeEvent) => {
       onMeasureHeight(entryKey, event.nativeEvent.layout.height);
@@ -396,7 +396,7 @@ const ToastLaneItem = React.memo(function ToastLaneItem({
 
   const style = React.useMemo(() => {
     return [
-      styles.toastItem,
+      styles.notificationItem,
       {
         opacity,
         transform: [{ translateY }],
@@ -410,12 +410,12 @@ const ToastLaneItem = React.memo(function ToastLaneItem({
       style={style}
       onLayout={handleLayout}
     >
-      <ToastSlotEntry entryKey={entryKey} element={element} active={active} />
+      <NotificationSlotEntry entryKey={entryKey} element={element} active={active} />
     </Animated.View>
   );
 });
 
-const ToastSlotEntry = React.memo(function ToastSlotEntry({
+const NotificationSlotEntry = React.memo(function NotificationSlotEntry({
   entryKey,
   element,
   active,
@@ -425,10 +425,10 @@ const ToastSlotEntry = React.memo(function ToastSlotEntry({
   active: boolean;
 }) {
   return (
-    <RenderTreeNode type={TOAST_TYPE} id={entryKey} active={active}>
-      <ToastEntryKeyContext.Provider value={entryKey}>
+    <RenderTreeNode type={NOTIFICATION_TYPE} id={entryKey} active={active}>
+      <NotificationEntryKeyContext.Provider value={entryKey}>
         {element}
-      </ToastEntryKeyContext.Provider>
+      </NotificationEntryKeyContext.Provider>
     </RenderTreeNode>
   );
 });
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
   lane: {
     ...StyleSheet.absoluteFillObject,
   },
-  toastItem: {
+  notificationItem: {
     left: 0,
     position: "absolute",
     right: 0,

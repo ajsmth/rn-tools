@@ -188,7 +188,7 @@ export const LaneDebugOverlay = React.memo(function LaneDebugOverlay({
     }
 
     // eslint-disable-next-line no-console
-    console.log(`[toasts][${lane}] entries`, summary.rows);
+    console.log(`[notifications][${lane}] entries`, summary.rows);
   }, [enabled, lane, publishSummary, summary]);
 
   return (

@@ -7,17 +7,16 @@ import {
 } from "@rn-tools/navigation";
 import { createRenderTreeStore, RenderTree } from "@rn-tools/core";
 import {
-  createToasts,
-  ToastsProvider,
-  useToastEntry,
-  useToasts,
-} from "@rn-tools/toasts";
+  createNotifications,
+  NotificationsProvider,
+  useNotificationEntry,
+  useNotifications,
+} from "@rn-tools/notifications";
 import * as React from "react";
 import { Text, View, Button, Pressable } from "react-native";
 
 const navigation = createNavigation();
-const toastsRenderTreeStore = createRenderTreeStore();
-const toasts = createToasts(toastsRenderTreeStore);
+const notifications = createNotifications();
 
 const tabScreens: TabScreenOptions[] = [
   {
@@ -39,13 +38,11 @@ const tabScreens: TabScreenOptions[] = [
 
 export default function App() {
   return (
-    <RenderTree store={toastsRenderTreeStore}>
-      <ToastsProvider toasts={toasts} debugLayout={false}>
-        <Navigation navigation={navigation}>
-          <Tabs screens={tabScreens} tabbarPosition="bottom" />
-        </Navigation>
-      </ToastsProvider>
-    </RenderTree>
+    <NotificationsProvider notifications={notifications} debugLayout={false}>
+      <Navigation navigation={navigation}>
+        <Tabs screens={tabScreens} tabbarPosition="bottom" />
+      </Navigation>
+    </NotificationsProvider>
   );
 }
 
@@ -144,13 +141,16 @@ function HomeScreen() {
             textAlign: "center",
           }}
         >
-          Toasts
+          Notifications
         </Text>
         <Button
-          title="Toast from top (3s)"
+          title="Notification from top (3s)"
           onPress={() =>
-            toasts.show(
-              <ToastContent message="Hello from the top!" position="top" />,
+            notifications.show(
+              <NotificationContent
+                message="Hello from the top!"
+                position="top"
+              />,
               {
                 position: "top",
                 durationMs: 3000,
@@ -159,10 +159,10 @@ function HomeScreen() {
           }
         />
         <Button
-          title="Toast from bottom (5s)"
+          title="Notification from bottom (5s)"
           onPress={() =>
-            toasts.show(
-              <ToastContent
+            notifications.show(
+              <NotificationContent
                 message="Hello from the bottom!"
                 position="bottom"
               />,
@@ -174,10 +174,10 @@ function HomeScreen() {
           }
         />
         <Button
-          title="Persistent toast (no auto-dismiss)"
+          title="Persistent notification (no auto-dismiss)"
           onPress={() =>
-            toasts.show(
-              <ToastContent
+            notifications.show(
+              <NotificationContent
                 message="I won't go away on my own!"
                 position="top"
               />,
@@ -189,18 +189,21 @@ function HomeScreen() {
             )
           }
         />
-        <Button title="Dismiss top toast" onPress={() => toasts.dismiss()} />
         <Button
-          title='Dismiss latest "top" toast'
-          onPress={() => toasts.dismiss("top")}
+          title="Dismiss top notification"
+          onPress={() => notifications.dismiss()}
         />
         <Button
-          title='Dismiss latest "bottom" toast'
-          onPress={() => toasts.dismiss("bottom")}
+          title='Dismiss latest "top" notification'
+          onPress={() => notifications.dismiss("top")}
         />
         <Button
-          title="Dismiss all toasts"
-          onPress={() => toasts.dismissAll()}
+          title='Dismiss latest "bottom" notification'
+          onPress={() => notifications.dismiss("bottom")}
+        />
+        <Button
+          title="Dismiss all notifications"
+          onPress={() => notifications.dismissAll()}
         />
       </View>
     </View>
@@ -229,14 +232,14 @@ function SheetContent({ label }: { label: string }) {
   );
 }
 
-function ToastContent({
+function NotificationContent({
   message,
   position,
 }: {
   message: string;
   position: "top" | "bottom";
 }) {
-  const { dismiss, entryKey } = useToastEntry();
+  const { dismiss, entryKey } = useNotificationEntry();
 
   return (
     <View

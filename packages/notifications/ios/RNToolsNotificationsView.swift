@@ -8,13 +8,13 @@ private let laneAbsoluteMaxHeight: CGFloat = 280
 private let laneRelativeMaxHeightRatio: CGFloat = 0.42
 private let laneMinimumHeight: CGFloat = 72
 
-public class RNToolsToastsView: ExpoView {
+public class RNToolsNotificationsView: ExpoView {
     private var overlayWindow: PassthroughWindow?
     private let rootView = PassthroughRootView()
     private let topLaneMountView = PassthroughContainerView()
     private let bottomLaneMountView = PassthroughContainerView()
-    private let topLaneView = ToastDebugLaneView(position: .top)
-    private let bottomLaneView = ToastDebugLaneView(position: .bottom)
+    private let topLaneView = NotificationDebugLaneView(position: .top)
+    private let bottomLaneView = NotificationDebugLaneView(position: .bottom)
     private let topGuideView = DebugGuideView(position: .top)
     private let bottomGuideView = DebugGuideView(position: .bottom)
     private var topLaneTouchHandler: UIGestureRecognizer?
@@ -50,10 +50,10 @@ public class RNToolsToastsView: ExpoView {
         bottomLaneMountView.isUserInteractionEnabled = true
         bottomLaneMountView.clipsToBounds = true
 
-        topLaneTouchHandler = RNToolsToastsTouchHandler.createAndAttach(
+        topLaneTouchHandler = RNToolsNotificationsTouchHandler.createAndAttach(
             for: topLaneMountView
         )
-        bottomLaneTouchHandler = RNToolsToastsTouchHandler.createAndAttach(
+        bottomLaneTouchHandler = RNToolsNotificationsTouchHandler.createAndAttach(
             for: bottomLaneMountView
         )
 
@@ -70,11 +70,11 @@ public class RNToolsToastsView: ExpoView {
 
     deinit {
         if let topLaneTouchHandler {
-            RNToolsToastsTouchHandler.detach(topLaneTouchHandler, from: topLaneMountView)
+            RNToolsNotificationsTouchHandler.detach(topLaneTouchHandler, from: topLaneMountView)
             self.topLaneTouchHandler = nil
         }
         if let bottomLaneTouchHandler {
-            RNToolsToastsTouchHandler.detach(bottomLaneTouchHandler, from: bottomLaneMountView)
+            RNToolsNotificationsTouchHandler.detach(bottomLaneTouchHandler, from: bottomLaneMountView)
             self.bottomLaneTouchHandler = nil
         }
         hideOverlay()
@@ -106,7 +106,7 @@ public class RNToolsToastsView: ExpoView {
         guard let assignedLane = resolvedLaneAssignment(for: childComponentView) else {
             #if DEBUG
                 assertionFailure(
-                    "[RNToolsToasts] Unexpected child type mounted into host: \(String(describing: type(of: childComponentView)))"
+                    "[RNToolsNotifications] Unexpected child type mounted into host: \(String(describing: type(of: childComponentView)))"
                 )
             #endif
             return
@@ -121,7 +121,7 @@ public class RNToolsToastsView: ExpoView {
         #if DEBUG
             if isDebugLayoutEnabled {
             NSLog(
-                "[RNToolsToasts][mount] index=%d id=%@ lane=%@ topSubviews=%d bottomSubviews=%d",
+                "[RNToolsNotifications][mount] index=%d id=%@ lane=%@ topSubviews=%d bottomSubviews=%d",
                 index,
                 childComponentView.accessibilityIdentifier ?? "nil",
                 assignedLane == .top ? "top" : "bottom",
@@ -142,7 +142,7 @@ public class RNToolsToastsView: ExpoView {
         #if DEBUG
             if isDebugLayoutEnabled {
             NSLog(
-                "[RNToolsToasts][unmount] index=%d id=%@ topSubviews=%d bottomSubviews=%d",
+                "[RNToolsNotifications][unmount] index=%d id=%@ topSubviews=%d bottomSubviews=%d",
                 index,
                 childComponentView.accessibilityIdentifier ?? "nil",
                 topLaneMountView.subviews.count,
@@ -235,17 +235,17 @@ public class RNToolsToastsView: ExpoView {
 
     private func resolvedLaneAssignment(
         for childComponentView: UIView
-    ) -> ToastLanePosition? {
-        if childComponentView is RNToolsToastsTopLaneView {
+    ) -> NotificationLanePosition? {
+        if childComponentView is RNToolsNotificationsTopLaneView {
             return .top
         }
-        if childComponentView is RNToolsToastsBottomLaneView {
+        if childComponentView is RNToolsNotificationsBottomLaneView {
             return .bottom
         }
         return nil
     }
 
-    private func laneContainerView(for position: ToastLanePosition) -> UIView {
+    private func laneContainerView(for position: NotificationLanePosition) -> UIView {
         if position == .top {
             return topLaneMountView
         }
@@ -254,12 +254,12 @@ public class RNToolsToastsView: ExpoView {
 
 }
 
-private final class ToastDebugLaneView: UIView {
-    private let position: ToastLanePosition
+private final class NotificationDebugLaneView: UIView {
+    private let position: NotificationLanePosition
     private let titleLabel = UILabel()
     private let frameLabel = UILabel()
 
-    init(position: ToastLanePosition) {
+    init(position: NotificationLanePosition) {
         self.position = position
         super.init(frame: .zero)
 
@@ -321,10 +321,10 @@ private final class ToastDebugLaneView: UIView {
 }
 
 private final class DebugGuideView: UIView {
-    private let position: ToastLanePosition
+    private let position: NotificationLanePosition
     private let label = UILabel()
 
-    init(position: ToastLanePosition) {
+    init(position: NotificationLanePosition) {
         self.position = position
         super.init(frame: .zero)
 
@@ -380,12 +380,12 @@ private final class PassthroughContainerView: UIView {
     }
 }
 
-private enum ToastLanePosition {
+private enum NotificationLanePosition {
     case top
     case bottom
 }
 
-public final class RNToolsToastsTopLaneView: ExpoView {
+public final class RNToolsNotificationsTopLaneView: ExpoView {
     required init(appContext: AppContext? = nil) {
         super.init(appContext: appContext)
         backgroundColor = .clear
@@ -393,7 +393,7 @@ public final class RNToolsToastsTopLaneView: ExpoView {
     }
 }
 
-public final class RNToolsToastsBottomLaneView: ExpoView {
+public final class RNToolsNotificationsBottomLaneView: ExpoView {
     required init(appContext: AppContext? = nil) {
         super.init(appContext: appContext)
         backgroundColor = .clear

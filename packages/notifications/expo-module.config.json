@@ -1,0 +1,12 @@
+{
+  "platforms": [
+    "apple"
+  ],
+  "apple": {
+    "modules": [
+      "RNToolsNotificationsModule",
+      "RNToolsNotificationsTopLaneModule",
+      "RNToolsNotificationsBottomLaneModule"
+    ]
+  }
+}

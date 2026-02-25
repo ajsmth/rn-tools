@@ -8,15 +8,15 @@ type NativeHostProps = ViewProps & {
   debugLayout?: boolean;
 };
 
-const NativeToastsHostView =
-  requireNativeViewManager<NativeHostProps>("RNToolsToasts");
+const NativeNotificationsHostView =
+  requireNativeViewManager<NativeHostProps>("RNToolsNotifications");
 
-const NativeToastsTopLaneView =
-  requireNativeViewManager<ViewProps>("RNToolsToastsTopLane");
-const NativeToastsBottomLaneView =
-  requireNativeViewManager<ViewProps>("RNToolsToastsBottomLane");
+const NativeNotificationsTopLaneView =
+  requireNativeViewManager<ViewProps>("RNToolsNotificationsTopLane");
+const NativeNotificationsBottomLaneView =
+  requireNativeViewManager<ViewProps>("RNToolsNotificationsBottomLane");
 
-export function ToastHost({
+export function NotificationHost({
   debugLayout = false,
   children,
 }: {
@@ -24,14 +24,14 @@ export function ToastHost({
   children?: React.ReactNode;
 }) {
   return (
-    <NativeToastsHostView
+    <NativeNotificationsHostView
       style={styles.host}
       debugLayout={debugLayout && __DEV__}
       pointerEvents="box-none"
       collapsable={false}
     >
       {children}
-    </NativeToastsHostView>
+    </NativeNotificationsHostView>
   );
 }
 
@@ -43,13 +43,13 @@ export const NativeTopLane = React.memo(function NativeTopLane({
   children,
 }: NativeLaneProps) {
   return (
-    <NativeToastsTopLaneView
+    <NativeNotificationsTopLaneView
       collapsable={false}
       pointerEvents="box-none"
       style={styles.lane}
     >
       {children}
-    </NativeToastsTopLaneView>
+    </NativeNotificationsTopLaneView>
   );
 });
 
@@ -57,13 +57,13 @@ export const NativeBottomLane = React.memo(function NativeBottomLane({
   children,
 }: NativeLaneProps) {
   return (
-    <NativeToastsBottomLaneView
+    <NativeNotificationsBottomLaneView
       collapsable={false}
       pointerEvents="box-none"
       style={styles.lane}
     >
       {children}
-    </NativeToastsBottomLaneView>
+    </NativeNotificationsBottomLaneView>
   );
 });
 
