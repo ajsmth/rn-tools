@@ -54,16 +54,16 @@ export default function App() {
 Navigate screens, present sheets, and trigger notifications imperatively:
 
 ```tsx
-navigation.push(<DetailScreen />, { id: "detail" });
-navigation.pop();
-navigation.tab(1);
-navigation.present(<EditSheet />, { id: "edit", snapPoints: [320, 520] });
-navigation.dismiss();
-navigation.dismissAll();
-navigation.notify(<SavedNotification />, { id: "saved", position: "top", durationMs: 3000 });
-navigation.dismissNotification();
-navigation.dismissNotification("bottom");
-navigation.dismissNotification("saved");
+navigation.stack.push(<DetailScreen />, { id: "detail" });
+navigation.stack.pop();
+navigation.tabs.tab(1);
+navigation.sheets.present(<EditSheet />, { id: "edit", snapPoints: [320, 520] });
+navigation.sheets.dismiss();
+navigation.sheets.dismissAll();
+navigation.notifications.present(<SavedNotification />, { id: "saved", position: "top", durationMs: 3000 });
+navigation.notifications.dismiss();
+navigation.notifications.dismiss("bottom");
+navigation.notifications.dismiss("saved");
 ```
 
 `durationMs` defaults to `3000`; pass `null` for persistent notifications.
@@ -73,7 +73,7 @@ Presented sheet and notification elements receive an injected optional `dismiss?
 When no explicit target is provided:
 - `push/pop/tab` resolve the deepest active stack/tabs node.
 - `dismiss()` resolves the active sheet.
-- `dismissNotification()` resolves the latest non-closing top-lane notification.
+- `notifications.dismiss()` resolves the latest non-closing top-lane notification.
 
 Hooks are also re-exported for convenience:
 - `useSheetEntry` (from `@rn-tools/sheets`)

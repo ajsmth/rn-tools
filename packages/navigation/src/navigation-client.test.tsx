@@ -49,14 +49,14 @@ describe("createNavigation", () => {
     expect(nav.store).toBeDefined();
     expect(nav.renderTreeStore).toBeDefined();
     expect(nav.sheetsStore).toBeDefined();
-    expect(typeof nav.push).toBe("function");
-    expect(typeof nav.pop).toBe("function");
-    expect(typeof nav.tab).toBe("function");
-    expect(typeof nav.present).toBe("function");
-    expect(typeof nav.dismiss).toBe("function");
-    expect(typeof nav.dismissAll).toBe("function");
-    expect(typeof nav.notify).toBe("function");
-    expect(typeof nav.dismissNotification).toBe("function");
+    expect(typeof nav.stack.push).toBe("function");
+    expect(typeof nav.stack.pop).toBe("function");
+    expect(typeof nav.tabs.tab).toBe("function");
+    expect(typeof nav.sheets.present).toBe("function");
+    expect(typeof nav.sheets.dismiss).toBe("function");
+    expect(typeof nav.sheets.dismissAll).toBe("function");
+    expect(typeof nav.notifications.present).toBe("function");
+    expect(typeof nav.notifications.dismiss).toBe("function");
   });
 
   it("initializes with empty state by default", () => {
@@ -80,45 +80,45 @@ describe("createNavigation", () => {
 describe("sheet methods", () => {
   it("present returns a key", () => {
     const nav = createNavigation();
-    const key = nav.present(<Text>sheet</Text>);
+    const key = nav.sheets.present(<Text>sheet</Text>);
 
     expect(typeof key).toBe("string");
   });
 
   it("present reuses key when id is reused", () => {
     const nav = createNavigation();
-    const key1 = nav.present(<Text>sheet-a</Text>, { id: "edit" });
-    const key2 = nav.present(<Text>sheet-b</Text>, { id: "edit" });
+    const key1 = nav.sheets.present(<Text>sheet-a</Text>, { id: "edit" });
+    const key2 = nav.sheets.present(<Text>sheet-b</Text>, { id: "edit" });
 
     expect(key2).toBe(key1);
   });
 
   it("dismiss and dismissAll are callable via public API", () => {
     const nav = createNavigation();
-    nav.present(<Text>a</Text>);
-    nav.present(<Text>b</Text>);
+    nav.sheets.present(<Text>a</Text>);
+    nav.sheets.present(<Text>b</Text>);
 
-    expect(() => nav.dismiss()).not.toThrow();
-    nav.dismissAll();
-    expect(() => nav.dismissAll()).not.toThrow();
+    expect(() => nav.sheets.dismiss()).not.toThrow();
+    nav.sheets.dismissAll();
+    expect(() => nav.sheets.dismissAll()).not.toThrow();
   });
 });
 
 describe("notification methods", () => {
   it("notify returns a key", () => {
     const nav = createNavigation();
-    const key = nav.notify(<Text>notification</Text>, { durationMs: null });
+    const key = nav.notifications.present(<Text>notification</Text>, { durationMs: null });
 
     expect(typeof key).toBe("string");
   });
 
   it("notify reuses key when id is reused", () => {
     const nav = createNavigation();
-    const key1 = nav.notify(<Text>notification-a</Text>, {
+    const key1 = nav.notifications.present(<Text>notification-a</Text>, {
       id: "welcome",
       durationMs: null,
     });
-    const key2 = nav.notify(<Text>notification-b</Text>, {
+    const key2 = nav.notifications.present(<Text>notification-b</Text>, {
       id: "welcome",
       durationMs: null,
     });
@@ -128,11 +128,11 @@ describe("notification methods", () => {
 
   it("dismissNotification is callable via public API", () => {
     const nav = createNavigation();
-    nav.notify(<Text>a</Text>, { durationMs: null });
-    nav.notify(<Text>b</Text>, { position: "bottom", durationMs: null });
+    nav.notifications.present(<Text>a</Text>, { durationMs: null });
+    nav.notifications.present(<Text>b</Text>, { position: "bottom", durationMs: null });
 
-    expect(() => nav.dismissNotification()).not.toThrow();
-    expect(() => nav.dismissNotification("bottom")).not.toThrow();
+    expect(() => nav.notifications.dismiss()).not.toThrow();
+    expect(() => nav.notifications.dismiss("bottom")).not.toThrow();
   });
 });
 
@@ -158,7 +158,7 @@ describe("push", () => {
       stacks: { "stack-a": [] },
     });
 
-    nav.push(<Text>pushed</Text>, { stack: "stack-a" });
+    nav.stack.push(<Text>pushed</Text>, { stack: "stack-a" });
 
     const screens = nav.store.getState().stacks.get("stack-a");
     expect(screens).toHaveLength(1);
@@ -167,7 +167,7 @@ describe("push", () => {
   it("creates the stack entry if it did not exist", () => {
     const nav = createNavigation();
 
-    nav.push(<Text>pushed</Text>, { stack: "stack-new" });
+    nav.stack.push(<Text>pushed</Text>, { stack: "stack-new" });
 
     const screens = nav.store.getState().stacks.get("stack-new");
     expect(screens).toHaveLength(1);
@@ -180,7 +180,7 @@ describe("push", () => {
       },
     });
 
-    nav.push(<Text>dup</Text>, { id: "screen-1", stack: "stack-a" });
+    nav.stack.push(<Text>dup</Text>, { id: "screen-1", stack: "stack-a" });
 
     expect(nav.store.getState().stacks.get("stack-a")).toHaveLength(1);
   });
@@ -192,16 +192,16 @@ describe("push", () => {
       },
     });
 
-    nav.pop({ stack: "stack-a" });
+    nav.stack.pop({ stack: "stack-a" });
     expect(nav.store.getState().stacks.get("stack-a")).toHaveLength(0);
 
-    nav.push(<Text>new</Text>, { id: "screen-1", stack: "stack-a" });
+    nav.stack.push(<Text>new</Text>, { id: "screen-1", stack: "stack-a" });
     expect(nav.store.getState().stacks.get("stack-a")).toHaveLength(1);
   });
 
   it("throws when no stack is provided and no stack is mounted", () => {
     const nav = createNavigation();
-    expect(() => nav.push(<Text>x</Text>)).toThrow(
+    expect(() => nav.stack.push(<Text>x</Text>)).toThrow(
       "could not resolve stack",
     );
   });
@@ -218,7 +218,7 @@ describe("pop", () => {
       },
     });
 
-    nav.pop({ stack: "stack-a" });
+    nav.stack.pop({ stack: "stack-a" });
 
     expect(nav.store.getState().stacks.get("stack-a")).toHaveLength(1);
   });
@@ -229,7 +229,7 @@ describe("pop", () => {
     });
 
     const before = nav.store.getState();
-    nav.pop({ stack: "stack-a" });
+    nav.stack.pop({ stack: "stack-a" });
     const after = nav.store.getState();
 
     expect(before).toBe(after);
@@ -237,7 +237,7 @@ describe("pop", () => {
 
   it("throws when no stack is provided and no stack is mounted", () => {
     const nav = createNavigation();
-    expect(() => nav.pop()).toThrow("could not resolve stack");
+    expect(() => nav.stack.pop()).toThrow("could not resolve stack");
   });
 });
 
@@ -247,7 +247,7 @@ describe("tab", () => {
       tabs: { "my-tabs": { activeIndex: 0 } },
     });
 
-    nav.tab(2, { tabs: "my-tabs" });
+    nav.tabs.tab(2, { tabs: "my-tabs" });
 
     expect(nav.store.getState().tabs.get("my-tabs")).toEqual({
       activeIndex: 2,
@@ -257,7 +257,7 @@ describe("tab", () => {
   it("creates the tabs entry if it did not exist", () => {
     const nav = createNavigation();
 
-    nav.tab(1, { tabs: "new-tabs" });
+    nav.tabs.tab(1, { tabs: "new-tabs" });
 
     expect(nav.store.getState().tabs.get("new-tabs")).toEqual({
       activeIndex: 1,
@@ -266,6 +266,6 @@ describe("tab", () => {
 
   it("throws when no tabs is provided and no tabs are mounted", () => {
     const nav = createNavigation();
-    expect(() => nav.tab(0)).toThrow("could not resolve tabs");
+    expect(() => nav.tabs.tab(0)).toThrow("could not resolve tabs");
   });
 });

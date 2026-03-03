@@ -153,4 +153,4 @@ const screens: TabScreenOptions[] = [
 ];
 ```
 
-When pushing screens via `navigation.push()`, the navigation system automatically targets the stack inside the currently active tab.
+When pushing screens via `navigation.stack.push()`, the navigation system automatically targets the stack inside the currently active tab.

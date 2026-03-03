@@ -132,7 +132,7 @@ describe("Stack", () => {
     );
 
     act(() => {
-      navigation.push(
+      navigation.stack.push(
         <RenderNodeProbe
           render={(data) => <Text>{`screen-b:${String(data.active)}`}</Text>}
         />,
@@ -243,7 +243,7 @@ describe("Stack", () => {
     );
 
     act(() => {
-      navigation.push(<Text>screen-a-dup</Text>, {
+      navigation.stack.push(<Text>screen-a-dup</Text>, {
         id: "screen-a",
         stack: "stack-a",
       });
@@ -253,14 +253,14 @@ describe("Stack", () => {
     expect(renderer.getByText("screen-a")).toBeTruthy();
 
     act(() => {
-      navigation.pop({ stack: "stack-a" });
+      navigation.stack.pop({ stack: "stack-a" });
     });
 
     expect(navigation.store.getState().stacks.get("stack-a")).toHaveLength(0);
     expect(renderer.queryByText("screen-a")).toBeNull();
 
     act(() => {
-      navigation.push(<Text>screen-a-again</Text>, {
+      navigation.stack.push(<Text>screen-a-again</Text>, {
         id: "screen-a",
         stack: "stack-a",
       });
@@ -409,7 +409,7 @@ describe("Stack", () => {
 
     // push with no stack should target the deepest active stack: right-nested
     act(() => {
-      navigation.push(<Text>first-push</Text>);
+      navigation.stack.push(<Text>first-push</Text>);
     });
 
     const stateAfterFirst = navigation.store.getState();
@@ -425,7 +425,7 @@ describe("Stack", () => {
     );
 
     act(() => {
-      navigation.push(<Text>second-push</Text>);
+      navigation.stack.push(<Text>second-push</Text>);
     });
 
     const stateAfterSecond = navigation.store.getState();

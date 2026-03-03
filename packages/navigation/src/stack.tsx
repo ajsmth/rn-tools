@@ -39,10 +39,10 @@ const StackRoot = React.memo(
       ref,
       () => ({
         push(element: React.ReactElement, options?: PushOptions) {
-          navigation.push(element, { ...options, stack: stackId });
+          navigation.stack.push(element, { ...options, stack: stackId });
         },
         pop() {
-          navigation.pop({ stack: stackId });
+          navigation.stack.pop({ stack: stackId });
         },
       }),
       [stackId, navigation],

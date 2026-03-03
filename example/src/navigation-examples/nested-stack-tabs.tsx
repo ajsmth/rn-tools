@@ -71,7 +71,7 @@ function MyScreen({
   bg?: string;
 }) {
   function push() {
-    navigation.push(
+    navigation.stack.push(
       <Stack.Screen>
         <MyScreen title="Pushed screen" showPopButton />
       </Stack.Screen>
@@ -79,7 +79,7 @@ function MyScreen({
   }
 
   function pop() {
-    navigation.pop();
+    navigation.stack.pop();
   }
 
   return (

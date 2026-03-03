@@ -73,17 +73,25 @@ export type NavigationClient = {
   renderTreeStore: RenderTreeStore;
   sheetsStore: SheetsClient;
   notificationsStore: NotificationsClient;
-  push: (element: React.ReactElement, options?: PushOptions) => void;
-  pop: (options?: { stack?: string }) => void;
-  tab: (index: number, options?: { tabs?: string }) => void;
-  present: (element: React.ReactElement, options?: SheetOptions) => string;
-  dismiss: (id?: string) => void;
-  dismissAll: () => void;
-  notify: (
-    element: React.ReactElement,
-    options?: NotificationOptions,
-  ) => string;
-  dismissNotification: (target?: NotificationDismissTarget) => void;
+  stack: {
+    push: (element: React.ReactElement, options?: PushOptions) => void;
+    pop: (options?: { stack?: string }) => void;
+  };
+  tabs: {
+    tab: (index: number, options?: { tabs?: string }) => void;
+  };
+  sheets: {
+    present: (element: React.ReactElement, options?: SheetOptions) => string;
+    dismiss: (id?: string) => void;
+    dismissAll: () => void;
+  };
+  notifications: {
+    present: (
+      element: React.ReactElement,
+      options?: NotificationOptions,
+    ) => string;
+    dismiss: (target?: NotificationDismissTarget) => void;
+  };
 };
 
 export function createNavigation(
@@ -199,14 +207,22 @@ export function createNavigation(
     renderTreeStore,
     sheetsStore,
     notificationsStore,
-    push,
-    pop,
-    tab,
-    present,
-    dismiss,
-    dismissAll,
-    notify,
-    dismissNotification,
+    stack: {
+      push,
+      pop,
+    },
+    tabs: {
+      tab,
+    },
+    sheets: {
+      present,
+      dismiss,
+      dismissAll,
+    },
+    notifications: {
+      present: notify,
+      dismiss: dismissNotification,
+    },
   };
 }
 

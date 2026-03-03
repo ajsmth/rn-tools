@@ -50,7 +50,7 @@ const TabsRoot = React.memo(
       ref,
       () => ({
         setActive(index: number) {
-          navigation.tab(index, { tabs: tabsId });
+          navigation.tabs.tab(index, { tabs: tabsId });
         },
       }),
       [tabsId, navigation],

@@ -78,7 +78,7 @@ function HomeScreen() {
       <Button
         title="Push screen"
         onPress={() => {
-          navigation.push(<DetailScreen title="Pushed Screen" count={1} />);
+          navigation.stack.push(<DetailScreen title="Pushed Screen" count={1} />);
         }}
       />
       <View style={{ marginTop: 24 }}>
@@ -95,13 +95,13 @@ function HomeScreen() {
         <Button
           title="Present sheet (auto-size)"
           onPress={() =>
-            navigation.present(<SheetContent label="Auto-sized" />)
+            navigation.sheets.present(<SheetContent label="Auto-sized" />)
           }
         />
         <Button
           title="Present sheet (snap points)"
           onPress={() =>
-            navigation.present(<SheetContent label="Snap points" />, {
+            navigation.sheets.present(<SheetContent label="Snap points" />, {
               snapPoints: [300, 500],
             })
           }
@@ -109,20 +109,20 @@ function HomeScreen() {
         <Button
           title="Present sheet (id: edit)"
           onPress={() =>
-            navigation.present(<SheetContent label="Edit sheet" />, {
+            navigation.sheets.present(<SheetContent label="Edit sheet" />, {
               id: "edit",
             })
           }
         />
         <Button
           title="Dismiss top sheet"
-          onPress={() => navigation.dismiss()}
+          onPress={() => navigation.sheets.dismiss()}
         />
         <Button
           title='Dismiss by id "edit"'
-          onPress={() => navigation.dismiss("edit")}
+          onPress={() => navigation.sheets.dismiss("edit")}
         />
-        <Button title="Dismiss all" onPress={() => navigation.dismissAll()} />
+        <Button title="Dismiss all" onPress={() => navigation.sheets.dismissAll()} />
       </View>
       <View style={{ marginTop: 24 }}>
         <Text
@@ -138,7 +138,7 @@ function HomeScreen() {
         <Button
           title="Notification from top (3s)"
           onPress={() =>
-            navigation.notify(
+            navigation.notifications.present(
               <NotificationContent
                 message="Hello from the top!"
                 position="top"
@@ -153,7 +153,7 @@ function HomeScreen() {
         <Button
           title="Notification from bottom (5s)"
           onPress={() =>
-            navigation.notify(
+            navigation.notifications.present(
               <NotificationContent
                 message="Hello from the bottom!"
                 position="bottom"
@@ -168,7 +168,7 @@ function HomeScreen() {
         <Button
           title="Persistent notification (no auto-dismiss)"
           onPress={() =>
-            navigation.notify(
+            navigation.notifications.present(
               <NotificationContent
                 message="I won't go away on my own!"
                 position="top"
@@ -183,15 +183,15 @@ function HomeScreen() {
         />
         <Button
           title="Dismiss top notification"
-          onPress={() => navigation.dismissNotification()}
+          onPress={() => navigation.notifications.dismiss()}
         />
         <Button
           title='Dismiss latest "top" notification'
-          onPress={() => navigation.dismissNotification("top")}
+          onPress={() => navigation.notifications.dismiss("top")}
         />
         <Button
           title='Dismiss latest "bottom" notification'
-          onPress={() => navigation.dismissNotification("bottom")}
+          onPress={() => navigation.notifications.dismiss("bottom")}
         />
         <Button
           title="Dismiss all notifications"
@@ -219,7 +219,7 @@ function SheetContent({
       <Button
         title="Present nested sheet"
         onPress={() => {
-          navigation.present(<SheetContent label="Nested sheet" />, {
+          navigation.sheets.present(<SheetContent label="Nested sheet" />, {
             snapPoints: [250],
           });
         }}
@@ -272,7 +272,7 @@ function ExploreScreen() {
       <Button
         title="Push screen"
         onPress={() => {
-          navigation.push(<DetailScreen title="Explore Detail" count={1} />);
+          navigation.stack.push(<DetailScreen title="Explore Detail" count={1} />);
         }}
       />
     </View>
@@ -286,7 +286,7 @@ function SettingsScreen() {
       <Button
         title="Push screen"
         onPress={() => {
-          navigation.push(<DetailScreen title="Settings Detail" count={1} />);
+          navigation.stack.push(<DetailScreen title="Settings Detail" count={1} />);
         }}
       />
     </View>
@@ -303,20 +303,20 @@ function DetailScreen({ title, count }: { title: string; count: number }) {
       <Button
         title="Push another"
         onPress={() => {
-          navigation.push(
+          navigation.stack.push(
             <DetailScreen title="Pushed Screen" count={count + 1} />,
           );
         }}
       />
-      <Button title="Pop screen" onPress={() => navigation.pop()} />
+      <Button title="Pop screen" onPress={() => navigation.stack.pop()} />
       <Button
         title="Autosized sheet"
-        onPress={() => navigation.present(<SheetContent label="Auto-sized" />)}
+        onPress={() => navigation.sheets.present(<SheetContent label="Auto-sized" />)}
       />
       <Button
         title="Snap points sheet"
         onPress={() =>
-          navigation.present(<SheetContent label="Snap points" />, {
+          navigation.sheets.present(<SheetContent label="Snap points" />, {
             snapPoints: [300, 500],
           })
         }

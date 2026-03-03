@@ -96,7 +96,7 @@ describe("Tabs", () => {
     );
 
     act(() => {
-      navigation.tab(2);
+      navigation.tabs.tab(2);
     });
 
     await waitFor(() => {
@@ -298,7 +298,7 @@ describe("Nested Stack + Tabs", () => {
     });
 
     act(() => {
-      navigation.push(<Text>pushed-to-a</Text>);
+      navigation.stack.push(<Text>pushed-to-a</Text>);
     });
 
     const stateAfterFirst = navigation.store.getState();
@@ -329,11 +329,11 @@ describe("Nested Stack + Tabs", () => {
     );
 
     act(() => {
-      navigation.tab(1);
+      navigation.tabs.tab(1);
     });
 
     act(() => {
-      navigation.push(<Text>pushed-to-b</Text>);
+      navigation.stack.push(<Text>pushed-to-b</Text>);
     });
 
     const state = navigation.store.getState();
@@ -371,7 +371,7 @@ describe("Nested Stack + Tabs", () => {
     });
 
     act(() => {
-      navigation.tab(1);
+      navigation.tabs.tab(1);
     });
 
     const state = navigation.store.getState();

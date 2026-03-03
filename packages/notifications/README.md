@@ -131,6 +131,6 @@ Use this as a fallback when prop injection is not convenient.
 `@rn-tools/navigation` mounts notifications internally. If you already use `Navigation`, call:
 
 ```ts
-navigation.notify(element, options?);
-navigation.dismissNotification(target?);
+navigation.notifications.present(element, options?);
+navigation.notifications.dismiss(target?);
 ```

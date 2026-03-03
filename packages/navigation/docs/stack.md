@@ -93,16 +93,16 @@ Screens can also be managed through the `navigation` object returned by `createN
 const navigation = createNavigation();
 
 // Push onto the deepest active stack
-navigation.push(<DetailScreen />);
+navigation.stack.push(<DetailScreen />);
 
 // Push onto a specific stack
-navigation.push(<DetailScreen />, { id: "detail", stack: "main-stack" });
+navigation.stack.push(<DetailScreen />, { id: "detail", stack: "main-stack" });
 
 // Pop from the deepest active stack
-navigation.pop();
+navigation.stack.pop();
 
 // Pop from a specific stack
-navigation.pop({ stack: "main-stack" });
+navigation.stack.pop({ stack: "main-stack" });
 ```
 
 ## Duplicate Prevention
@@ -111,10 +111,10 @@ When pushing a screen with an `id`, the stack will skip the push if a screen wit
 
 ```tsx
 // First push succeeds
-navigation.push(<DetailScreen />, { id: "detail", stack: "main-stack" });
+navigation.stack.push(<DetailScreen />, { id: "detail", stack: "main-stack" });
 
 // Second push is ignored — "detail" already exists on the stack
-navigation.push(<DetailScreen />, { id: "detail", stack: "main-stack" });
+navigation.stack.push(<DetailScreen />, { id: "detail", stack: "main-stack" });
 ```
 
 Once the screen is popped, it can be pushed again with the same ID.
@@ -138,7 +138,7 @@ const navigation = createNavigation({
 
 ## Nesting Stacks
 
-Stacks can be nested. When calling `navigation.push()` without an explicit `stack`, it targets the deepest active stack:
+Stacks can be nested. When calling `navigation.stack.push()` without an explicit `stack`, it targets the deepest active stack:
 
 ```tsx
 function App() {
@@ -148,7 +148,7 @@ function App() {
 }
 
 // Targets "inner" — the deepest active stack
-navigation.push(<DetailScreen />);
+navigation.stack.push(<DetailScreen />);
 ```
 
 If a parent stack becomes inactive, push operations fall back to the next deepest active stack.

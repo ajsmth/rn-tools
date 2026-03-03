@@ -26,8 +26,8 @@ export default function App() {
 - a render tree for active stack/tab resolution
 - a root `Stack` (`__root__`)
 - navigation context/providers
-- a sheets provider (for `navigation.present(...)`)
-- a notifications provider (for `navigation.notify(...)`)
+- a sheets provider (for `navigation.sheets.present(...)`)
+- a notifications provider (for `navigation.notifications.present(...)`)
 
 ## `createNavigation`
 
@@ -46,19 +46,25 @@ type NavigationClient = {
   sheetsStore: SheetsClient;
   notificationsStore: NotificationsClient;
 
-  push: (element: React.ReactElement, options?: PushOptions) => void;
-  pop: (options?: { stack?: string }) => void;
-  tab: (index: number, options?: { tabs?: string }) => void;
-
-  present: (element: React.ReactElement, options?: SheetOptions) => string;
-  dismiss: (id?: string) => void;
-  dismissAll: () => void;
-
-  notify: (
-    element: React.ReactElement,
-    options?: NotificationOptions,
-  ) => string;
-  dismissNotification: (target?: NotificationDismissTarget) => void;
+  stack: {
+    push: (element: React.ReactElement, options?: PushOptions) => void;
+    pop: (options?: { stack?: string }) => void;
+  };
+  tabs: {
+    tab: (index: number, options?: { tabs?: string }) => void;
+  };
+  sheets: {
+    present: (element: React.ReactElement, options?: SheetOptions) => string;
+    dismiss: (id?: string) => void;
+    dismissAll: () => void;
+  };
+  notifications: {
+    present: (
+      element: React.ReactElement,
+      options?: NotificationOptions,
+    ) => string;
+    dismiss: (target?: NotificationDismissTarget) => void;
+  };
 };
 ```
 
@@ -67,7 +73,7 @@ type NavigationClient = {
 ### `push`
 
 ```ts
-navigation.push(element, options?)
+navigation.stack.push(element, options?)
 ```
 
 Pushes to a stack.
@@ -78,7 +84,7 @@ Pushes to a stack.
 ### `pop`
 
 ```ts
-navigation.pop(options?)
+navigation.stack.pop(options?)
 ```
 
 Pops top screen from target stack (or deepest active stack).
@@ -86,7 +92,7 @@ Pops top screen from target stack (or deepest active stack).
 ### `tab`
 
 ```ts
-navigation.tab(index, options?)
+navigation.tabs.tab(index, options?)
 ```
 
 Switches active tab index.
@@ -98,7 +104,7 @@ Switches active tab index.
 ### `present`
 
 ```ts
-navigation.present(element, options?)
+navigation.sheets.present(element, options?)
 ```
 
 Presents a bottom sheet and returns a sheet key.
@@ -119,7 +125,7 @@ The rendered element also receives an injected optional `dismiss?: () => void` p
 ### `dismiss`
 
 ```ts
-navigation.dismiss(id?)
+navigation.sheets.dismiss(id?)
 ```
 
 Dismisses by sheet id/key, or dismisses the top-most sheet if omitted.
@@ -127,17 +133,17 @@ Dismisses by sheet id/key, or dismisses the top-most sheet if omitted.
 ### `dismissAll`
 
 ```ts
-navigation.dismissAll()
+navigation.sheets.dismissAll()
 ```
 
 Dismisses all active sheets.
 
 ## Notification methods
 
-### `notify`
+### `present`
 
 ```ts
-navigation.notify(element, options?)
+navigation.notifications.present(element, options?)
 ```
 
 Shows a notification and returns its key.
@@ -149,10 +155,10 @@ Shows a notification and returns its key.
 
 The rendered element also receives an injected optional `dismiss?: () => void` prop.
 
-### `dismissNotification`
+### `dismiss`
 
 ```ts
-navigation.dismissNotification(target?)
+navigation.notifications.dismiss(target?)
 ```
 
 Dismisses a notification by key/id, lane (`"top"` or `"bottom"`), or the latest top-lane notification when omitted.
@@ -187,12 +193,12 @@ function Home() {
     <View>
       <Button
         title="Push"
-        onPress={() => navigation.push(<Detail />, { id: "detail" })}
+        onPress={() => navigation.stack.push(<Detail />, { id: "detail" })}
       />
       <Button
         title="Present sheet"
         onPress={() =>
-          navigation.present(
+          navigation.sheets.present(
             <View style={{ padding: 24 }}>
               <Text>Sheet content</Text>
             </View>,
@@ -200,7 +206,7 @@ function Home() {
           )
         }
       />
-      <Button title="Dismiss sheet" onPress={() => navigation.dismiss()} />
+      <Button title="Dismiss sheet" onPress={() => navigation.sheets.dismiss()} />
     </View>
   );
 }
@@ -208,7 +214,7 @@ function Home() {
 function Detail() {
   return (
     <View>
-      <Button title="Back" onPress={() => navigation.pop()} />
+      <Button title="Back" onPress={() => navigation.stack.pop()} />
     </View>
   );
 }

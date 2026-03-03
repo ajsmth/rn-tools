@@ -14,7 +14,7 @@ function MyScreen({
   children?: React.ReactNode;
 }) {
   function pushOnce() {
-    navigation.push(
+    navigation.stack.push(
       <Stack.Screen>
         <MyScreen title="Pushed screen">
           <Button title="Pop screen" onPress={pop} />
@@ -27,7 +27,7 @@ function MyScreen({
   }
 
   function pop() {
-    navigation.pop();
+    navigation.stack.pop();
   }
 
   return (
