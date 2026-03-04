@@ -6,23 +6,9 @@ import type {
   BaseOverlayOptions,
   OverlayState,
 } from "@rn-tools/core";
-import type {
-  AppearanceAndroid,
-  AppearanceIOS,
-  SheetChangeEvent,
-} from "./native-sheets-view";
-import type { ViewStyle } from "react-native";
+import type { NativeSheetViewProps } from "./native-sheets-view";
 
-export type SheetOptions = BaseOverlayOptions & {
-  snapPoints?: number[];
-  initialIndex?: number;
-  canDismiss?: boolean;
-  onDismissPrevented?: () => void;
-  onStateChange?: (event: SheetChangeEvent) => void;
-  containerStyle?: ViewStyle;
-  appearanceAndroid?: AppearanceAndroid;
-  appearanceIOS?: AppearanceIOS;
-};
+export type SheetOptions = BaseOverlayOptions & NativeSheetViewProps;
 
 export type SheetsState = OverlayState<SheetOptions>;
 export type SheetsStore = Store<SheetsState>;
@@ -31,7 +17,11 @@ export type SheetsClient = {
   store: SheetsStore;
   renderTreeStore: RenderTreeStore;
   setRenderTreeStore: (renderTreeStore: RenderTreeStore) => void;
-  present: (element: React.ReactElement, options?: SheetOptions) => string;
+  present: (
+    element: string | React.ReactElement,
+    options?: Partial<SheetOptions>,
+  ) => string;
+  mount: (id: string) => void;
   dismiss: (id?: string) => void;
   dismissAll: () => void;
   remove: (id: string) => void;
@@ -51,16 +41,8 @@ export const SheetsContext = React.createContext<SheetsClient | null>(null);
 export const SheetsStoreContext = React.createContext<SheetsStore | null>(null);
 export const SheetEntryKeyContext = React.createContext<string | null>(null);
 
-export function useSheets(): SheetsClient {
-  const sheets = React.useContext(SheetsContext);
-  if (!sheets) {
-    throw new Error("SheetsProvider is missing from the component tree.");
-  }
-  return sheets;
-}
-
 export function useSheetEntry() {
-  const sheets = useSheets();
+  const sheets = React.useContext(SheetsContext);
   const entryKey = React.useContext(SheetEntryKeyContext);
 
   const dismiss = React.useCallback(() => {
@@ -89,13 +71,28 @@ export function createSheets(
     renderTreeStore,
   });
 
+  function present(
+    idOrElement: string | React.ReactElement,
+    options?: SheetOptions,
+  ) {
+    if (typeof idOrElement === "string") {
+      overlay.markOpening(idOrElement);
+      return idOrElement;
+    }
+
+    return overlay.add(idOrElement, options);
+  }
+
+  function mount(id: string) {
+    overlay.add(null, { id, status: "mounted" });
+  }
+
   return {
     store: overlay.store,
-    get renderTreeStore() {
-      return overlay.renderTreeStore;
-    },
+    renderTreeStore: overlay.renderTreeStore,
     setRenderTreeStore: overlay.setRenderTreeStore,
-    present: overlay.add,
+    present,
+    mount,
     dismiss: overlay.remove,
     dismissAll: overlay.removeAll,
     remove: overlay.destroy,

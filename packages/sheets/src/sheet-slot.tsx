@@ -1,7 +1,7 @@
 import * as React from "react";
 import { RenderTreeNode, useStore } from "@rn-tools/core";
 import type { OverlayStatus } from "@rn-tools/core";
-import { BottomSheet } from "./native-sheets-view";
+import { NativeBottomSheet } from "./native-sheets-view";
 import type { SheetChangeEvent } from "./native-sheets-view";
 import {
   SHEET_TYPE,
@@ -11,10 +11,7 @@ import {
   SheetsStoreContext,
 } from "./sheets-client";
 import type { ViewStyle } from "react-native";
-import type {
-  AppearanceAndroid,
-  AppearanceIOS,
-} from "./native-sheets-view";
+import type { AppearanceAndroid, AppearanceIOS } from "./native-sheets-view";
 
 type SheetSlotEntryProps = {
   entryKey: string;
@@ -80,7 +77,11 @@ const SheetSlotEntry = React.memo(function SheetSlotEntry(
 
   if (!props.wrapped) {
     return (
-      <RenderTreeNode type={SHEET_TYPE} id={props.entryKey} active={props.active}>
+      <RenderTreeNode
+        type={SHEET_TYPE}
+        id={props.entryKey}
+        active={props.active}
+      >
         <SheetEntryKeyContext.Provider value={props.entryKey}>
           {injectedElement}
         </SheetEntryKeyContext.Provider>
@@ -90,7 +91,7 @@ const SheetSlotEntry = React.memo(function SheetSlotEntry(
 
   return (
     <RenderTreeNode type={SHEET_TYPE} id={props.entryKey} active={props.active}>
-      <BottomSheet
+      <NativeBottomSheet
         isOpen={isOpen}
         setIsOpen={handleSetIsOpen}
         onDismissed={handleDismissed}
@@ -106,14 +107,16 @@ const SheetSlotEntry = React.memo(function SheetSlotEntry(
         <SheetEntryKeyContext.Provider value={props.entryKey}>
           {injectedElement}
         </SheetEntryKeyContext.Provider>
-      </BottomSheet>
+      </NativeBottomSheet>
     </RenderTreeNode>
   );
 });
 
 export const SheetSlot = React.memo(function SheetSlot() {
   const store = React.useContext(SheetsStoreContext);
-  const entries = useStore(store, (state) => state.entries);
+  const entries = useStore(store, (state) =>
+    state.entries.filter((e) => e.element !== null),
+  );
   const activeKey = React.useMemo(() => {
     for (let i = entries.length - 1; i >= 0; i--) {
       if (entries[i].status !== "closing") {

@@ -14,9 +14,9 @@ jest.mock("./native-sheets-view", () => {
 
   return {
     ...actual,
-    BottomSheet: jest.fn((props: { children?: React.ReactNode }) => (
-      React.createElement(View, { testID: "bottom-sheet" }, props.children)
-    )),
+    NativeBottomSheet: jest.fn((props: { children?: React.ReactNode }) =>
+      React.createElement(View, { testID: "bottom-sheet" }, props.children),
+    ),
   };
 });
 
@@ -93,7 +93,8 @@ describe("SheetSlot injected dismiss prop", () => {
     });
 
     expect(
-      sheets.store.getState().entries.find((entry) => entry.key === key)?.status,
+      sheets.store.getState().entries.find((entry) => entry.key === key)
+        ?.status,
     ).toBe("closing");
   });
 });

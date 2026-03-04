@@ -4,9 +4,9 @@ import { getRenderNodeActive, getRenderNodeDepth } from "./render-tree";
 import type { Store } from "./store";
 import type { RenderTreeStore } from "./render-tree";
 
-export type OverlayStatus = "opening" | "open" | "closing";
+export type OverlayStatus = "mounted" | "opening" | "open" | "closing" | "closed"
 
-export type BaseOverlayOptions = { id?: string; wrapped?: boolean };
+export type BaseOverlayOptions = { id?: string; wrapped?: boolean, status?: OverlayStatus };
 
 export type OverlayEntry<TOptions extends BaseOverlayOptions> = {
   key: string;
@@ -28,12 +28,13 @@ export type OverlayStore<TOptions extends BaseOverlayOptions> = {
   store: Store<OverlayState<TOptions>>;
   renderTreeStore: RenderTreeStore;
   setRenderTreeStore: (renderTreeStore: RenderTreeStore) => void;
-  add: (element: React.ReactElement, options?: TOptions) => string;
+  add: (element: React.ReactElement, options?: Partial<TOptions>) => string;
   remove: (id?: string) => void;
   removeAll: () => void;
   destroy: (id: string) => void;
   markOpened: (key: string) => void;
   markClosed: (key: string) => void;
+  markOpening: (key: string) => void;
 };
 
 
@@ -72,6 +73,8 @@ export function createOverlayStore<
   ): string {
     const generatedKey = `${config.type}-${++counter}`;
     let addedKey = generatedKey;
+    const initialStatus = options?.status ?? "opening"
+    delete options["status"]
 
     store.setState((prev) => {
       if (options.id == null) {
@@ -79,7 +82,7 @@ export function createOverlayStore<
           ...prev,
           entries: [
             ...prev.entries,
-            { key: generatedKey, element, options, status: "opening" },
+            { key: generatedKey, element, options, status: initialStatus },
           ],
         };
       }
@@ -93,7 +96,7 @@ export function createOverlayStore<
           ...prev,
           entries: [
             ...prev.entries,
-            { key: generatedKey, element, options, status: "opening" },
+            { key: generatedKey, element, options, status: initialStatus },
           ],
         };
       }
@@ -104,7 +107,7 @@ export function createOverlayStore<
         key: duplicate.key,
         element,
         options,
-        status: "opening",
+        status: initialStatus,
       };
 
       const withoutDuplicate = prev.entries.filter(
@@ -204,6 +207,18 @@ export function createOverlayStore<
     });
   }
 
+  function markOpening(id: string) {
+    store.setState((prev) => {
+      const index = prev.entries.findIndex(e => e.options.id === id)
+      if (index === -1) return prev
+
+      const entry = prev.entries[index]
+      const entries = [...prev.entries]
+      entries[index] = { ...entry, status: "opening" }
+      return { ...prev, entries }
+    })
+  }
+
   function markOpened(key: string) {
     store.setState((prev) => {
       const index = prev.entries.findIndex((entry) => entry.key === key);
@@ -241,9 +256,7 @@ export function createOverlayStore<
 
   return {
     store,
-    get renderTreeStore() {
-      return renderTreeStoreRef.current;
-    },
+    renderTreeStore: renderTreeStoreRef.current,
     setRenderTreeStore,
     add,
     remove,
@@ -251,5 +264,6 @@ export function createOverlayStore<
     destroy,
     markOpened,
     markClosed,
+    markOpening,
   };
 }

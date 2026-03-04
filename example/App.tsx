@@ -9,6 +9,7 @@ import {
 } from "@rn-tools/navigation";
 import * as React from "react";
 import { Text, View, Button, Pressable } from "react-native";
+import { BottomSheetExample } from "~/bottom-sheet-example";
 
 const navigation = createNavigation();
 
@@ -31,6 +32,7 @@ const tabScreens: TabScreenOptions[] = [
 ];
 
 export default function App() {
+  // return <BottomSheetExample />;
   return (
     <Navigation navigation={navigation}>
       <Tabs screens={tabScreens} tabbarPosition="bottom" />
@@ -78,7 +80,9 @@ function HomeScreen() {
       <Button
         title="Push screen"
         onPress={() => {
-          navigation.stack.push(<DetailScreen title="Pushed Screen" count={1} />);
+          navigation.stack.push(
+            <DetailScreen title="Pushed Screen" count={1} />,
+          );
         }}
       />
       <View style={{ marginTop: 24 }}>
@@ -122,7 +126,10 @@ function HomeScreen() {
           title='Dismiss by id "edit"'
           onPress={() => navigation.sheets.dismiss("edit")}
         />
-        <Button title="Dismiss all" onPress={() => navigation.sheets.dismissAll()} />
+        <Button
+          title="Dismiss all"
+          onPress={() => navigation.sheets.dismissAll()}
+        />
       </View>
       <View style={{ marginTop: 24 }}>
         <Text
@@ -272,7 +279,9 @@ function ExploreScreen() {
       <Button
         title="Push screen"
         onPress={() => {
-          navigation.stack.push(<DetailScreen title="Explore Detail" count={1} />);
+          navigation.stack.push(
+            <DetailScreen title="Explore Detail" count={1} />,
+          );
         }}
       />
     </View>
@@ -286,7 +295,9 @@ function SettingsScreen() {
       <Button
         title="Push screen"
         onPress={() => {
-          navigation.stack.push(<DetailScreen title="Settings Detail" count={1} />);
+          navigation.stack.push(
+            <DetailScreen title="Settings Detail" count={1} />,
+          );
         }}
       />
     </View>
@@ -311,7 +322,9 @@ function DetailScreen({ title, count }: { title: string; count: number }) {
       <Button title="Pop screen" onPress={() => navigation.stack.pop()} />
       <Button
         title="Autosized sheet"
-        onPress={() => navigation.sheets.present(<SheetContent label="Auto-sized" />)}
+        onPress={() =>
+          navigation.sheets.present(<SheetContent label="Auto-sized" />)
+        }
       />
       <Button
         title="Snap points sheet"
