@@ -6,13 +6,12 @@ import type { SheetChangeEvent } from "./native-sheets-view";
 import {
   SHEET_TYPE,
   SheetEntryKeyContext,
-  type SheetInjectedProps,
-  SheetsContext,
-  SheetsStoreContext,
-} from "./sheets-client";
+  useSheetsStore,
+} from "./sheets-context";
 import type { ViewStyle } from "react-native";
 import type { AppearanceAndroid, AppearanceIOS } from "./native-sheets-view";
 
+// TODO: dedupe props
 type SheetSlotEntryProps = {
   entryKey: string;
   element: React.ReactElement;
@@ -32,17 +31,17 @@ type SheetSlotEntryProps = {
 const SheetSlotEntry = React.memo(function SheetSlotEntry(
   props: SheetSlotEntryProps,
 ) {
-  const sheets = React.useContext(SheetsContext);
+  const sheets = useSheetsStore();
   const isOpen = props.status !== "closing";
 
   const handleStateChange = React.useCallback(
     (event: SheetChangeEvent) => {
       if (event.type === "OPEN") {
-        sheets?.markDidOpen(props.entryKey);
+        sheets?.markOpened(props.entryKey);
       }
 
       if (event.type === "HIDDEN") {
-        sheets?.markDidDismiss(props.entryKey);
+        sheets?.markClosed(props.entryKey);
       }
 
       props.onStateChange?.(event);
@@ -53,27 +52,15 @@ const SheetSlotEntry = React.memo(function SheetSlotEntry(
   const handleSetIsOpen = React.useCallback(
     (nextIsOpen: boolean) => {
       if (!nextIsOpen) {
-        sheets?.dismiss(props.entryKey);
+        sheets?.remove(props.entryKey);
       }
     },
     [sheets, props.entryKey],
   );
 
   const handleDismissed = React.useCallback(() => {
-    sheets?.markDidDismiss(props.entryKey);
+    sheets?.markClosed(props.entryKey);
   }, [sheets, props.entryKey]);
-
-  const handleDismiss = React.useCallback(() => {
-    sheets?.dismiss(props.entryKey);
-  }, [sheets, props.entryKey]);
-
-  const injectedElement = React.useMemo(() => {
-    if (!React.isValidElement<SheetInjectedProps>(props.element)) {
-      return props.element;
-    }
-
-    return React.cloneElement(props.element, { dismiss: handleDismiss });
-  }, [props.element, handleDismiss]);
 
   if (!props.wrapped) {
     return (
@@ -83,7 +70,7 @@ const SheetSlotEntry = React.memo(function SheetSlotEntry(
         active={props.active}
       >
         <SheetEntryKeyContext.Provider value={props.entryKey}>
-          {injectedElement}
+          {props.element}
         </SheetEntryKeyContext.Provider>
       </RenderTreeNode>
     );
@@ -105,7 +92,7 @@ const SheetSlotEntry = React.memo(function SheetSlotEntry(
         appearanceIOS={props.appearanceIOS}
       >
         <SheetEntryKeyContext.Provider value={props.entryKey}>
-          {injectedElement}
+          {props.element}
         </SheetEntryKeyContext.Provider>
       </NativeBottomSheet>
     </RenderTreeNode>
@@ -113,10 +100,12 @@ const SheetSlotEntry = React.memo(function SheetSlotEntry(
 });
 
 export const SheetSlot = React.memo(function SheetSlot() {
-  const store = React.useContext(SheetsStoreContext);
-  const entries = useStore(store, (state) =>
+  const store = useSheetsStore();
+
+  const entries = useStore(store.store, (state) =>
     state.entries.filter((e) => e.element !== null),
   );
+
   const activeKey = React.useMemo(() => {
     for (let i = entries.length - 1; i >= 0; i--) {
       if (entries[i].status !== "closing") {

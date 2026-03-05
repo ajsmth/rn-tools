@@ -7,18 +7,10 @@ describe("createSheets", () => {
   it("returns the expected client API", () => {
     const sheets = createSheets(createRenderTreeStore());
 
-    expect(sheets.store).toBeDefined();
+    expect(sheets).toBeDefined();
     expect(typeof sheets.present).toBe("function");
     expect(typeof sheets.dismiss).toBe("function");
     expect(typeof sheets.dismissAll).toBe("function");
-    expect(typeof sheets.remove).toBe("function");
-    expect(typeof sheets.markDidOpen).toBe("function");
-    expect(typeof sheets.markDidDismiss).toBe("function");
-  });
-
-  it("starts with empty state", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    expect(sheets.store.getState().entries).toEqual([]);
   });
 
   it("uses sheet- prefix for keys", () => {
@@ -55,10 +47,16 @@ describe("present", () => {
   it("reuses key and replaces entry when id already exists", () => {
     const sheets = createSheets(createRenderTreeStore());
 
-    const key1 = sheets.present(<Text>a</Text>, { id: "edit", snapPoints: [240] });
+    const key1 = sheets.present(<Text>a</Text>, {
+      id: "edit",
+      snapPoints: [240],
+    });
     sheets.markDidOpen(key1);
 
-    const key2 = sheets.present(<Text>b</Text>, { id: "edit", snapPoints: [320] });
+    const key2 = sheets.present(<Text>b</Text>, {
+      id: "edit",
+      snapPoints: [320],
+    });
 
     const entries = sheets.store.getState().entries;
     expect(key2).toBe(key1);

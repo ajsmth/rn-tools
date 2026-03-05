@@ -6,7 +6,7 @@ import type { RenderTreeStore } from "./render-tree";
 
 export type OverlayStatus = "mounted" | "opening" | "open" | "closing" | "closed"
 
-export type BaseOverlayOptions = { id?: string; wrapped?: boolean, status?: OverlayStatus };
+export type BaseOverlayOptions = { id?: string; wrapped?: boolean };
 
 export type OverlayEntry<TOptions extends BaseOverlayOptions> = {
   key: string;
@@ -28,7 +28,9 @@ export type OverlayStore<TOptions extends BaseOverlayOptions> = {
   store: Store<OverlayState<TOptions>>;
   renderTreeStore: RenderTreeStore;
   setRenderTreeStore: (renderTreeStore: RenderTreeStore) => void;
+  mount: (id: string) => void;
   add: (element: React.ReactElement, options?: Partial<TOptions>) => string;
+  // TODO - update namings to make it easier to follow
   remove: (id?: string) => void;
   removeAll: () => void;
   destroy: (id: string) => void;
@@ -67,14 +69,25 @@ export function createOverlayStore<
     return deepestId;
   }
 
+  function mount(id: string) {
+    const generatedKey = `${config.type}-${++counter}`;
+    store.setState((prev) => {
+      return {
+        ...prev,
+        entries: [
+          ...prev.entries,
+          { key: generatedKey, element: null, options: { id } as TOptions, status: "mounted" }
+        ]
+      }
+    })
+  }
+
   function add(
     element: React.ReactElement,
     options: TOptions = {} as TOptions,
   ): string {
     const generatedKey = `${config.type}-${++counter}`;
     let addedKey = generatedKey;
-    const initialStatus = options?.status ?? "opening"
-    delete options["status"]
 
     store.setState((prev) => {
       if (options.id == null) {
@@ -82,7 +95,7 @@ export function createOverlayStore<
           ...prev,
           entries: [
             ...prev.entries,
-            { key: generatedKey, element, options, status: initialStatus },
+            { key: generatedKey, element, options, status: "opening" },
           ],
         };
       }
@@ -96,7 +109,7 @@ export function createOverlayStore<
           ...prev,
           entries: [
             ...prev.entries,
-            { key: generatedKey, element, options, status: initialStatus },
+            { key: generatedKey, element, options, status: "opening" },
           ],
         };
       }
@@ -107,7 +120,7 @@ export function createOverlayStore<
         key: duplicate.key,
         element,
         options,
-        status: initialStatus,
+        status: "opening",
       };
 
       const withoutDuplicate = prev.entries.filter(
@@ -258,6 +271,7 @@ export function createOverlayStore<
     store,
     renderTreeStore: renderTreeStoreRef.current,
     setRenderTreeStore,
+    mount,
     add,
     remove,
     removeAll,

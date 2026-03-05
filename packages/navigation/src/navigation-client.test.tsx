@@ -32,9 +32,7 @@ describe("createNavigationState", () => {
   });
 
   it("accepts Map inputs directly", () => {
-    const stacks = new Map([
-      ["stack-a", [{ element: <Text>a</Text> }]],
-    ]);
+    const stacks = new Map([["stack-a", [{ element: <Text>a</Text> }]]]);
     const tabs = new Map([["my-tabs", { activeIndex: 1 }]]);
     const state = createNavigationState({ stacks, tabs });
 
@@ -48,7 +46,6 @@ describe("createNavigation", () => {
     const nav = createNavigation();
     expect(nav.store).toBeDefined();
     expect(nav.renderTreeStore).toBeDefined();
-    expect(nav.sheetsStore).toBeDefined();
     expect(typeof nav.stack.push).toBe("function");
     expect(typeof nav.stack.pop).toBe("function");
     expect(typeof nav.tabs.tab).toBe("function");
@@ -107,7 +104,9 @@ describe("sheet methods", () => {
 describe("notification methods", () => {
   it("notify returns a key", () => {
     const nav = createNavigation();
-    const key = nav.notifications.present(<Text>notification</Text>, { durationMs: null });
+    const key = nav.notifications.present(<Text>notification</Text>, {
+      durationMs: null,
+    });
 
     expect(typeof key).toBe("string");
   });
@@ -129,7 +128,10 @@ describe("notification methods", () => {
   it("dismissNotification is callable via public API", () => {
     const nav = createNavigation();
     nav.notifications.present(<Text>a</Text>, { durationMs: null });
-    nav.notifications.present(<Text>b</Text>, { position: "bottom", durationMs: null });
+    nav.notifications.present(<Text>b</Text>, {
+      position: "bottom",
+      durationMs: null,
+    });
 
     expect(() => nav.notifications.dismiss()).not.toThrow();
     expect(() => nav.notifications.dismiss("bottom")).not.toThrow();
@@ -211,10 +213,7 @@ describe("pop", () => {
   it("removes the top screen from the specified stack", () => {
     const nav = createNavigation({
       stacks: {
-        "stack-a": [
-          { element: <Text>a</Text> },
-          { element: <Text>b</Text> },
-        ],
+        "stack-a": [{ element: <Text>a</Text> }, { element: <Text>b</Text> }],
       },
     });
 

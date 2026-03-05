@@ -1,102 +1,113 @@
 import * as React from "react";
-import { createOverlayStore, createRenderTreeStore } from "@rn-tools/core";
+import {
+  RenderTree,
+  RenderTreeStoreContext,
+  createRenderTreeStore,
+  createOverlayStore,
+} from "@rn-tools/core";
 import type {
-  Store,
   RenderTreeStore,
   BaseOverlayOptions,
   OverlayState,
+  OverlayStore,
 } from "@rn-tools/core";
 import type { NativeSheetViewProps } from "./native-sheets-view";
+import { SheetSlot } from "./sheet-slot";
+import { SHEET_TYPE, SheetsStoreContext } from "./sheets-context";
 
 export type SheetOptions = BaseOverlayOptions & NativeSheetViewProps;
 
 export type SheetsState = OverlayState<SheetOptions>;
-export type SheetsStore = Store<SheetsState>;
+export type SheetsStore = OverlayStore<SheetOptions>;
 
 export type SheetsClient = {
-  store: SheetsStore;
-  renderTreeStore: RenderTreeStore;
-  setRenderTreeStore: (renderTreeStore: RenderTreeStore) => void;
-  present: (
-    element: string | React.ReactElement,
-    options?: Partial<SheetOptions>,
-  ) => string;
-  mount: (id: string) => void;
+  present(element: React.ReactElement, options?: Partial<SheetOptions>): string;
+  present(id: string): string;
+
   dismiss: (id?: string) => void;
   dismissAll: () => void;
-  remove: (id: string) => void;
-  markDidOpen: (key: string) => void;
-  markDidDismiss: (key: string) => void;
 };
 
 export type SheetEntry = SheetsState["entries"][number];
 export type SheetStatus = SheetEntry["status"];
-export type SheetInjectedProps = {
-  dismiss?: () => void;
+
+export {
+  SHEET_TYPE,
+  SheetEntryKeyContext,
+  SheetsContext,
+  SheetsStoreContext,
+} from "./sheets-context";
+
+type SheetsProviderProps = {
+  store: SheetsStore;
+  children: React.ReactNode;
 };
 
-export const SHEET_TYPE = "sheet";
+const SheetsProvider = React.memo(function SheetsProvider({
+  store,
+  children,
+}: SheetsProviderProps) {
+  const parentRenderTreeStore = React.useContext(RenderTreeStoreContext);
 
-export const SheetsContext = React.createContext<SheetsClient | null>(null);
-export const SheetsStoreContext = React.createContext<SheetsStore | null>(null);
-export const SheetEntryKeyContext = React.createContext<string | null>(null);
+  if (parentRenderTreeStore) {
+    store.setRenderTreeStore(parentRenderTreeStore);
+  }
 
-export function useSheetEntry() {
-  const sheets = React.useContext(SheetsContext);
-  const entryKey = React.useContext(SheetEntryKeyContext);
-
-  const dismiss = React.useCallback(() => {
-    if (entryKey) {
-      sheets.dismiss(entryKey);
-      return;
-    }
-    sheets.dismiss();
-  }, [sheets, entryKey]);
-
-  return React.useMemo(
-    () => ({
-      entryKey,
-      dismiss,
-      dismissAll: sheets.dismissAll,
-    }),
-    [entryKey, dismiss, sheets.dismissAll],
+  const content = (
+    <SheetsStoreContext.Provider value={store}>
+      {children}
+      <SheetSlot />
+    </SheetsStoreContext.Provider>
   );
-}
+
+  if (parentRenderTreeStore) {
+    return content;
+  }
+
+  return <RenderTree store={store.renderTreeStore}>{content}</RenderTree>;
+});
 
 export function createSheets(
   renderTreeStore: RenderTreeStore = createRenderTreeStore(),
-): SheetsClient {
-  const overlay = createOverlayStore<SheetOptions>({
+) {
+  const store = createOverlayStore<SheetOptions>({
     type: SHEET_TYPE,
     renderTreeStore,
   });
 
   function present(
+    element: React.ReactElement,
+    options?: Partial<SheetOptions>,
+  ): string;
+  function present(id: string): string;
+  function present(
     idOrElement: string | React.ReactElement,
     options?: SheetOptions,
   ) {
     if (typeof idOrElement === "string") {
-      overlay.markOpening(idOrElement);
+      store.markOpening(idOrElement);
       return idOrElement;
     }
 
-    return overlay.add(idOrElement, options);
+    return store.add(idOrElement, options);
   }
 
-  function mount(id: string) {
-    overlay.add(null, { id, status: "mounted" });
-  }
+  const Provider = React.memo(function Provider({
+    children,
+  }: {
+    children: React.ReactNode;
+  }) {
+    return <SheetsProvider store={store}>{children}</SheetsProvider>;
+  });
+
+  const client: SheetsClient = {
+    present,
+    dismiss: store.remove,
+    dismissAll: store.removeAll,
+  };
 
   return {
-    store: overlay.store,
-    renderTreeStore: overlay.renderTreeStore,
-    setRenderTreeStore: overlay.setRenderTreeStore,
-    present,
-    mount,
-    dismiss: overlay.remove,
-    dismissAll: overlay.removeAll,
-    remove: overlay.destroy,
-    markDidOpen: overlay.markOpened,
-    markDidDismiss: overlay.markClosed,
+    ...client,
+    Provider,
   };
 }

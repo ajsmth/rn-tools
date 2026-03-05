@@ -6,7 +6,11 @@ import {
   getRenderNodeActive,
   getRenderNodeDepth,
 } from "@rn-tools/core";
-import type { Store, RenderTreeStore, BaseOverlayOptions } from "@rn-tools/core";
+import type {
+  Store,
+  RenderTreeStore,
+  BaseOverlayOptions,
+} from "@rn-tools/core";
 import { createSheets } from "@rn-tools/sheets";
 import type { SheetOptions, SheetsClient } from "@rn-tools/sheets";
 import { createNotifications } from "@rn-tools/notifications";
@@ -71,7 +75,6 @@ export function loadNavigationState(
 export type NavigationClient = {
   store: NavigationStore;
   renderTreeStore: RenderTreeStore;
-  sheetsStore: SheetsClient;
   notificationsStore: NotificationsClient;
   stack: {
     push: (element: React.ReactElement, options?: PushOptions) => void;
@@ -80,11 +83,7 @@ export type NavigationClient = {
   tabs: {
     tab: (index: number, options?: { tabs?: string }) => void;
   };
-  sheets: {
-    present: (element: React.ReactElement, options?: SheetOptions) => string;
-    dismiss: (id?: string) => void;
-    dismissAll: () => void;
-  };
+  sheets: ReturnType<typeof createSheets>;
   notifications: {
     present: (
       element: React.ReactElement,
@@ -101,7 +100,7 @@ export function createNavigation(
     normalizeNavigationState(initialState ?? { stacks: new Map() }),
   );
   const renderTreeStore = createRenderTreeStore();
-  const sheetsStore = createSheets(renderTreeStore);
+  const sheets = createSheets(renderTreeStore);
   const notificationsStore = createNotifications(renderTreeStore);
 
   function getDeepestActiveNodeId(type: string): string | null {
@@ -176,21 +175,6 @@ export function createNavigation(
     });
   }
 
-  function present(
-    element: React.ReactElement,
-    options?: SheetOptions,
-  ): string {
-    return sheetsStore.present(element, options);
-  }
-
-  function dismiss(id?: string) {
-    sheetsStore.dismiss(id);
-  }
-
-  function dismissAll() {
-    sheetsStore.dismissAll();
-  }
-
   function notify(
     element: React.ReactElement,
     options?: NotificationOptions,
@@ -205,7 +189,6 @@ export function createNavigation(
   return {
     store: navStore,
     renderTreeStore,
-    sheetsStore,
     notificationsStore,
     stack: {
       push,
@@ -214,11 +197,7 @@ export function createNavigation(
     tabs: {
       tab,
     },
-    sheets: {
-      present,
-      dismiss,
-      dismissAll,
-    },
+    sheets: sheets,
     notifications: {
       present: notify,
       dismiss: dismissNotification,
@@ -245,7 +224,7 @@ export function useNavigationStore(): NavigationStore {
 export function useTabActiveIndex(tabsId: string | null): number {
   const store = useNavigationStore();
   return useStore(store, (state) =>
-    tabsId ? state.tabs.get(tabsId)?.activeIndex ?? 0 : 0,
+    tabsId ? (state.tabs.get(tabsId)?.activeIndex ?? 0) : 0,
   );
 }
 
@@ -254,7 +233,7 @@ export function useStackScreens(
 ): NavigationScreenEntry[] {
   const store = useNavigationStore();
   return useStore(store, (state) =>
-    stackKey ? state.stacks.get(stackKey) ?? [] : [],
+    stackKey ? (state.stacks.get(stackKey) ?? []) : [],
   );
 }
 

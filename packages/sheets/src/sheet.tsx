@@ -5,11 +5,12 @@ import type { SheetChangeEvent } from "./native-sheets-view";
 import {
   SHEET_TYPE,
   SheetEntryKeyContext,
-  SheetsContext,
-} from "./sheets-client";
+  useSheetsStore,
+} from "./sheets-context";
 import type { ViewStyle } from "react-native";
 import type { AppearanceAndroid, AppearanceIOS } from "./native-sheets-view";
 
+// TODO - dedupe prop
 type SheetProps = {
   id: string;
   children?: React.ReactNode;
@@ -24,7 +25,8 @@ type SheetProps = {
 };
 
 export const Sheet = React.memo(function Sheet(props: SheetProps) {
-  const sheets = React.useContext(SheetsContext);
+  const sheets = useSheetsStore();
+
   const sheet = useStore(sheets.store, (s) =>
     s.entries.find((e) => e.options?.id === props.id),
   );
@@ -45,11 +47,11 @@ export const Sheet = React.memo(function Sheet(props: SheetProps) {
   const handleStateChange = React.useCallback(
     (event: SheetChangeEvent) => {
       if (event.type === "OPEN") {
-        sheets?.markDidOpen(props.id);
+        sheets?.markOpened(props.id);
       }
 
       if (event.type === "HIDDEN") {
-        sheets?.markDidDismiss(props.id);
+        sheets?.markClosed(props.id);
       }
 
       props.onStateChange?.(event);
@@ -60,14 +62,14 @@ export const Sheet = React.memo(function Sheet(props: SheetProps) {
   const handleSetIsOpen = React.useCallback(
     (nextIsOpen: boolean) => {
       if (!nextIsOpen) {
-        sheets?.dismiss(props.id);
+        sheets?.remove(props.id);
       }
     },
     [sheets, props.id],
   );
 
   const handleDismissed = React.useCallback(() => {
-    sheets?.markDidDismiss(props.id);
+    sheets?.remove(props.id);
   }, [sheets, props.id]);
 
   return (

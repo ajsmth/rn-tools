@@ -38,14 +38,20 @@ export type NotificationStatus = NotificationEntry["status"];
 export const NOTIFICATION_TYPE = "notification";
 export const DEFAULT_NOTIFICATION_DURATION_MS = 3000;
 
-export const NotificationsContext = React.createContext<NotificationsClient | null>(null);
-export const NotificationsStoreContext = React.createContext<NotificationsStore | null>(null);
-export const NotificationEntryKeyContext = React.createContext<string | null>(null);
+export const NotificationsContext =
+  React.createContext<NotificationsClient | null>(null);
+export const NotificationsStoreContext =
+  React.createContext<NotificationsStore | null>(null);
+export const NotificationEntryKeyContext = React.createContext<string | null>(
+  null,
+);
 
 export function useNotifications(): NotificationsClient {
   const notifications = React.useContext(NotificationsContext);
   if (!notifications) {
-    throw new Error("NotificationsProvider is missing from the component tree.");
+    throw new Error(
+      "NotificationsProvider is missing from the component tree.",
+    );
   }
   return notifications;
 }
@@ -95,7 +101,9 @@ export function createNotifications(
     beforeEntries: NotificationsState["entries"],
     afterEntries: NotificationsState["entries"],
   ) => {
-    const beforeByKey = new Map(beforeEntries.map((entry) => [entry.key, entry]));
+    const beforeByKey = new Map(
+      beforeEntries.map((entry) => [entry.key, entry]),
+    );
     for (const after of afterEntries) {
       const before = beforeByKey.get(after.key);
       if (!before) {
