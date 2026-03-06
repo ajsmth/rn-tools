@@ -62,11 +62,11 @@ export type RenderTreeDebugNode = {
   children: RenderTreeDebugNode[];
 };
 
-export const RENDER_TREE_ROOT_ID = "render-tree-root";
+export const RENDER_TREE_ROOT_ID_OLD = "render-tree-root";
 
 function createRootNode(): RenderNode {
   return {
-    id: RENDER_TREE_ROOT_ID,
+    id: RENDER_TREE_ROOT_ID_OLD,
     type: "root",
     parentId: null,
     active: true,
@@ -76,8 +76,8 @@ function createRootNode(): RenderNode {
 
 function createRenderTree(nodes?: Map<string, RenderNode>): RenderTreeState {
   const nextNodes = nodes ? new Map(nodes) : new Map();
-  if (!nextNodes.has(RENDER_TREE_ROOT_ID)) {
-    nextNodes.set(RENDER_TREE_ROOT_ID, createRootNode());
+  if (!nextNodes.has(RENDER_TREE_ROOT_ID_OLD)) {
+    nextNodes.set(RENDER_TREE_ROOT_ID_OLD, createRootNode());
   }
   return { nodes: nextNodes };
 }
@@ -155,7 +155,7 @@ export function getRenderNodeActive(chart: RenderTreeState, id: string) {
 export function buildRenderTreeDebugTree(
   chart: RenderTreeState,
 ): RenderTreeDebugNode | null {
-  const root = chart.nodes.get(RENDER_TREE_ROOT_ID);
+  const root = chart.nodes.get(RENDER_TREE_ROOT_ID_OLD);
   if (!root) {
     return null;
   }
@@ -284,17 +284,23 @@ export type RenderTreeProps = {
 
 export type RenderTreeStore = Store<RenderTreeState>;
 
-export function createRenderTreeStore(initial?: RenderTreeState): RenderTreeStore {
-  return createStore(initial ? createRenderTree(initial.nodes) : createRenderTree());
+export function createRenderTreeStore(
+  initial?: RenderTreeState,
+): RenderTreeStore {
+  return createStore(
+    initial ? createRenderTree(initial.nodes) : createRenderTree(),
+  );
 }
 
-export const RenderTree = React.memo(function RenderTree(props: RenderTreeProps) {
+export const RenderTree = React.memo(function RenderTree(
+  props: RenderTreeProps,
+) {
   const storeRef = React.useRef(createRenderTreeStore());
   const store = props.store ?? storeRef.current;
 
   return (
     <RenderTreeStoreContext.Provider value={store}>
-      <RenderNodeIdContext.Provider value={RENDER_TREE_ROOT_ID}>
+      <RenderNodeIdContext.Provider value={RENDER_TREE_ROOT_ID_OLD}>
         <RenderNodeTypeContext.Provider value="root">
           {props.children}
         </RenderNodeTypeContext.Provider>

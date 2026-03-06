@@ -60,7 +60,7 @@ export type BottomSheetProps = {
   snapPoints?: number[];
   isOpen: boolean;
   initialIndex?: number;
-  setIsOpen: (isOpen: boolean) => void;
+  setIsOpen?: (isOpen: boolean) => void;
   onDismissed?: () => void;
   canDismiss?: boolean;
   onDismissPrevented?: () => void;
@@ -68,6 +68,8 @@ export type BottomSheetProps = {
   appearanceAndroid?: AppearanceAndroid;
   appearanceIOS?: AppearanceIOS;
 };
+
+const NOOP = () => {};
 
 export function NativeBottomSheet(props: BottomSheetProps) {
   const {
@@ -77,7 +79,7 @@ export function NativeBottomSheet(props: BottomSheetProps) {
     containerStyle,
     isOpen,
     initialIndex = 0,
-    setIsOpen,
+    setIsOpen = NOOP,
     onDismissed,
     appearanceAndroid,
     appearanceIOS,

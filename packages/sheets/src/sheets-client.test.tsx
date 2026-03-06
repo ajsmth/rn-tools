@@ -1,177 +1,142 @@
-import * as React from "react";
+import { createSheets } from "./sheets-client";
+import { render, act, within } from "@testing-library/react-native";
 import { Text } from "react-native";
-import { createSheets, SHEET_TYPE } from "./sheets-client";
-import { createRenderTreeStore } from "@rn-tools/core";
+import { Sheet } from "./sheet";
 
-describe("createSheets", () => {
-  it("returns the expected client API", () => {
-    const sheets = createSheets(createRenderTreeStore());
-
-    expect(sheets).toBeDefined();
-    expect(typeof sheets.present).toBe("function");
-    expect(typeof sheets.dismiss).toBe("function");
-    expect(typeof sheets.dismissAll).toBe("function");
-  });
-
-  it("uses sheet- prefix for keys", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<Text>hello</Text>);
-    expect(key).toMatch(/^sheet-/);
-  });
+jest.mock("./native-bottom-sheet.tsx", () => {
+  return {
+    // TODO: - mock the onSheetChange callback to test behaviour
+    NativeBottomSheet: ({ children, isOpen }) => {
+      if (!isOpen) return null;
+      return <>{children}</>;
+    },
+  };
 });
 
-describe("present", () => {
-  it("adds a new sheet in opening state", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<Text>hello</Text>);
+describe("createSheets()", () => {
+  test("adding sheets", () => {
+    const sheets = createSheets();
 
-    const entries = sheets.store.getState().entries;
-    expect(typeof key).toBe("string");
-    expect(entries).toHaveLength(1);
-    expect(entries[0].key).toBe(key);
-    expect(entries[0].status).toBe("opening");
-  });
+    const result = render(
+      <sheets.Provider>
+        <Text>Hi</Text>
+      </sheets.Provider>,
+    );
 
-  it("stores element and options", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const element = <Text>content</Text>;
-    const options = { id: "edit", snapPoints: [300, 500] };
-
-    sheets.present(element, options);
-
-    const entry = sheets.store.getState().entries[0];
-    expect(entry.element).toBe(element);
-    expect(entry.options).toBe(options);
-  });
-
-  it("reuses key and replaces entry when id already exists", () => {
-    const sheets = createSheets(createRenderTreeStore());
-
-    const key1 = sheets.present(<Text>a</Text>, {
-      id: "edit",
-      snapPoints: [240],
-    });
-    sheets.markDidOpen(key1);
-
-    const key2 = sheets.present(<Text>b</Text>, {
-      id: "edit",
-      snapPoints: [320],
+    act(() => {
+      sheets.push(<Text>Pushed!</Text>);
     });
 
-    const entries = sheets.store.getState().entries;
-    expect(key2).toBe(key1);
-    expect(entries).toHaveLength(1);
-    expect(entries[0].key).toBe(key1);
-    expect(entries[0].status).toBe("opening");
-    expect(entries[0].options.snapPoints).toEqual([320]);
-  });
-});
+    result.getByText(/pushed/i);
 
-describe("dismiss", () => {
-  it("marks the top non-closing sheet as closing", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const keyA = sheets.present(<Text>a</Text>);
-    const keyB = sheets.present(<Text>b</Text>);
-    sheets.markDidOpen(keyA);
-    sheets.markDidOpen(keyB);
-
-    sheets.dismiss();
-
-    const entries = sheets.store.getState().entries;
-    expect(entries[0].status).toBe("open");
-    expect(entries[1].status).toBe("closing");
-  });
-
-  it("uses render-tree active sheet for no-arg dismiss", () => {
-    const renderTreeStore = createRenderTreeStore();
-    const sheets = createSheets(renderTreeStore);
-    const keyA = sheets.present(<Text>a</Text>);
-    const keyB = sheets.present(<Text>b</Text>);
-    sheets.markDidOpen(keyA);
-    sheets.markDidOpen(keyB);
-
-    renderTreeStore.setState({
-      nodes: new Map([
-        [
-          "render-tree-root",
-          {
-            id: "render-tree-root",
-            type: "root",
-            parentId: null,
-            active: true,
-            children: [keyA, keyB],
-          },
-        ],
-        [
-          keyA,
-          {
-            id: keyA,
-            type: SHEET_TYPE,
-            parentId: "render-tree-root",
-            active: true,
-            children: [],
-          },
-        ],
-        [
-          keyB,
-          {
-            id: keyB,
-            type: SHEET_TYPE,
-            parentId: "render-tree-root",
-            active: false,
-            children: [],
-          },
-        ],
-      ]),
+    act(() => {
+      sheets.push(<Text>Second</Text>);
     });
 
-    sheets.dismiss();
-
-    const entries = sheets.store.getState().entries;
-    expect(entries.find((entry) => entry.key === keyA)?.status).toBe("closing");
-    expect(entries.find((entry) => entry.key === keyB)?.status).toBe("open");
+    result.getByText(/second/i);
   });
-});
 
-describe("markDidDismiss", () => {
-  it("removes a closing sheet", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<Text>a</Text>);
-    sheets.markDidOpen(key);
-    sheets.dismiss(key);
+  test("removing sheets", () => {
+    const sheets = createSheets();
 
-    sheets.markDidDismiss(key);
+    const result = render(
+      <sheets.Provider>
+        <Text>Hey</Text>
+      </sheets.Provider>,
+    );
 
-    expect(sheets.store.getState().entries).toHaveLength(0);
+    act(() => {
+      sheets.push(<Text>Push1</Text>);
+      sheets.push(<Text>Push2</Text>);
+    });
+
+    result.getByText(/push1/i);
+    result.getByText(/push2/i);
+
+    act(() => {
+      sheets.dismiss();
+    });
+
+    expect(result.queryByText(/push2/i)).toBeNull();
   });
-});
 
-describe("dismissAll", () => {
-  it("marks every non-closing sheet as closing", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const keyA = sheets.present(<Text>a</Text>);
-    const keyB = sheets.present(<Text>b</Text>);
-    const keyC = sheets.present(<Text>c</Text>);
-    sheets.markDidOpen(keyA);
-    sheets.markDidOpen(keyB);
-    sheets.markDidOpen(keyC);
-    sheets.dismiss(keyB);
+  test("removing all sheets", () => {
+    const sheets = createSheets();
 
-    sheets.dismissAll();
+    const result = render(
+      <sheets.Provider>
+        <Text>Hey</Text>
+      </sheets.Provider>,
+    );
 
-    const entries = sheets.store.getState().entries;
-    expect(entries).toHaveLength(3);
-    expect(entries.every((entry) => entry.status === "closing")).toBe(true);
+    act(() => {
+      sheets.push(<Text>Push1</Text>);
+      sheets.push(<Text>Push2</Text>);
+    });
+
+    result.getByText(/push2/i);
+
+    act(() => {
+      sheets.dismissAll();
+    });
+
+    expect(result.queryByText(/push2/i)).toBeNull();
+    expect(result.queryByText(/push1/i)).toBeNull();
   });
-});
 
-describe("remove", () => {
-  it("removes by key", () => {
-    const sheets = createSheets(createRenderTreeStore());
-    const key = sheets.present(<Text>a</Text>);
+  test("pushing and removing by id", () => {
+    const sheets = createSheets();
 
-    sheets.remove(key);
+    const result = render(
+      <sheets.Provider>
+        <Text>Hey</Text>
+      </sheets.Provider>,
+    );
 
-    expect(sheets.store.getState().entries).toHaveLength(0);
+    act(() => {
+      sheets.push(<Text>Push1</Text>, { id: "1" });
+      sheets.push(<Text>Push2</Text>, { id: "2" });
+    });
+
+    expect(result.queryByText(/push1/i)).not.toBeNull();
+
+    act(() => {
+      sheets.dismiss("1");
+    });
+
+    expect(result.queryByText(/push1/i)).toBeNull();
+    expect(result.queryByText(/push2/i)).not.toBeNull();
+
+    act(() => {
+      sheets.dismiss("1");
+    });
+
+    expect(result.queryByText(/push1/i)).toBeNull();
+  });
+
+  test("declarative sheets toggling visibility", () => {
+    const sheets = createSheets();
+
+    const result = render(
+      <sheets.Provider>
+        <Sheet id="1">
+          <Text>MySheet</Text>
+        </Sheet>
+      </sheets.Provider>,
+    );
+
+    expect(result.queryByText(/mysheet/i)).toBeNull();
+
+    act(() => {
+      sheets.show("1");
+    });
+
+    expect(result.queryByText(/mysheet/i)).not.toBeNull();
+
+    act(() => {
+      sheets.dismiss("1");
+    });
+
+    expect(result.queryByText(/mysheet/i)).toBeNull();
   });
 });

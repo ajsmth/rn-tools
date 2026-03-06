@@ -5,6 +5,8 @@ import {
   createRenderTreeStore,
   getRenderNodeActive,
   getRenderNodeDepth,
+  createTree,
+  createNodeRegistry,
 } from "@rn-tools/core";
 import type {
   Store,
@@ -99,8 +101,11 @@ export function createNavigation(
   const navStore = createStore(
     normalizeNavigationState(initialState ?? { stacks: new Map() }),
   );
+  const tree = createTree();
+  const registry = createNodeRegistry();
+  const sheets = createSheets(tree, registry);
+
   const renderTreeStore = createRenderTreeStore();
-  const sheets = createSheets(renderTreeStore);
   const notificationsStore = createNotifications(renderTreeStore);
 
   function getDeepestActiveNodeId(type: string): string | null {

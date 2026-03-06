@@ -1,4 +1,4 @@
-import { Sheet, createSheets, SheetsProvider } from "@rn-tools/sheets";
+import { Sheet, createSheets } from "@rn-tools/sheets";
 import * as React from "react";
 import { Text, View, Button, TextInput, FlatList } from "react-native";
 import { useKeyboardHeight } from "@rn-tools/core";
@@ -9,19 +9,16 @@ const sheets = createSheets();
 
 export function BottomSheetExample() {
   return (
-    <SheetsProvider sheets={sheets}>
+    <sheets.Provider>
       <View className="flex-1 pt-24">
         <View className="flex-1">
-          <Button
-            title="Show sheet"
-            onPress={() => sheets.present("my-sheet")}
-          />
+          <Button title="Show sheet" onPress={() => sheets.show("my-sheet")} />
 
           <Sheet
             id="my-sheet"
-            initialIndex={1}
+            // initialIndex={1}
             canDismiss
-            onStateChange={(event) => console.log({ event })}
+            // onStateChange={(event) => console.log({ event })}
             snapPoints={[400, 600, 1200]}
             appearanceAndroid={{
               dimAmount: 0,
@@ -38,7 +35,7 @@ export function BottomSheetExample() {
           </Sheet>
         </View>
       </View>
-    </SheetsProvider>
+    </sheets.Provider>
   );
 }
 

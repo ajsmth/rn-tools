@@ -99,13 +99,13 @@ function HomeScreen() {
         <Button
           title="Present sheet (auto-size)"
           onPress={() =>
-            navigation.sheets.present(<SheetContent label="Auto-sized" />)
+            navigation.sheets.push(<SheetContent label="Auto-sized" />)
           }
         />
         <Button
           title="Present sheet (snap points)"
           onPress={() =>
-            navigation.sheets.present(<SheetContent label="Snap points" />, {
+            navigation.sheets.push(<SheetContent label="Snap points" />, {
               snapPoints: [300, 500],
             })
           }
@@ -113,7 +113,7 @@ function HomeScreen() {
         <Button
           title="Present sheet (id: edit)"
           onPress={() =>
-            navigation.sheets.present(<SheetContent label="Edit sheet" />, {
+            navigation.sheets.push(<SheetContent label="Edit sheet" />, {
               id: "edit",
             })
           }
@@ -226,12 +226,15 @@ function SheetContent({
       <Button
         title="Present nested sheet"
         onPress={() => {
-          navigation.sheets.present(<SheetContent label="Nested sheet" />, {
+          navigation.sheets.push(<SheetContent label="Nested sheet" />, {
             snapPoints: [250],
           });
         }}
       />
-      <Button title="Dismiss this sheet" onPress={() => dismiss?.()} />
+      <Button
+        title="Dismiss this sheet"
+        onPress={() => navigation.sheets.dismiss()}
+      />
     </View>
   );
 }
@@ -323,13 +326,13 @@ function DetailScreen({ title, count }: { title: string; count: number }) {
       <Button
         title="Autosized sheet"
         onPress={() =>
-          navigation.sheets.present(<SheetContent label="Auto-sized" />)
+          navigation.sheets.push(<SheetContent label="Auto-sized" />)
         }
       />
       <Button
         title="Snap points sheet"
         onPress={() =>
-          navigation.sheets.present(<SheetContent label="Snap points" />, {
+          navigation.sheets.push(<SheetContent label="Snap points" />, {
             snapPoints: [300, 500],
           })
         }
