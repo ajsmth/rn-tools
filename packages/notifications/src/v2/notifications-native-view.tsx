@@ -1,5 +1,5 @@
 import * as React from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { requireNativeViewManager } from "expo-modules-core";
 import type { ViewProps } from "react-native";
 
@@ -26,6 +26,7 @@ export function NativeContainer({
   debugLayout?: boolean;
   children?: React.ReactNode;
 }) {
+  return <View style={styles.lane}>{children}</View>;
   return (
     <NativeNotificationsHostView
       style={styles.host}
@@ -45,6 +46,7 @@ type NativeLaneProps = {
 export const NativeTopLane = React.memo(function NativeTopLane({
   children,
 }: NativeLaneProps) {
+  return <View style={styles.lane}>{children}</View>;
   return (
     <NativeNotificationsTopLaneView
       collapsable={false}
@@ -59,6 +61,7 @@ export const NativeTopLane = React.memo(function NativeTopLane({
 export const NativeBottomLane = React.memo(function NativeBottomLane({
   children,
 }: NativeLaneProps) {
+  return <View style={styles.lane}>{children}</View>;
   return (
     <NativeNotificationsBottomLaneView
       collapsable={false}

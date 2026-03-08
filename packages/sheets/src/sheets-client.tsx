@@ -30,7 +30,7 @@ export function createSheets(tree: Tree = createTree()) {
 
   const store = createTransitionStore();
 
-  function open(
+  function present(
     element: React.ReactElement<unknown>,
     options: Partial<SheetOptions> = {},
   ) {
@@ -42,7 +42,7 @@ export function createSheets(tree: Tree = createTree()) {
     return id;
   }
 
-  function show(id: string) {
+  function open(id: string) {
     if (!store.getEntry(id)) {
       // Warn?
     }
@@ -80,8 +80,8 @@ export function createSheets(tree: Tree = createTree()) {
   });
 
   return {
+    present,
     open,
-    show,
     dismiss,
     dismissAll,
     Provider,

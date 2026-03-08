@@ -3,9 +3,7 @@ import {
   Navigation,
   Stack,
   Tabs,
-  type NotificationInjectedProps,
-  type SheetInjectedProps,
-  type TabScreenOptions,
+  TabScreen,
 } from "@rn-tools/navigation";
 import * as React from "react";
 import { Text, View, Button, Pressable } from "react-native";
@@ -13,26 +11,25 @@ import { BottomSheetExample } from "~/bottom-sheet-example";
 
 const navigation = createNavigation();
 
-const tabScreens: TabScreenOptions[] = [
+const tabScreens: TabScreen[] = [
   {
     id: "home",
-    screen: <Stack rootScreen={<HomeScreen />} />,
+    element: <Stack rootScreen={<HomeScreen />} />,
     tab: TabButton,
   },
   {
     id: "explore",
-    screen: <Stack rootScreen={<ExploreScreen />} />,
+    element: <Stack rootScreen={<ExploreScreen />} />,
     tab: TabButton,
   },
   {
     id: "settings",
-    screen: <SettingsScreen />,
+    element: <SettingsScreen />,
     tab: TabButton,
   },
 ];
 
 export default function App() {
-  // return <BottomSheetExample />;
   return (
     <Navigation navigation={navigation}>
       <Tabs screens={tabScreens} tabbarPosition="bottom" />
@@ -52,12 +49,10 @@ function TabButton({
   const label = id.charAt(0).toUpperCase() + id.slice(1);
 
   return (
-    <Pressable
-      onPress={onPress}
+    <View
       style={{
-        flex: 1,
         alignItems: "center",
-        paddingVertical: 12,
+        paddingVertical: 24,
       }}
     >
       <Text
@@ -69,7 +64,7 @@ function TabButton({
       >
         {label}
       </Text>
-    </Pressable>
+    </View>
   );
 }
 
@@ -99,13 +94,13 @@ function HomeScreen() {
         <Button
           title="Present sheet (auto-size)"
           onPress={() =>
-            navigation.sheets.push(<SheetContent label="Auto-sized" />)
+            navigation.sheets.present(<SheetContent label="Auto-sized" />)
           }
         />
         <Button
           title="Present sheet (snap points)"
           onPress={() =>
-            navigation.sheets.push(<SheetContent label="Snap points" />, {
+            navigation.sheets.present(<SheetContent label="Snap points" />, {
               snapPoints: [300, 500],
             })
           }
@@ -113,7 +108,7 @@ function HomeScreen() {
         <Button
           title="Present sheet (id: edit)"
           onPress={() =>
-            navigation.sheets.push(<SheetContent label="Edit sheet" />, {
+            navigation.sheets.present(<SheetContent label="Edit sheet" />, {
               id: "edit",
             })
           }
@@ -209,12 +204,7 @@ function HomeScreen() {
   );
 }
 
-function SheetContent({
-  label,
-  dismiss,
-}: {
-  label: string;
-} & SheetInjectedProps) {
+function SheetContent({ label }: { label: string }) {
   return (
     <View style={{ padding: 24 }}>
       <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 12 }}>
@@ -226,7 +216,7 @@ function SheetContent({
       <Button
         title="Present nested sheet"
         onPress={() => {
-          navigation.sheets.push(<SheetContent label="Nested sheet" />, {
+          navigation.sheets.present(<SheetContent label="Nested sheet" />, {
             snapPoints: [250],
           });
         }}
@@ -242,11 +232,10 @@ function SheetContent({
 function NotificationContent({
   message,
   position,
-  dismiss,
 }: {
   message: string;
   position: "top" | "bottom";
-} & NotificationInjectedProps) {
+}) {
   return (
     <View
       style={{
@@ -263,10 +252,7 @@ function NotificationContent({
       <Text style={{ color: "#111", fontSize: 14, fontWeight: "600" }}>
         {message}
       </Text>
-      <Pressable
-        onPress={dismiss}
-        style={{ marginTop: 8, alignSelf: "flex-start" }}
-      >
+      <Pressable style={{ marginTop: 8, alignSelf: "flex-start" }}>
         <Text style={{ color: "#007AFF", fontSize: 13, fontWeight: "500" }}>
           Dismiss {position}
         </Text>
@@ -326,13 +312,13 @@ function DetailScreen({ title, count }: { title: string; count: number }) {
       <Button
         title="Autosized sheet"
         onPress={() =>
-          navigation.sheets.push(<SheetContent label="Auto-sized" />)
+          navigation.sheets.present(<SheetContent label="Auto-sized" />)
         }
       />
       <Button
         title="Snap points sheet"
         onPress={() =>
-          navigation.sheets.push(<SheetContent label="Snap points" />, {
+          navigation.sheets.present(<SheetContent label="Snap points" />, {
             snapPoints: [300, 500],
           })
         }

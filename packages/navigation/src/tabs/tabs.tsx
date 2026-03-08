@@ -16,6 +16,7 @@ type TabProps = {
   screens: TabScreen[];
   tabbarPosition?: "top" | "bottom";
   tabbarContainerStyle?: StyleProp<ViewStyle>;
+  tabbarItemStyle?: StyleProp<ViewStyle>;
 };
 
 type TabTriggerProps = {
@@ -23,7 +24,7 @@ type TabTriggerProps = {
   isActive?: boolean;
 };
 
-type TabScreen = {
+export type TabScreen = {
   id: string;
   element: React.ReactElement;
   tab?: (props: TabTriggerProps) => React.ReactNode;
@@ -38,7 +39,8 @@ let counter = 0;
 export const Tabs = React.memo(
   React.forwardRef<TabsHandle, Omit<TabProps, "children">>(
     function Tabs(props, ref) {
-      const { tabbarPosition, tabbarContainerStyle, screens } = props;
+      const { tabbarPosition, tabbarContainerStyle, tabbarItemStyle, screens } =
+        props;
       const position = tabbarPosition ?? "bottom";
 
       const id = React.useRef(props.id ?? `tabs-${counter++}`).current;
@@ -46,17 +48,37 @@ export const Tabs = React.memo(
 
       const activeIndex = useStore(store, (state) => state.activeById[id]);
 
+      React.useEffect(() => {
+        store.setState((prev) => {
+          return {
+            ...prev,
+            activeById: {
+              ...prev.activeById,
+              [id]: 0,
+            },
+          };
+        });
+      }, [id, store]);
+
       const tabbar = React.useMemo(
         () => (
           <TabBar
             screens={screens}
             style={tabbarContainerStyle}
+            tabbarItemStyle={tabbarItemStyle}
             position={position}
             activeIndex={activeIndex}
             tabsId={id}
           />
         ),
-        [screens, tabbarContainerStyle, activeIndex, position, id],
+        [
+          screens,
+          tabbarContainerStyle,
+          tabbarItemStyle,
+          activeIndex,
+          position,
+          id,
+        ],
       );
 
       return (
@@ -75,11 +97,13 @@ export const Tabs = React.memo(
 const TabBar = React.memo(function TabBar(props: {
   screens: TabScreen[];
   activeIndex: number;
+  tabbarItemStyle?: StyleProp<ViewStyle>;
   style?: StyleProp<ViewStyle>;
   position: "top" | "bottom";
   tabsId: string;
 }) {
-  const { tabsId, screens, activeIndex, style, position } = props;
+  const { tabsId, screens, activeIndex, style, tabbarItemStyle, position } =
+    props;
   const insets = useSafeAreaInsets();
 
   const tabbarStyle = React.useMemo(
@@ -113,13 +137,13 @@ const TabBar = React.memo(function TabBar(props: {
     <View style={tabbarStyle}>
       {screens.map((screen, index) => (
         <Pressable
-          style={styles.tab}
+          style={tabbarItemStyle ?? styles.tab}
           onPress={() => handlePress(index)}
           key={screen.id}
         >
           {screen.tab?.({
             id: screen.id,
-            isActive: index === props.activeIndex,
+            isActive: index === activeIndex,
           })}
         </Pressable>
       ))}

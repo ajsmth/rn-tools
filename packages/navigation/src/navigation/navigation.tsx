@@ -14,14 +14,12 @@ export const Navigation = React.memo(function Navigation(
   const rootScreen = React.useMemo(() => <>{children}</>, [children]);
 
   return (
-    <navigation.notifications.Provider>
-      <navigation.sheets.Provider>
-        <navigation.tabs.Provider>
-          <navigation.stack.Provider>
-            <Stack rootScreen={rootScreen} />
-          </navigation.stack.Provider>
-        </navigation.tabs.Provider>
-      </navigation.sheets.Provider>
-    </navigation.notifications.Provider>
+    <navigation.sheets.Provider>
+      <navigation.tabs.Provider>
+        <navigation.stack.Provider>
+          <Stack rootScreen={rootScreen} />
+        </navigation.stack.Provider>
+      </navigation.tabs.Provider>
+    </navigation.sheets.Provider>
   );
 });

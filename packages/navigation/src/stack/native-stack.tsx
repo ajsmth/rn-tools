@@ -20,5 +20,5 @@ export type NativeScreenProps = Omit<RNScreens.ScreenProps, "active"> & {
 export const NativeScreen = React.memo(function NativeScreen(
   props: NativeScreenProps,
 ) {
-  return <RNScreens.Screen {...props} active={props.active ? 1 : 0} />;
+  return <RNScreens.Screen {...props} activityState={2} />;
 });

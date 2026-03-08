@@ -9,6 +9,15 @@ type Options = {
 export function createTabs(tree = createTree()) {
   const store = createStore<TabStore>({ activeById: {} });
 
+  function register(id: string, activeIndex: number) {
+    store.setState((prev) => {
+      return {
+        ...prev,
+        [id]: activeIndex,
+      };
+    });
+  }
+
   function tab(index: number, options: Options = {}) {
     const targetId = options.tabId ?? tree.getActiveNode(TABS)?.extraId;
 
@@ -40,6 +49,7 @@ export function createTabs(tree = createTree()) {
 
   return {
     tab,
+    register,
     Provider,
   };
 }

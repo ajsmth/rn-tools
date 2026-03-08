@@ -12,7 +12,7 @@ export function BottomSheetExample() {
     <sheets.Provider>
       <View className="flex-1 pt-24">
         <View className="flex-1">
-          <Button title="Show sheet" onPress={() => sheets.show("my-sheet")} />
+          <Button title="Show sheet" onPress={() => sheets.open("my-sheet")} />
 
           <Sheet
             id="my-sheet"
