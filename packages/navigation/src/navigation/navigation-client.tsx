@@ -5,10 +5,10 @@ import { createStack } from "../stack";
 import { createTabs } from "../tabs";
 
 export type NavigationClient = {
-  stack: ReturnType<typeof createStack>;
-  tabs: ReturnType<typeof createTabs>;
-  sheets: ReturnType<typeof createSheets>;
-  notifications: ReturnType<typeof createNotifications>;
+  stack: Omit<ReturnType<typeof createStack>, "Provider">;
+  tabs: Omit<ReturnType<typeof createTabs>, "Provider">;
+  sheets: Omit<ReturnType<typeof createSheets>, "Provider">;
+  notifications: Omit<ReturnType<typeof createNotifications>, "Provider">;
 };
 
 export function createNavigation(): NavigationClient {

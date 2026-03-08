@@ -21,6 +21,7 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
+  s.public_header_files = 'RNToolsCoreTouchHandler.h'
   s.pod_target_xcconfig = {
     'DEFINES_MODULE' => 'YES',
     'OTHER_SWIFT_FLAGS' => '$(inherited)'

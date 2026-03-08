@@ -6,7 +6,7 @@ import {
   TabScreen,
 } from "@rn-tools/navigation";
 import * as React from "react";
-import { Text, View, Button, Pressable } from "react-native";
+import { Text, ScrollView, View, Button, Pressable } from "react-native";
 import { BottomSheetExample } from "~/bottom-sheet-example";
 
 const navigation = createNavigation();
@@ -70,7 +70,8 @@ function TabButton({
 
 function HomeScreen() {
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <ScrollView style={{ flex: 1 }}>
+      <View style={{ height: 64 }} />
       <Text style={{ fontSize: 24, fontWeight: "bold" }}>Home</Text>
       <Button
         title="Push screen"
@@ -197,10 +198,10 @@ function HomeScreen() {
         />
         <Button
           title="Dismiss all notifications"
-          onPress={() => navigation.notificationsStore.dismissAll()}
+          onPress={() => navigation.notifications.dismissAll()}
         />
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -224,6 +225,15 @@ function SheetContent({ label }: { label: string }) {
       <Button
         title="Dismiss this sheet"
         onPress={() => navigation.sheets.dismiss()}
+      />
+
+      <Button
+        title="Show notification"
+        onPress={() =>
+          navigation.notifications.present(
+            <NotificationContent message="Hey!" />,
+          )
+        }
       />
     </View>
   );
@@ -252,7 +262,10 @@ function NotificationContent({
       <Text style={{ color: "#111", fontSize: 14, fontWeight: "600" }}>
         {message}
       </Text>
-      <Pressable style={{ marginTop: 8, alignSelf: "flex-start" }}>
+      <Pressable
+        onPress={() => navigation.notifications.dismiss()}
+        style={{ marginTop: 8, alignSelf: "flex-start" }}
+      >
         <Text style={{ color: "#007AFF", fontSize: 13, fontWeight: "500" }}>
           Dismiss {position}
         </Text>

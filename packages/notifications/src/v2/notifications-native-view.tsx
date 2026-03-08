@@ -1,43 +1,6 @@
 import * as React from "react";
-import { StyleSheet, View } from "react-native";
-import { requireNativeViewManager } from "expo-modules-core";
-import type { ViewProps } from "react-native";
-
-type NativeHostProps = ViewProps & {
-  children?: React.ReactNode;
-  debugLayout?: boolean;
-};
-
-const NativeNotificationsHostView = requireNativeViewManager<NativeHostProps>(
-  "RNToolsNotifications",
-);
-
-const NativeNotificationsTopLaneView = requireNativeViewManager<ViewProps>(
-  "RNToolsNotificationsTopLane",
-);
-const NativeNotificationsBottomLaneView = requireNativeViewManager<ViewProps>(
-  "RNToolsNotificationsBottomLane",
-);
-
-export function NativeContainer({
-  debugLayout = false,
-  children,
-}: {
-  debugLayout?: boolean;
-  children?: React.ReactNode;
-}) {
-  return <View style={styles.lane}>{children}</View>;
-  return (
-    <NativeNotificationsHostView
-      style={styles.host}
-      debugLayout={debugLayout && __DEV__}
-      pointerEvents="box-none"
-      collapsable={false}
-    >
-      {children}
-    </NativeNotificationsHostView>
-  );
-}
+import { View } from "react-native";
+import { useSafeAreaInsets } from "@rn-tools/core";
 
 type NativeLaneProps = {
   children?: React.ReactNode;
@@ -46,39 +9,41 @@ type NativeLaneProps = {
 export const NativeTopLane = React.memo(function NativeTopLane({
   children,
 }: NativeLaneProps) {
-  return <View style={styles.lane}>{children}</View>;
+  const insets = useSafeAreaInsets();
+
   return (
-    <NativeNotificationsTopLaneView
-      collapsable={false}
+    <View
+      style={{
+        position: "absolute",
+        top: insets.top,
+        left: 0,
+        right: 0,
+        height: 280,
+      }}
       pointerEvents="box-none"
-      style={styles.lane}
     >
       {children}
-    </NativeNotificationsTopLaneView>
+    </View>
   );
 });
 
 export const NativeBottomLane = React.memo(function NativeBottomLane({
   children,
 }: NativeLaneProps) {
-  return <View style={styles.lane}>{children}</View>;
+  const insets = useSafeAreaInsets();
+
   return (
-    <NativeNotificationsBottomLaneView
-      collapsable={false}
+    <View
       pointerEvents="box-none"
-      style={styles.lane}
+      style={{
+        position: "absolute",
+        bottom: insets.bottom,
+        left: 0,
+        right: 0,
+        height: 280,
+      }}
     >
       {children}
-    </NativeNotificationsBottomLaneView>
+    </View>
   );
-});
-
-const styles = StyleSheet.create({
-  host: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "transparent",
-  },
-  lane: {
-    ...StyleSheet.absoluteFillObject,
-  },
 });

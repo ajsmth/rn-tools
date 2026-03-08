@@ -1,5 +1,6 @@
 import {
   EVENTS,
+  Overlay,
   TreeProvider,
   createTransitionStore,
   createTree,
@@ -8,7 +9,6 @@ import * as React from "react";
 import { NotificationsSlot } from "./notifications-slot";
 import { NOTIFICATION_NODE } from "./notification-constants";
 import {
-  NativeContainer,
   NativeTopLane,
   NativeBottomLane,
 } from "./notifications-native-view";
@@ -58,17 +58,16 @@ export function createNotifications(tree = createTree()) {
   }) {
     return (
       <TreeProvider tree={tree}>
-        <NativeContainer>
+        <Overlay>
           <NativeTopLane>
             <NotificationsSlot position="top" store={store} />
           </NativeTopLane>
 
-          {children}
-
           <NativeBottomLane>
             <NotificationsSlot position="bottom" store={store} />
           </NativeBottomLane>
-        </NativeContainer>
+        </Overlay>
+        {children}
       </TreeProvider>
     );
   });

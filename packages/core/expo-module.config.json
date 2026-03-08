@@ -6,7 +6,8 @@
   ],
   "apple": {
     "modules": [
-      "RNToolsCoreModule"
+      "RNToolsCoreModule",
+      "RNToolsOverlayModule"
     ]
   },
   "android": {
