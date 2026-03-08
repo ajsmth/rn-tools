@@ -10,7 +10,7 @@ export const STATUSES = {
   UNMOUNTED: "unmounted",
 } as const;
 
-type Status = (typeof STATUSES)[keyof typeof STATUSES];
+export type Status = (typeof STATUSES)[keyof typeof STATUSES];
 
 export const EVENTS = {
   MOUNT: "MOUNT",
@@ -65,6 +65,9 @@ type StoreState<T = any> = {
 };
 
 export type TransitionStore = ReturnType<typeof createTransitionStore>;
+export const TransitionStoreContext = React.createContext(
+  createTransitionStore(),
+);
 
 export function createTransitionStore() {
   const store = createStore<StoreState>({
@@ -85,22 +88,6 @@ export function createTransitionStore() {
         elements: {
           ...prev.elements,
           [id]: { element, props },
-        },
-      };
-    });
-  }
-
-  function setNode(nodeId: string, id: string) {
-    store.setState((prev) => {
-      if (!getEntry(id)) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        nodes: {
-          ...prev.nodes,
-          [nodeId]: id,
         },
       };
     });
@@ -138,6 +125,19 @@ export function createTransitionStore() {
     });
   }
 
+  function getEntries<T = any>(state: StoreState<T>) {
+    return state.entries
+      .filter((entry) => state.elements[entry.id]?.element != null)
+      .map((entry) => {
+        const { element, props } = state.elements[entry.id];
+        return {
+          ...entry,
+          element,
+          props,
+        };
+      });
+  }
+
   function useEntry(id: string) {
     const entry = useStore(store, (state) =>
       state.entries.find((e) => e.id === id),
@@ -151,17 +151,15 @@ export function createTransitionStore() {
   }
 
   function useEntries() {
-    const entries = useStore(store, (state) => state.entries);
-    const elements = useStore(store, (state) => state.elements);
-
-    return entries.filter((e) => elements[e.id]?.element != null);
+    const entries = useStore(store, getEntries);
+    return entries;
   }
 
   return {
     transition,
     add,
-    setNode,
     getEntry,
+    getEntries,
     useEntry,
     useEntries,
     getState: store.getState,

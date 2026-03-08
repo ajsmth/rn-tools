@@ -19,6 +19,7 @@ type TreeNodeProps = {
   children: React.ReactNode;
   type: string;
   active?: boolean;
+  id?: string;
 };
 
 export const NodeIdContext = React.createContext(RENDER_TREE_ROOT_ID);
@@ -27,6 +28,7 @@ export const TreeNode = React.memo(function TreeNode({
   children,
   type,
   active = true,
+  id,
 }: TreeNodeProps) {
   const tree = React.useContext(TreeContext);
   const parentId = React.useContext(NodeIdContext);
@@ -40,6 +42,7 @@ export const TreeNode = React.memo(function TreeNode({
         active,
         parentId,
         type,
+        extraId: id,
       });
     } else {
       tree.addNode({
@@ -48,9 +51,10 @@ export const TreeNode = React.memo(function TreeNode({
         active,
         children: [],
         type,
+        extraId: id,
       });
     }
-  }, [parentId, active, type]);
+  }, [parentId, active, type, id]);
 
   React.useEffect(() => {
     return () => {

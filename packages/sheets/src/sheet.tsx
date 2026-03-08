@@ -1,6 +1,6 @@
 import * as React from "react";
 import { SHEET_NODE, SheetStoreContext } from "./sheets-context";
-import { EVENTS, NodeRegistryItem, STATUSES, TreeNode } from "@rn-tools/core";
+import { EVENTS, STATUSES, TreeNode } from "@rn-tools/core";
 import {
   BottomSheetProps,
   NativeBottomSheet,
@@ -53,16 +53,14 @@ export const Sheet = React.memo(function Sheet({
   );
 
   return (
-    <TreeNode type={SHEET_NODE}>
-      <NodeRegistryItem id={id}>
-        <NativeBottomSheet
-          isOpen={isOpen}
-          onStateChange={handleSheetStateChange}
-          {...props}
-        >
-          {children}
-        </NativeBottomSheet>
-      </NodeRegistryItem>
+    <TreeNode type={SHEET_NODE} id={id}>
+      <NativeBottomSheet
+        isOpen={isOpen}
+        onStateChange={handleSheetStateChange}
+        {...props}
+      >
+        {children}
+      </NativeBottomSheet>
     </TreeNode>
   );
 });

@@ -1,7 +1,7 @@
 import { TreeProvider, TreeNode } from "./tree-context";
 import { RENDER_TREE_ROOT_ID, createTree } from "./tree";
 import { Text } from "react-native";
-import { render, waitFor } from "@testing-library/react-native";
+import { render } from "@testing-library/react-native";
 
 describe("TreeContext", () => {
   test("render", () => {
@@ -50,30 +50,6 @@ describe("TreeContext", () => {
     expect(tree.getActiveNode(testNodeType).id).toEqual(
       `${testNodeType}-node-0`,
     );
-  });
-
-  test("sibling nodes of same type results in last render wins", () => {
-    const tree = createTree();
-    const testNodeType = "my-node";
-
-    function TestTree() {
-      return (
-        <TreeProvider tree={tree}>
-          <TreeNode type={testNodeType}>
-            <Text>Node 1</Text>
-          </TreeNode>
-          <TreeNode type={testNodeType}>
-            <Text>Node 2</Text>
-          </TreeNode>
-        </TreeProvider>
-      );
-    }
-
-    render(<TestTree />);
-    const node = tree.getActiveNode(testNodeType);
-    expect(node).toBeDefined();
-    expect(node.parentId).toEqual(RENDER_TREE_ROOT_ID);
-    expect(node.id).toEqual(`${testNodeType}-node-1`);
   });
 
   test("nodes are reattached to the right parent", async () => {

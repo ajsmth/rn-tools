@@ -3,6 +3,7 @@ export type Node = {
   type: string;
   parentId: string | null;
   active: boolean;
+  extraId?: string | null;
   children: string[];
 };
 
@@ -132,23 +133,25 @@ export function createTree() {
 
   function getActiveNode(type: string): Node | undefined {
     let best: Node | undefined = undefined;
+    let bestDepth = -1;
 
-    function walk(nodeId: string) {
+    function walk(nodeId: string, depth: number) {
       const node = nodes[nodeId];
       if (!node || !node.active) return;
 
-      if (node.type === type) {
+      if (node.type === type && depth > bestDepth) {
         best = node;
+        bestDepth = depth;
       }
 
       if (node.children != null) {
         for (const childId of node.children) {
-          walk(childId);
+          walk(childId, depth + 1);
         }
       }
     }
 
-    walk(RENDER_TREE_ROOT_ID);
+    walk(RENDER_TREE_ROOT_ID, 0);
 
     return best;
   }

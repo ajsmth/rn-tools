@@ -166,6 +166,17 @@ describe("createTree()", () => {
     expect(activeNode.id).toEqual("3");
   });
 
+  test("getActiveNode accounts for tree depth", () => {
+    const tree = createTree();
+
+    tree.addNode(createTestNode("1", "modal"));
+    tree.addNode(createTestNode("2", "modal", "1"));
+    tree.addNode(createTestNode("3", "modal"));
+
+    const activeNode = tree.getActiveNode("modal");
+    expect(activeNode.id).toEqual("2");
+  });
+
   test("generating ids for node types", () => {
     const tree = createTree();
     const id1 = tree.createId("test");

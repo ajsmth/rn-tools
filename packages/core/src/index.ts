@@ -6,4 +6,3 @@ export * from "./overlay-store";
 export * from './tree'
 export * from './transition-store'
 export * from './tree-context'
-export * from './node-registry'

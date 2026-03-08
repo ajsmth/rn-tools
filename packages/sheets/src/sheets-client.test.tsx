@@ -24,13 +24,13 @@ describe("createSheets()", () => {
     );
 
     act(() => {
-      sheets.push(<Text>Pushed!</Text>);
+      sheets.open(<Text>Pushed!</Text>);
     });
 
     result.getByText(/pushed/i);
 
     act(() => {
-      sheets.push(<Text>Second</Text>);
+      sheets.open(<Text>Second</Text>);
     });
 
     result.getByText(/second/i);
@@ -46,8 +46,8 @@ describe("createSheets()", () => {
     );
 
     act(() => {
-      sheets.push(<Text>Push1</Text>);
-      sheets.push(<Text>Push2</Text>);
+      sheets.open(<Text>Push1</Text>);
+      sheets.open(<Text>Push2</Text>);
     });
 
     result.getByText(/push1/i);
@@ -70,8 +70,8 @@ describe("createSheets()", () => {
     );
 
     act(() => {
-      sheets.push(<Text>Push1</Text>);
-      sheets.push(<Text>Push2</Text>);
+      sheets.open(<Text>Push1</Text>);
+      sheets.open(<Text>Push2</Text>);
     });
 
     result.getByText(/push2/i);
@@ -94,8 +94,8 @@ describe("createSheets()", () => {
     );
 
     act(() => {
-      sheets.push(<Text>Push1</Text>, { id: "1" });
-      sheets.push(<Text>Push2</Text>, { id: "2" });
+      sheets.open(<Text>Push1</Text>, { id: "1" });
+      sheets.open(<Text>Push2</Text>, { id: "2" });
     });
 
     expect(result.queryByText(/push1/i)).not.toBeNull();

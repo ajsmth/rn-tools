@@ -1,11 +1,5 @@
 import * as React from "react";
-import {
-  EVENTS,
-  NodeRegistryItem,
-  STATUSES,
-  TransitionStore,
-  TreeNode,
-} from "@rn-tools/core";
+import { EVENTS, STATUSES, TransitionStore, TreeNode } from "@rn-tools/core";
 import { SHEET_NODE } from "./sheets-context";
 import { NativeBottomSheet, SheetChangeEvent } from "./native-bottom-sheet";
 
@@ -25,15 +19,14 @@ export const SheetsSlot = React.memo(function SheetsSlot({
           key={entry.id}
           type={SHEET_NODE}
           active={index === arr.length - 1}
+          id={entry.id}
         >
-          <NodeRegistryItem id={entry.id}>
-            <SheetEntry
-              id={entry.id}
-              status={entry.status}
-              transition={store.transition}
-              useEntry={store.useEntry}
-            />
-          </NodeRegistryItem>
+          <SheetEntry
+            id={entry.id}
+            status={entry.status}
+            transition={store.transition}
+            useEntry={store.useEntry}
+          />
         </TreeNode>
       ))}
     </>

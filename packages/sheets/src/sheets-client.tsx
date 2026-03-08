@@ -4,8 +4,6 @@ import {
   createTree,
   EVENTS,
   TreeProvider,
-  createNodeRegistry,
-  NodeRegistryProvider,
 } from "@rn-tools/core";
 import * as React from "react";
 import { SHEET_NODE, SheetStoreContext } from "./sheets-context";
@@ -27,15 +25,12 @@ type ProviderProps = {
   children: React.ReactNode;
 };
 
-export function createSheets(
-  tree: Tree = createTree(),
-  registry = createNodeRegistry(),
-) {
+export function createSheets(tree: Tree = createTree()) {
   let counter = 0;
 
   const store = createTransitionStore();
 
-  function push(
+  function open(
     element: React.ReactElement<unknown>,
     options: Partial<SheetOptions> = {},
   ) {
@@ -43,6 +38,8 @@ export function createSheets(
 
     store.add(id, element, options);
     store.transition(id, EVENTS.OPEN);
+
+    return id;
   }
 
   function show(id: string) {
@@ -55,8 +52,8 @@ export function createSheets(
 
   function dismiss(id?: string) {
     if (id == null) {
-      const activeNodeId = tree.getActiveNode(SHEET_NODE)?.id;
-      id = registry.nodes[activeNodeId];
+      const activeNode = tree.getActiveNode(SHEET_NODE);
+      id = activeNode?.extraId;
     }
 
     const entry = store.getEntry(id);
@@ -74,18 +71,16 @@ export function createSheets(
   const Provider = React.memo(function Provider({ children }: ProviderProps) {
     return (
       <TreeProvider tree={tree}>
-        <NodeRegistryProvider registry={registry}>
-          <SheetStoreContext.Provider value={store}>
-            {children}
-            <SheetsSlot store={store} />
-          </SheetStoreContext.Provider>
-        </NodeRegistryProvider>
+        <SheetStoreContext.Provider value={store}>
+          {children}
+          <SheetsSlot store={store} />
+        </SheetStoreContext.Provider>
       </TreeProvider>
     );
   });
 
   return {
-    push,
+    open,
     show,
     dismiss,
     dismissAll,
