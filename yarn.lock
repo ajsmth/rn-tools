@@ -2980,7 +2980,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rn-tools/core@npm:*, @rn-tools/core@npm:3.0.3, @rn-tools/core@workspace:packages/core":
+"@rn-tools/core@npm:*, @rn-tools/core@npm:3.0.4, @rn-tools/core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@rn-tools/core@workspace:packages/core"
   dependencies:
@@ -3050,7 +3050,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rn-tools/notifications@workspace:packages/notifications"
   dependencies:
-    "@rn-tools/core": "npm:3.0.3"
+    "@rn-tools/core": "npm:3.0.4"
     "@testing-library/react-native": "npm:^13.3.3"
     "@types/jest": "npm:^29.5.14"
     "@types/react": "npm:18.3.12"
@@ -3067,7 +3067,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@rn-tools/sheets@workspace:packages/sheets"
   dependencies:
-    "@rn-tools/core": "npm:3.0.3"
+    "@rn-tools/core": "npm:3.0.4"
     "@testing-library/react-native": "npm:^13.3.3"
     "@types/jest": "npm:^29.5.14"
     "@types/react": "npm:18.3.12"

@@ -1,5 +1,11 @@
 # @rn-tools/core
 
+## 3.0.4
+
+### Patch Changes
+
+- Update navigation APIs
+
 ## 3.0.3
 
 ### Patch Changes

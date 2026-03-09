@@ -1,192 +1,174 @@
+import { createTree } from "@rn-tools/core";
+import { createNotifications } from "./notifications-client";
+import { act, render, screen, within } from "@testing-library/react-native";
 import * as React from "react";
 import { Text } from "react-native";
-import { createRenderTreeStore } from "@rn-tools/core";
-import {
-  createNotifications,
-  DEFAULT_NOTIFICATION_DURATION_MS,
-} from "./notifications-client";
 
-beforeEach(() => {
-  jest.useFakeTimers();
+jest.mock("./notifications-native-view.tsx", () => {
+  const View = jest.requireActual("react-native").View;
+  return {
+    NativeContainer: ({ children }) => <>{children}</>,
+    NativeTopLane: ({ children }) => <View testID="top-lane">{children}</View>,
+    NativeBottomLane: ({ children }) => (
+      <View testID="bottom-lane">{children}</View>
+    ),
+  };
 });
 
-afterEach(() => {
-  jest.runOnlyPendingTimers();
-  jest.useRealTimers();
-});
+function getLane(position: "top" | "bottom") {
+  return screen.getByTestId(position + "-lane");
+}
 
-describe("createNotifications", () => {
-  it("returns the expected client API", () => {
-    const notifications = createNotifications(createRenderTreeStore());
+describe("createNotifications()", () => {
+  test("rendering notifications in lanes", () => {
+    const tree = createTree();
+    const notifications = createNotifications(tree);
+    render(
+      <notifications.Provider>
+        <Text>Root</Text>
+      </notifications.Provider>,
+    );
 
-    expect(notifications.store).toBeDefined();
-    expect(typeof notifications.show).toBe("function");
-    expect(typeof notifications.dismiss).toBe("function");
-    expect(typeof notifications.dismissAll).toBe("function");
-    expect(typeof notifications.remove).toBe("function");
-    expect(typeof notifications.markDidShow).toBe("function");
-    expect(typeof notifications.markDidDismiss).toBe("function");
-  });
-
-  it("starts with empty state", () => {
-    const notifications = createNotifications(createRenderTreeStore());
-    expect(notifications.store.getState().entries).toEqual([]);
-  });
-});
-
-describe("show", () => {
-  it("adds entries with lane options and defaults to top", () => {
-    const notifications = createNotifications(createRenderTreeStore());
-    const topDefaultKey = notifications.show(<Text>top-default</Text>);
-    const bottomKey = notifications.show(<Text>bottom</Text>, { position: "bottom" });
-
-    const entries = notifications.store.getState().entries;
-    expect(entries).toHaveLength(2);
-    expect(entries[0].key).toBe(topDefaultKey);
-    expect(entries[0].options.position).toBeUndefined();
-    expect(entries[1].key).toBe(bottomKey);
-    expect(entries[1].options.position).toBe("bottom");
-  });
-
-  it("auto-dismisses after durationMs", () => {
-    const notifications = createNotifications(createRenderTreeStore());
-    const key = notifications.show(<Text>auto</Text>, { durationMs: 1000 });
-
-    expect(notifications.store.getState().entries[0]?.status).toBe("opening");
-
-    jest.advanceTimersByTime(999);
-    expect(notifications.store.getState().entries[0]?.status).toBe("opening");
-
-    jest.advanceTimersByTime(1);
-    expect(
-      notifications.store.getState().entries.find((entry) => entry.key === key)?.status,
-    ).toBe("closing");
-  });
-
-  it("auto-dismisses at the default duration when durationMs is omitted", () => {
-    const notifications = createNotifications(createRenderTreeStore());
-    const key = notifications.show(<Text>auto</Text>);
-
-    jest.advanceTimersByTime(DEFAULT_NOTIFICATION_DURATION_MS - 1);
-    expect(
-      notifications.store.getState().entries.find((entry) => entry.key === key)?.status,
-    ).toBe("opening");
-
-    jest.advanceTimersByTime(1);
-    expect(
-      notifications.store.getState().entries.find((entry) => entry.key === key)?.status,
-    ).toBe("closing");
-  });
-
-  it("does not auto-dismiss when durationMs is null", () => {
-    const notifications = createNotifications(createRenderTreeStore());
-    const key = notifications.show(<Text>persistent</Text>, { durationMs: null });
-
-    jest.advanceTimersByTime(10_000);
-    expect(
-      notifications.store.getState().entries.find((entry) => entry.key === key)?.status,
-    ).toBe("opening");
-  });
-
-  it("replaces the auto-dismiss timer when a duplicate id is shown again", () => {
-    const notifications = createNotifications(createRenderTreeStore());
-    const keyA = notifications.show(<Text>a</Text>, { id: "welcome", durationMs: 1000 });
-    const keyB = notifications.show(<Text>b</Text>, {
-      id: "welcome",
-      durationMs: DEFAULT_NOTIFICATION_DURATION_MS,
+    act(() => {
+      notifications.present(<Text>Hey</Text>);
     });
 
-    expect(keyB).toBe(keyA);
+    within(getLane("top")).getByText(/hey/i);
+    expect(within(getLane("bottom")).queryByText(/hey/i)).toBeNull();
 
-    jest.advanceTimersByTime(1000);
-    expect(
-      notifications.store.getState().entries.find((entry) => entry.key === keyB)?.status,
-    ).toBe("opening");
+    act(() => {
+      notifications.present(<Text>Hello</Text>, { position: "bottom" });
+    });
 
-    jest.advanceTimersByTime(DEFAULT_NOTIFICATION_DURATION_MS - 1000);
-    expect(
-      notifications.store.getState().entries.find((entry) => entry.key === keyB)?.status,
-    ).toBe("closing");
-  });
-});
-
-describe("dismiss", () => {
-  it("dismisses the latest non-closing notification in the requested top lane", () => {
-    const notifications = createNotifications(createRenderTreeStore());
-    const topA = notifications.show(<Text>top-a</Text>);
-    const bottomA = notifications.show(<Text>bottom-a</Text>, { position: "bottom" });
-    const topB = notifications.show(<Text>top-b</Text>);
-
-    notifications.markDidShow(topA);
-    notifications.markDidShow(bottomA);
-    notifications.markDidShow(topB);
-
-    notifications.dismiss("top");
-
-    const entries = notifications.store.getState().entries;
-    expect(entries.find((entry) => entry.key === topA)?.status).toBe("open");
-    expect(entries.find((entry) => entry.key === bottomA)?.status).toBe("open");
-    expect(entries.find((entry) => entry.key === topB)?.status).toBe("closing");
+    within(getLane("bottom")).getByText(/hello/i);
+    expect(within(getLane("top")).queryByText(/hello/i)).toBeNull();
   });
 
-  it("dismisses the latest non-closing notification in the requested bottom lane", () => {
-    const notifications = createNotifications(createRenderTreeStore());
-    const topA = notifications.show(<Text>top-a</Text>);
-    const bottomA = notifications.show(<Text>bottom-a</Text>, { position: "bottom" });
-    const bottomB = notifications.show(<Text>bottom-b</Text>, { position: "bottom" });
+  test("dismiss works", () => {
+    const tree = createTree();
+    const notifications = createNotifications(tree);
 
-    notifications.markDidShow(topA);
-    notifications.markDidShow(bottomA);
-    notifications.markDidShow(bottomB);
-
-    notifications.dismiss("bottom");
-
-    const entries = notifications.store.getState().entries;
-    expect(entries.find((entry) => entry.key === topA)?.status).toBe("open");
-    expect(entries.find((entry) => entry.key === bottomA)?.status).toBe("open");
-    expect(entries.find((entry) => entry.key === bottomB)?.status).toBe(
-      "closing",
+    render(
+      <notifications.Provider>
+        <Text>Root</Text>
+      </notifications.Provider>,
     );
+
+    act(() => {
+      notifications.present(<Text>Hey</Text>);
+    });
+
+    act(() => {
+      notifications.dismiss();
+    });
+
+    expect(screen.queryByText(/hey/i)).toBeNull();
+  });
+
+  test("dismiss by id works", () => {
+    const tree = createTree();
+    const notifications = createNotifications(tree);
+
+    render(
+      <notifications.Provider>
+        <Text>Root</Text>
+      </notifications.Provider>,
+    );
+
+    act(() => {
+      notifications.present(<Text>Hey</Text>, { id: "1" });
+      notifications.present(<Text>Hello</Text>, { id: "2" });
+    });
+
+    act(() => {
+      notifications.dismiss("1");
+    });
+
+    expect(screen.queryByText(/hey/i)).toBeNull();
+  });
+
+  test("dismiss all", () => {
+    const tree = createTree();
+    const notifications = createNotifications(tree);
+
+    render(
+      <notifications.Provider>
+        <Text>Root</Text>
+      </notifications.Provider>,
+    );
+
+    act(() => {
+      notifications.present(<Text>Hey</Text>, { id: "1" });
+      notifications.present(<Text>Hello</Text>, {
+        id: "2",
+        position: "bottom",
+      });
+    });
+
+    within(getLane("bottom")).getByText(/hello/i);
+
+    act(() => {
+      notifications.dismissAll();
+    });
+
+    expect(screen.queryByText(/hey/i)).toBeNull();
+    expect(screen.queryByText(/hey/i)).toBeNull();
   });
 });
 
-describe("markDidDismiss", () => {
-  it("removes a notification from the store after lane-targeted dismiss", () => {
-    const notifications = createNotifications(createRenderTreeStore());
-    const topKey = notifications.show(<Text>top</Text>);
-    const bottomKey = notifications.show(<Text>bottom</Text>, { position: "bottom" });
-    notifications.markDidShow(topKey);
-    notifications.markDidShow(bottomKey);
-
-    notifications.dismiss("bottom");
-    notifications.markDidDismiss(bottomKey);
-
-    const entries = notifications.store.getState().entries;
-    expect(entries).toHaveLength(1);
-    expect(entries[0].key).toBe(topKey);
-    expect(entries[0].status).toBe("open");
+describe("notifications duration timer", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
   });
 
-  it("removes a notification when native dismissal callback fires directly", () => {
-    const notifications = createNotifications(createRenderTreeStore());
-    const key = notifications.show(<Text>notification</Text>);
-    notifications.markDidShow(key);
-
-    notifications.markDidDismiss(key);
-
-    expect(notifications.store.getState().entries).toHaveLength(0);
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
   });
 
-  it("clears auto-dismiss when dismissAll is called", () => {
-    const notifications = createNotifications(createRenderTreeStore());
-    const keyA = notifications.show(<Text>a</Text>, { durationMs: 1000 });
-    const keyB = notifications.show(<Text>b</Text>, { durationMs: 2000 });
+  test("auto dismisses after durationMs", () => {
+    const tree = createTree();
+    const notifications = createNotifications(tree);
 
-    notifications.dismissAll();
-    notifications.markDidDismiss(keyA);
-    notifications.markDidDismiss(keyB);
+    render(
+      <notifications.Provider>
+        <Text>Root</Text>
+      </notifications.Provider>,
+    );
 
-    jest.advanceTimersByTime(5000);
-    expect(notifications.store.getState().entries).toHaveLength(0);
+    act(() => {
+      notifications.present(<Text>Note</Text>, { durationMs: 500 });
+    });
+
+    within(getLane("top")).getByText(/note/i);
+
+    act(() => {
+      jest.advanceTimersByTime(500);
+    });
+
+    expect(screen.queryByText(/note/i)).toBeNull();
+  });
+
+  test("null duration keeps notification open", () => {
+    const tree = createTree();
+    const notifications = createNotifications(tree);
+
+    render(
+      <notifications.Provider>
+        <Text>Root</Text>
+      </notifications.Provider>,
+    );
+
+    act(() => {
+      notifications.present(<Text>Persistent</Text>, { durationMs: null });
+    });
+
+    within(getLane("top")).getByText(/persistent/i);
+
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    within(getLane("top")).getByText(/persistent/i);
   });
 });

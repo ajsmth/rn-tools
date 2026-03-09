@@ -1,105 +1,89 @@
-import * as React from "react";
-import { createOverlayStore, createRenderTreeStore } from "@rn-tools/core";
-import type {
-  Store,
-  RenderTreeStore,
-  BaseOverlayOptions,
-  OverlayState,
+import {
+  Tree,
+  createTransitionStore,
+  createTree,
+  EVENTS,
+  TreeProvider,
 } from "@rn-tools/core";
-import type {
-  AppearanceAndroid,
-  AppearanceIOS,
-  SheetChangeEvent,
-} from "./native-sheets-view";
-import type { ViewStyle } from "react-native";
+import * as React from "react";
+import { SHEET_NODE, SheetStoreContext } from "./sheets-context";
+import { SheetsSlot } from "./sheets-slot";
+import { BottomSheetProps } from "./native-bottom-sheet";
 
-export type SheetOptions = BaseOverlayOptions & {
-  snapPoints?: number[];
-  initialIndex?: number;
-  canDismiss?: boolean;
-  onDismissPrevented?: () => void;
-  onStateChange?: (event: SheetChangeEvent) => void;
-  containerStyle?: ViewStyle;
-  appearanceAndroid?: AppearanceAndroid;
-  appearanceIOS?: AppearanceIOS;
+type SheetOptions = {
+  id?: string;
+} & Pick<
+  BottomSheetProps,
+  | "snapPoints"
+  | "initialIndex"
+  | "appearanceIOS"
+  | "appearanceAndroid"
+  | "containerStyle"
+>;
+
+type ProviderProps = {
+  children: React.ReactNode;
 };
 
-export type SheetsState = OverlayState<SheetOptions>;
-export type SheetsStore = Store<SheetsState>;
+export function createSheets(tree: Tree = createTree()) {
+  let counter = 0;
 
-export type SheetsClient = {
-  store: SheetsStore;
-  renderTreeStore: RenderTreeStore;
-  setRenderTreeStore: (renderTreeStore: RenderTreeStore) => void;
-  present: (element: React.ReactElement, options?: SheetOptions) => string;
-  dismiss: (id?: string) => void;
-  dismissAll: () => void;
-  remove: (id: string) => void;
-  markDidOpen: (key: string) => void;
-  markDidDismiss: (key: string) => void;
-};
+  const store = createTransitionStore();
 
-export type SheetEntry = SheetsState["entries"][number];
-export type SheetStatus = SheetEntry["status"];
-export type SheetInjectedProps = {
-  dismiss?: () => void;
-};
+  function present(
+    element: React.ReactElement<unknown>,
+    options: Partial<SheetOptions> = {},
+  ) {
+    const id = options.id ?? `sheet-${counter++}`;
 
-export const SHEET_TYPE = "sheet";
+    store.add(id, element, options);
+    store.transition(id, EVENTS.OPEN);
 
-export const SheetsContext = React.createContext<SheetsClient | null>(null);
-export const SheetsStoreContext = React.createContext<SheetsStore | null>(null);
-export const SheetEntryKeyContext = React.createContext<string | null>(null);
-
-export function useSheets(): SheetsClient {
-  const sheets = React.useContext(SheetsContext);
-  if (!sheets) {
-    throw new Error("SheetsProvider is missing from the component tree.");
+    return id;
   }
-  return sheets;
-}
 
-export function useSheetEntry() {
-  const sheets = useSheets();
-  const entryKey = React.useContext(SheetEntryKeyContext);
-
-  const dismiss = React.useCallback(() => {
-    if (entryKey) {
-      sheets.dismiss(entryKey);
-      return;
+  function open(id: string) {
+    if (!store.getEntry(id)) {
+      // Warn?
     }
-    sheets.dismiss();
-  }, [sheets, entryKey]);
 
-  return React.useMemo(
-    () => ({
-      entryKey,
-      dismiss,
-      dismissAll: sheets.dismissAll,
-    }),
-    [entryKey, dismiss, sheets.dismissAll],
-  );
-}
+    store.transition(id, EVENTS.OPEN);
+  }
 
-export function createSheets(
-  renderTreeStore: RenderTreeStore = createRenderTreeStore(),
-): SheetsClient {
-  const overlay = createOverlayStore<SheetOptions>({
-    type: SHEET_TYPE,
-    renderTreeStore,
+  function dismiss(id?: string) {
+    if (id == null) {
+      const activeNode = tree.getActiveNode(SHEET_NODE);
+      id = activeNode?.extraId;
+    }
+
+    const entry = store.getEntry(id);
+
+    if (id != null && entry != null) {
+      store.transition(id, EVENTS.CLOSE);
+    }
+  }
+
+  function dismissAll() {
+    store.getState().entries.forEach((e) => dismiss(e.id));
+  }
+
+  // TODO - handle multiple slots - register nodes and add target to entries
+  const Provider = React.memo(function Provider({ children }: ProviderProps) {
+    return (
+      <TreeProvider tree={tree}>
+        <SheetStoreContext.Provider value={store}>
+          {children}
+          <SheetsSlot store={store} />
+        </SheetStoreContext.Provider>
+      </TreeProvider>
+    );
   });
 
   return {
-    store: overlay.store,
-    get renderTreeStore() {
-      return overlay.renderTreeStore;
-    },
-    setRenderTreeStore: overlay.setRenderTreeStore,
-    present: overlay.add,
-    dismiss: overlay.remove,
-    dismissAll: overlay.removeAll,
-    remove: overlay.destroy,
-    markDidOpen: overlay.markOpened,
-    markDidDismiss: overlay.markClosed,
+    present,
+    open,
+    dismiss,
+    dismissAll,
+    Provider,
   };
 }

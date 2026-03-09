@@ -38,7 +38,7 @@ export type AppearanceAndroid = {
   backgroundColor?: string;
 };
 
-type NativeSheetViewProps = {
+export type NativeSheetViewProps = {
   children: React.ReactNode;
   snapPoints?: number[];
   isOpen: boolean;
@@ -51,7 +51,7 @@ type NativeSheetViewProps = {
   appearanceIOS?: AppearanceIOS;
 };
 
-const NativeSheetsView =
+const NativeView =
   requireNativeViewManager<NativeSheetViewProps>("RNToolsSheets");
 
 export type BottomSheetProps = {
@@ -60,7 +60,7 @@ export type BottomSheetProps = {
   snapPoints?: number[];
   isOpen: boolean;
   initialIndex?: number;
-  setIsOpen: (isOpen: boolean) => void;
+  setIsOpen?: (isOpen: boolean) => void;
   onDismissed?: () => void;
   canDismiss?: boolean;
   onDismissPrevented?: () => void;
@@ -69,7 +69,9 @@ export type BottomSheetProps = {
   appearanceIOS?: AppearanceIOS;
 };
 
-export function BottomSheet(props: BottomSheetProps) {
+const NOOP = () => {};
+
+export function NativeBottomSheet(props: BottomSheetProps) {
   const {
     onStateChange,
     children,
@@ -77,7 +79,7 @@ export function BottomSheet(props: BottomSheetProps) {
     containerStyle,
     isOpen,
     initialIndex = 0,
-    setIsOpen,
+    setIsOpen = NOOP,
     onDismissed,
     appearanceAndroid,
     appearanceIOS,
@@ -152,16 +154,13 @@ export function BottomSheet(props: BottomSheetProps) {
     [isOpen, computedSnapPoints],
   );
 
-  const notifyDismissed = React.useCallback(
-    () => {
-      if (hasOpened.current) {
-        setIsOpen(false);
-      }
-      onDismissed?.();
-      hasOpened.current = false;
-    },
-    [setIsOpen, onDismissed],
-  );
+  const notifyDismissed = React.useCallback(() => {
+    if (hasOpened.current) {
+      setIsOpen(false);
+    }
+    onDismissed?.();
+    hasOpened.current = false;
+  }, [setIsOpen, onDismissed]);
 
   const handleOnDismiss = React.useCallback(() => {
     notifyDismissed();
@@ -182,12 +181,9 @@ export function BottomSheet(props: BottomSheetProps) {
     [onStateChange, notifyDismissed],
   );
 
-  const handleLayout = React.useCallback(
-    (event: LayoutChangeEvent) => {
-      setLayout(event.nativeEvent.layout);
-    },
-    [],
-  );
+  const handleLayout = React.useCallback((event: LayoutChangeEvent) => {
+    setLayout(event.nativeEvent.layout);
+  }, []);
 
   const handleDismissWithChanges = React.useCallback(() => {
     onDismissPrevented?.();
@@ -209,7 +205,7 @@ export function BottomSheet(props: BottomSheetProps) {
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={pointerEvents}>
-      <NativeSheetsView
+      <NativeView
         isOpen={computedIsOpen}
         canDismiss={canDismiss}
         initialIndex={initialIndex}
@@ -225,7 +221,7 @@ export function BottomSheet(props: BottomSheetProps) {
             {children}
           </View>
         </View>
-      </NativeSheetsView>
+      </NativeView>
     </View>
   );
 }

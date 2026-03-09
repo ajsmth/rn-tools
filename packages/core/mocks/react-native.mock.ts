@@ -39,6 +39,8 @@ export const Animated = {
   View: function AnimatedView(props: { children?: unknown }) {
     return React.createElement("AnimatedView", props, props.children);
   },
+  add: (a: unknown, b: unknown) => ({ __op: "add", a, b }),
+  multiply: (a: unknown, b: unknown) => ({ __op: "multiply", a, b }),
   timing: () => ({
     start: completeAnimation,
   }),

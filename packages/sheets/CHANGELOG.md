@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.4
+
+### Patch Changes
+
+- Update navigation APIs
+- Updated dependencies
+  - @rn-tools/core@3.0.4
+
 ## 3.0.3
 
 ### Patch Changes

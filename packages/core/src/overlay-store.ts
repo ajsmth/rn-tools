@@ -4,7 +4,7 @@ import { getRenderNodeActive, getRenderNodeDepth } from "./render-tree";
 import type { Store } from "./store";
 import type { RenderTreeStore } from "./render-tree";
 
-export type OverlayStatus = "opening" | "open" | "closing";
+export type OverlayStatus = "mounted" | "opening" | "open" | "closing" | "closed"
 
 export type BaseOverlayOptions = { id?: string; wrapped?: boolean };
 
@@ -28,12 +28,15 @@ export type OverlayStore<TOptions extends BaseOverlayOptions> = {
   store: Store<OverlayState<TOptions>>;
   renderTreeStore: RenderTreeStore;
   setRenderTreeStore: (renderTreeStore: RenderTreeStore) => void;
-  add: (element: React.ReactElement, options?: TOptions) => string;
+  mount: (id: string) => void;
+  add: (element: React.ReactElement, options?: Partial<TOptions>) => string;
+  // TODO - update namings to make it easier to follow
   remove: (id?: string) => void;
   removeAll: () => void;
   destroy: (id: string) => void;
   markOpened: (key: string) => void;
   markClosed: (key: string) => void;
+  markOpening: (key: string) => void;
 };
 
 
@@ -64,6 +67,19 @@ export function createOverlayStore<
     }
 
     return deepestId;
+  }
+
+  function mount(id: string) {
+    const generatedKey = `${config.type}-${++counter}`;
+    store.setState((prev) => {
+      return {
+        ...prev,
+        entries: [
+          ...prev.entries,
+          { key: generatedKey, element: null, options: { id } as TOptions, status: "mounted" }
+        ]
+      }
+    })
   }
 
   function add(
@@ -204,6 +220,18 @@ export function createOverlayStore<
     });
   }
 
+  function markOpening(id: string) {
+    store.setState((prev) => {
+      const index = prev.entries.findIndex(e => e.options.id === id)
+      if (index === -1) return prev
+
+      const entry = prev.entries[index]
+      const entries = [...prev.entries]
+      entries[index] = { ...entry, status: "opening" }
+      return { ...prev, entries }
+    })
+  }
+
   function markOpened(key: string) {
     store.setState((prev) => {
       const index = prev.entries.findIndex((entry) => entry.key === key);
@@ -241,15 +269,15 @@ export function createOverlayStore<
 
   return {
     store,
-    get renderTreeStore() {
-      return renderTreeStoreRef.current;
-    },
+    renderTreeStore: renderTreeStoreRef.current,
     setRenderTreeStore,
+    mount,
     add,
     remove,
     removeAll,
     destroy,
     markOpened,
     markClosed,
+    markOpening,
   };
 }

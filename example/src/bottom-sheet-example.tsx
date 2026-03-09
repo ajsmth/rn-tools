@@ -1,46 +1,47 @@
-import { BottomSheet } from "@rn-tools/sheets";
+import { Sheet, createSheets } from "@rn-tools/sheets";
 import * as React from "react";
 import { Text, View, Button, TextInput, FlatList } from "react-native";
 import { useKeyboardHeight } from "@rn-tools/core";
 
 const data = Array.from({ length: 50 }).map((i, index) => `Item ${index}`);
 
+const sheets = createSheets();
+
 export function BottomSheetExample() {
-  const [isOpen, setIsOpen] = React.useState(false);
-
   return (
-    <View className="flex-1 pt-24">
-      <View className="flex-1">
-        <Button title="Show sheet" onPress={() => setIsOpen(!isOpen)} />
+    <sheets.Provider>
+      <View className="flex-1 pt-24">
+        <View className="flex-1">
+          <Button title="Show sheet" onPress={() => sheets.open("my-sheet")} />
 
-        <BottomSheet
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          initialIndex={1}
-          canDismiss
-          onStateChange={(event) => console.log({ event })}
-          snapPoints={[400, 600, 1200]}
-          appearanceAndroid={{
-            dimAmount: 0,
-            cornerRadius: 32.0,
-            backgroundColor: "#ffffff",
-          }}
-          appearanceIOS={{
-            cornerRadius: 16.0,
-            grabberVisible: true,
-            backgroundColor: "#ffffff",
-          }}
-        >
-          {isOpen && <SheetContent setIsOpen={setIsOpen} />}
-        </BottomSheet>
+          <Sheet
+            id="my-sheet"
+            // initialIndex={1}
+            canDismiss
+            // onStateChange={(event) => console.log({ event })}
+            snapPoints={[400, 600, 1200]}
+            appearanceAndroid={{
+              dimAmount: 0,
+              cornerRadius: 32.0,
+              backgroundColor: "#ffffff",
+            }}
+            appearanceIOS={{
+              cornerRadius: 16.0,
+              grabberVisible: true,
+              backgroundColor: "#ffffff",
+            }}
+          >
+            <SheetContent />
+          </Sheet>
+        </View>
       </View>
-    </View>
+    </sheets.Provider>
   );
 }
 
-function SheetContent({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) {
+function SheetContent() {
   const handleClose = React.useCallback(() => {
-    setIsOpen(false);
+    sheets.dismiss("my-sheet");
   }, []);
 
   const keyboardHeight = useKeyboardHeight();

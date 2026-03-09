@@ -3,29 +3,28 @@ import {
   Navigation,
   Stack,
   Tabs,
-  type NotificationInjectedProps,
-  type SheetInjectedProps,
-  type TabScreenOptions,
+  TabScreen,
 } from "@rn-tools/navigation";
 import * as React from "react";
-import { Text, View, Button, Pressable } from "react-native";
+import { Text, ScrollView, View, Button, Pressable } from "react-native";
+import { BottomSheetExample } from "~/bottom-sheet-example";
 
 const navigation = createNavigation();
 
-const tabScreens: TabScreenOptions[] = [
+const tabScreens: TabScreen[] = [
   {
     id: "home",
-    screen: <Stack rootScreen={<HomeScreen />} />,
+    element: <Stack rootScreen={<HomeScreen />} />,
     tab: TabButton,
   },
   {
     id: "explore",
-    screen: <Stack rootScreen={<ExploreScreen />} />,
+    element: <Stack rootScreen={<ExploreScreen />} />,
     tab: TabButton,
   },
   {
     id: "settings",
-    screen: <SettingsScreen />,
+    element: <SettingsScreen />,
     tab: TabButton,
   },
 ];
@@ -50,12 +49,10 @@ function TabButton({
   const label = id.charAt(0).toUpperCase() + id.slice(1);
 
   return (
-    <Pressable
-      onPress={onPress}
+    <View
       style={{
-        flex: 1,
         alignItems: "center",
-        paddingVertical: 12,
+        paddingVertical: 24,
       }}
     >
       <Text
@@ -67,18 +64,23 @@ function TabButton({
       >
         {label}
       </Text>
-    </Pressable>
+    </View>
   );
 }
 
 function HomeScreen() {
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text style={{ fontSize: 24, fontWeight: "bold" }}>Home</Text>
+    <ScrollView style={{ flex: 1 }}>
+      <View style={{ height: 64 }} />
+      <Text style={{ fontSize: 24, fontWeight: "bold", textAlign: "center" }}>
+        Home
+      </Text>
       <Button
         title="Push screen"
         onPress={() => {
-          navigation.stack.push(<DetailScreen title="Pushed Screen" count={1} />);
+          navigation.stack.push(
+            <DetailScreen title="Pushed Screen" count={1} />,
+          );
         }}
       />
       <View style={{ marginTop: 24 }}>
@@ -122,7 +124,10 @@ function HomeScreen() {
           title='Dismiss by id "edit"'
           onPress={() => navigation.sheets.dismiss("edit")}
         />
-        <Button title="Dismiss all" onPress={() => navigation.sheets.dismissAll()} />
+        <Button
+          title="Dismiss all"
+          onPress={() => navigation.sheets.dismissAll()}
+        />
       </View>
       <View style={{ marginTop: 24 }}>
         <Text
@@ -195,19 +200,14 @@ function HomeScreen() {
         />
         <Button
           title="Dismiss all notifications"
-          onPress={() => navigation.notificationsStore.dismissAll()}
+          onPress={() => navigation.notifications.dismissAll()}
         />
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
-function SheetContent({
-  label,
-  dismiss,
-}: {
-  label: string;
-} & SheetInjectedProps) {
+function SheetContent({ label }: { label: string }) {
   return (
     <View style={{ padding: 24 }}>
       <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 12 }}>
@@ -224,7 +224,19 @@ function SheetContent({
           });
         }}
       />
-      <Button title="Dismiss this sheet" onPress={() => dismiss?.()} />
+      <Button
+        title="Dismiss this sheet"
+        onPress={() => navigation.sheets.dismiss()}
+      />
+
+      <Button
+        title="Show notification"
+        onPress={() =>
+          navigation.notifications.present(
+            <NotificationContent message="Hey!" position="top" />,
+          )
+        }
+      />
     </View>
   );
 }
@@ -232,11 +244,10 @@ function SheetContent({
 function NotificationContent({
   message,
   position,
-  dismiss,
 }: {
   message: string;
   position: "top" | "bottom";
-} & NotificationInjectedProps) {
+}) {
   return (
     <View
       style={{
@@ -253,14 +264,6 @@ function NotificationContent({
       <Text style={{ color: "#111", fontSize: 14, fontWeight: "600" }}>
         {message}
       </Text>
-      <Pressable
-        onPress={dismiss}
-        style={{ marginTop: 8, alignSelf: "flex-start" }}
-      >
-        <Text style={{ color: "#007AFF", fontSize: 13, fontWeight: "500" }}>
-          Dismiss {position}
-        </Text>
-      </Pressable>
     </View>
   );
 }
@@ -272,7 +275,9 @@ function ExploreScreen() {
       <Button
         title="Push screen"
         onPress={() => {
-          navigation.stack.push(<DetailScreen title="Explore Detail" count={1} />);
+          navigation.stack.push(
+            <DetailScreen title="Explore Detail" count={1} />,
+          );
         }}
       />
     </View>
@@ -286,7 +291,9 @@ function SettingsScreen() {
       <Button
         title="Push screen"
         onPress={() => {
-          navigation.stack.push(<DetailScreen title="Settings Detail" count={1} />);
+          navigation.stack.push(
+            <DetailScreen title="Settings Detail" count={1} />,
+          );
         }}
       />
     </View>
@@ -311,7 +318,9 @@ function DetailScreen({ title, count }: { title: string; count: number }) {
       <Button title="Pop screen" onPress={() => navigation.stack.pop()} />
       <Button
         title="Autosized sheet"
-        onPress={() => navigation.sheets.present(<SheetContent label="Auto-sized" />)}
+        onPress={() =>
+          navigation.sheets.present(<SheetContent label="Auto-sized" />)
+        }
       />
       <Button
         title="Snap points sheet"

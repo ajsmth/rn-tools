@@ -1,0 +1,199 @@
+import * as React from "react";
+import { TABS_NODE, TABS_SCREEN_NODE, TabStoreContext } from "./tabs-constants";
+import { TreeNode, useStore } from "@rn-tools/core";
+import * as RNScreens from "react-native-screens";
+import {
+  StyleProp,
+  StyleSheet,
+  ViewStyle,
+  View,
+  Pressable,
+} from "react-native";
+import { useSafeAreaInsets } from "@rn-tools/core";
+
+type TabProps = {
+  id?: string;
+  screens: TabScreen[];
+  tabbarPosition?: "top" | "bottom";
+  tabbarContainerStyle?: StyleProp<ViewStyle>;
+  tabbarItemStyle?: StyleProp<ViewStyle>;
+};
+
+type TabTriggerProps = {
+  id: string;
+  isActive?: boolean;
+};
+
+export type TabScreen = {
+  id: string;
+  element: React.ReactElement;
+  tab?: (props: TabTriggerProps) => React.ReactNode;
+};
+
+export type TabsHandle = {
+  tab: (index: number) => void;
+};
+
+let counter = 0;
+
+export const Tabs = React.memo(
+  React.forwardRef<TabsHandle, Omit<TabProps, "children">>(
+    function Tabs(props, ref) {
+      const { tabbarPosition, tabbarContainerStyle, tabbarItemStyle, screens } =
+        props;
+      const position = tabbarPosition ?? "bottom";
+
+      const id = React.useRef(props.id ?? `tabs-${counter++}`).current;
+      const store = React.useContext(TabStoreContext);
+
+      const activeIndex = useStore(store, (state) => state.activeById[id]);
+
+      React.useEffect(() => {
+        store.setState((prev) => {
+          return {
+            ...prev,
+            activeById: {
+              ...prev.activeById,
+              [id]: 0,
+            },
+          };
+        });
+      }, [id, store]);
+
+      const tabbar = React.useMemo(
+        () => (
+          <TabBar
+            screens={screens}
+            style={tabbarContainerStyle}
+            tabbarItemStyle={tabbarItemStyle}
+            position={position}
+            activeIndex={activeIndex}
+            tabsId={id}
+          />
+        ),
+        [
+          screens,
+          tabbarContainerStyle,
+          tabbarItemStyle,
+          activeIndex,
+          position,
+          id,
+        ],
+      );
+
+      return (
+        <TreeNode type={TABS_NODE} id={id}>
+          {position === "top" && tabbar}
+          <View style={styles.slotContainer}>
+            <TabsSlot activeIndex={activeIndex} screens={props.screens} />
+          </View>
+          {position === "bottom" && tabbar}
+        </TreeNode>
+      );
+    },
+  ),
+);
+
+const TabBar = React.memo(function TabBar(props: {
+  screens: TabScreen[];
+  activeIndex: number;
+  tabbarItemStyle?: StyleProp<ViewStyle>;
+  style?: StyleProp<ViewStyle>;
+  position: "top" | "bottom";
+  tabsId: string;
+}) {
+  const { tabsId, screens, activeIndex, style, tabbarItemStyle, position } =
+    props;
+  const insets = useSafeAreaInsets();
+
+  const tabbarStyle = React.useMemo(
+    () => [
+      styles.tabbar,
+      position === "top" && { paddingTop: insets.top },
+      position === "bottom" && { paddingBottom: insets.bottom },
+      style,
+    ],
+    [position, style, insets.top, insets.bottom],
+  );
+
+  const store = React.useContext(TabStoreContext);
+
+  const handlePress = React.useCallback(
+    (index: number) => {
+      store.setState((prev) => {
+        return {
+          ...prev,
+          activeById: {
+            ...prev.activeById,
+            [tabsId]: index,
+          },
+        };
+      });
+    },
+    [tabsId],
+  );
+
+  return (
+    <View style={tabbarStyle}>
+      {screens.map((screen, index) => {
+        if (!screens[index].tab) {
+          return null;
+        }
+
+        return (
+          <Pressable
+            style={tabbarItemStyle ?? styles.tab}
+            onPress={() => handlePress(index)}
+            key={screen.id}
+          >
+            {screen.tab?.({
+              id: screen.id,
+              isActive: index === activeIndex,
+            })}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+});
+
+const TabsSlot = React.memo(function TabsSlot(props: {
+  screens: TabScreen[];
+  activeIndex: number;
+}) {
+  const { activeIndex, screens } = props;
+
+  return (
+    <RNScreens.ScreenContainer style={StyleSheet.absoluteFill}>
+      {screens.map((screen, index) => (
+        <RNScreens.Screen
+          key={screen.id}
+          activityState={index === activeIndex ? 2 : 0}
+          style={StyleSheet.absoluteFill}
+        >
+          <TreeNode
+            type={TABS_SCREEN_NODE}
+            id={screen.id}
+            active={index === activeIndex}
+          >
+            {screen.element}
+          </TreeNode>
+        </RNScreens.Screen>
+      ))}
+    </RNScreens.ScreenContainer>
+  );
+});
+
+const styles = StyleSheet.create({
+  tabbar: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  tab: {
+    flex: 1,
+  },
+  slotContainer: {
+    flex: 1,
+  },
+});
