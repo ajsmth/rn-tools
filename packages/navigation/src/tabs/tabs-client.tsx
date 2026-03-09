@@ -1,6 +1,6 @@
 import { TreeProvider, createStore, createTree } from "@rn-tools/core";
 import * as React from "react";
-import { TABS, TabStore, TabStoreContext } from "./tabs-constants";
+import { TABS_NODE, TabStore, TabStoreContext } from "./tabs-constants";
 
 type Options = {
   tabId?: string;
@@ -9,17 +9,8 @@ type Options = {
 export function createTabs(tree = createTree()) {
   const store = createStore<TabStore>({ activeById: {} });
 
-  function register(id: string, activeIndex: number) {
-    store.setState((prev) => {
-      return {
-        ...prev,
-        [id]: activeIndex,
-      };
-    });
-  }
-
   function tab(index: number, options: Options = {}) {
-    const targetId = options.tabId ?? tree.getActiveNode(TABS)?.extraId;
+    const targetId = options.tabId ?? tree.getActiveNode(TABS_NODE)?.extraId;
 
     if (targetId) {
       store.setState((prev) => {
@@ -49,7 +40,6 @@ export function createTabs(tree = createTree()) {
 
   return {
     tab,
-    register,
     Provider,
   };
 }

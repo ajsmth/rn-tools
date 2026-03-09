@@ -1,5 +1,5 @@
 import * as React from "react";
-import { TABS_SCREEN, TabStoreContext } from "./tabs-constants";
+import { TABS_NODE, TABS_SCREEN_NODE, TabStoreContext } from "./tabs-constants";
 import { TreeNode, useStore } from "@rn-tools/core";
 import * as RNScreens from "react-native-screens";
 import {
@@ -82,13 +82,13 @@ export const Tabs = React.memo(
       );
 
       return (
-        <React.Fragment>
+        <TreeNode type={TABS_NODE} id={id}>
           {position === "top" && tabbar}
           <View style={styles.slotContainer}>
             <TabsSlot activeIndex={activeIndex} screens={props.screens} />
           </View>
           {position === "bottom" && tabbar}
-        </React.Fragment>
+        </TreeNode>
       );
     },
   ),
@@ -135,18 +135,24 @@ const TabBar = React.memo(function TabBar(props: {
 
   return (
     <View style={tabbarStyle}>
-      {screens.map((screen, index) => (
-        <Pressable
-          style={tabbarItemStyle ?? styles.tab}
-          onPress={() => handlePress(index)}
-          key={screen.id}
-        >
-          {screen.tab?.({
-            id: screen.id,
-            isActive: index === activeIndex,
-          })}
-        </Pressable>
-      ))}
+      {screens.map((screen, index) => {
+        if (!screens[index].tab) {
+          return null;
+        }
+
+        return (
+          <Pressable
+            style={tabbarItemStyle ?? styles.tab}
+            onPress={() => handlePress(index)}
+            key={screen.id}
+          >
+            {screen.tab?.({
+              id: screen.id,
+              isActive: index === activeIndex,
+            })}
+          </Pressable>
+        );
+      })}
     </View>
   );
 });
@@ -166,7 +172,7 @@ const TabsSlot = React.memo(function TabsSlot(props: {
           style={StyleSheet.absoluteFill}
         >
           <TreeNode
-            type={TABS_SCREEN}
+            type={TABS_SCREEN_NODE}
             id={screen.id}
             active={index === activeIndex}
           >
