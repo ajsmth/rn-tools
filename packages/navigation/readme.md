@@ -33,36 +33,28 @@ import {
   Navigation,
   Stack,
   Tabs,
-  type TabScreenOptions,
+  type TabScreen,
 } from "@rn-tools/navigation";
 
 const navigation = createNavigation();
 
-const tabScreens: TabScreenOptions[] = [
+const tabScreens: TabScreen[] = [
   {
     id: "home",
-    screen: <Stack id="home" rootScreen={<HomeScreen />} />,
-    tab: ({ isActive, onPress }) => (
-      <Pressable onPress={onPress}>
-        <Text style={{ fontWeight: isActive ? "bold" : "normal" }}>Home</Text>
-      </Pressable>
-    ),
+    element: <Stack rootScreen={<HomeScreen />} />,
+    tab: ({ isActive }) => <Text style={{ fontWeight: isActive ? "bold" : "normal" }}>Home</Text>
   },
   {
     id: "settings",
-    screen: <SettingsScreen />,
-    tab: ({ isActive, onPress }) => (
-      <Pressable onPress={onPress}>
-        <Text style={{ fontWeight: isActive ? "bold" : "normal" }}>Settings</Text>
-      </Pressable>
-    ),
+    element: <SettingsScreen />,
+    tab: ({ isActive }) => <Text style={{ fontWeight: isActive ? "bold" : "normal" }}>Settings</Text>
   },
 ];
 
 export default function App() {
   return (
     <Navigation navigation={navigation}>
-      <Tabs id="main-tabs" screens={tabScreens} />
+      <Tabs screens={tabScreens} />
     </Navigation>
   );
 }
