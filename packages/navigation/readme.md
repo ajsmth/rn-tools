@@ -70,8 +70,10 @@ export default function App() {
 
 ## Docs
 
-- [Navigation](docs/navigation.md) — setup, `createNavigation`, `NavigationClient` API (screens + sheets + notifications), hooks
-- [Stack](docs/stack.md) — stack navigation, pushing/popping, refs, preloading, nesting
-- [Tabs](docs/tabs.md) — tab navigation, tab bar, refs, preloading, nesting with stacks
-- [Sheets](../sheets/README.md) — sheet setup, API, and props
-- [Notifications](../notifications/README.md) — notification setup, API, and props
+You now have access to all of the following APIs in your app!
+
+- [Navigation](docs/navigation.md)
+- [Stack](docs/stack.md)
+- [Tabs](docs/tabs.md)
+- [Sheets](../sheets/README.md)
+- [Notifications](../notifications/README.md)
