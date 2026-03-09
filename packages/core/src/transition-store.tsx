@@ -59,6 +59,8 @@ type Entry = {
   status: Status;
 };
 
+export type TransitionItemEntry = Entry;
+
 type StoreState<T = any> = {
   entries: Entry[];
   elements: Record<string, { element: React.ReactElement; props: T }>;

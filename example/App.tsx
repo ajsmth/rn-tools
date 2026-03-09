@@ -72,7 +72,9 @@ function HomeScreen() {
   return (
     <ScrollView style={{ flex: 1 }}>
       <View style={{ height: 64 }} />
-      <Text style={{ fontSize: 24, fontWeight: "bold" }}>Home</Text>
+      <Text style={{ fontSize: 24, fontWeight: "bold", textAlign: "center" }}>
+        Home
+      </Text>
       <Button
         title="Push screen"
         onPress={() => {
@@ -231,7 +233,7 @@ function SheetContent({ label }: { label: string }) {
         title="Show notification"
         onPress={() =>
           navigation.notifications.present(
-            <NotificationContent message="Hey!" />,
+            <NotificationContent message="Hey!" position="top" />,
           )
         }
       />
@@ -262,14 +264,6 @@ function NotificationContent({
       <Text style={{ color: "#111", fontSize: 14, fontWeight: "600" }}>
         {message}
       </Text>
-      <Pressable
-        onPress={() => navigation.notifications.dismiss()}
-        style={{ marginTop: 8, alignSelf: "flex-start" }}
-      >
-        <Text style={{ color: "#007AFF", fontSize: 13, fontWeight: "500" }}>
-          Dismiss {position}
-        </Text>
-      </Pressable>
     </View>
   );
 }
