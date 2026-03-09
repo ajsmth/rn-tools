@@ -5,7 +5,24 @@ Navigation primitives for React Native. Built on `react-native-screens` with int
 ## Installation
 
 ```bash
-yarn expo install @rn-tools/navigation react-native-screens
+yarn expo install @rn-tools/navigation react-native-screens expo-build-properties
+```
+
+Set iOS deployment target to `16.0` in `app.json`:
+
+```json
+{
+  "plugins": [
+    [
+      "expo-build-properties",
+      {
+        "ios": {
+          "deploymentTarget": "16.0"
+        }
+      }
+    ]
+  ]
+}
 ```
 
 ## Quick Start
@@ -50,38 +67,6 @@ export default function App() {
   );
 }
 ```
-
-Navigate screens, present sheets, and trigger notifications imperatively:
-
-```tsx
-navigation.stack.push(<DetailScreen />, { id: "detail" });
-navigation.stack.pop();
-navigation.tabs.tab(1);
-navigation.sheets.present(<EditSheet />, { id: "edit", snapPoints: [320, 520] });
-navigation.sheets.dismiss();
-navigation.sheets.dismissAll();
-navigation.notifications.present(<SavedNotification />, { id: "saved", position: "top", durationMs: 3000 });
-navigation.notifications.dismiss();
-navigation.notifications.dismiss("bottom");
-navigation.notifications.dismiss("saved");
-```
-
-`durationMs` defaults to `3000`; pass `null` for persistent notifications.
-
-Presented sheet and notification elements receive an injected optional `dismiss?: () => void` prop.
-
-When no explicit target is provided:
-- `push/pop/tab` resolve the deepest active stack/tabs node.
-- `dismiss()` resolves the active sheet.
-- `notifications.dismiss()` resolves the latest non-closing top-lane notification.
-
-Hooks are also re-exported for convenience:
-- `useSheetEntry` (from `@rn-tools/sheets`)
-- `useNotificationEntry` (from `@rn-tools/notifications`)
-
-Injected-prop typings are re-exported as well:
-- `SheetInjectedProps`
-- `NotificationInjectedProps`
 
 ## Docs
 

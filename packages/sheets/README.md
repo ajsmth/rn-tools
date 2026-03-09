@@ -2,7 +2,7 @@
 
 Native bottom sheets for React Native + Expo with iOS `UISheetPresentationController` and Android `BottomSheetDialog`.
 
-## Install
+## Setup
 
 ```bash
 yarn add @rn-tools/sheets expo-build-properties
@@ -25,46 +25,39 @@ Set iOS deployment target to `16.0` in `app.json`:
 }
 ```
 
-Then rebuild the native app.
+Then rebuild the native app so the new sheet native module is linked.
 
 ## APIs
 
 This package supports two usage styles:
 
-1. Declarative `BottomSheet`
-2. Store-driven `createSheets` + `SheetsProvider`
+1. Declarative `Sheet`
+2. Stack driven sheets via the sheets.present API
 
-### Declarative `BottomSheet`
+### Declarative `Sheet`
 
 ```tsx
 import * as React from "react";
 import { Button, View } from "react-native";
-import { BottomSheet } from "@rn-tools/sheets";
+import { Sheet, createSheets } from "@rn-tools/sheets";
+
+const sheets = createSheets();
 
 export default function Example() {
-  const [isOpen, setIsOpen] = React.useState(false);
-
   return (
-    <View style={{ flex: 1 }}>
-      <Button title="Open" onPress={() => setIsOpen(true)} />
-
-      <BottomSheet
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
-        snapPoints={[300, 500]}
-        initialIndex={0}
-      >
+    <sheets.Provider>
+      <Button title="Open sheet" onPress={() => sheets.open("settings")} />
+      <Sheet id="settings" snapPoints={[320, 520]}>
         <View style={{ padding: 24 }}>{/* content */}</View>
-      </BottomSheet>
-    </View>
+      </Sheet>
+    </sheets.Provider>
   );
 }
 ```
 
-### Store-driven sheets
+### Stack-driven sheets
 
 Use this for imperative sheet presentation from anywhere in your app.
-You do not need a hook for this pattern; you can call the external sheets store directly.
 
 ```tsx
 import * as React from "react";
@@ -110,7 +103,7 @@ function SheetContent({ dismiss }: SheetInjectedProps) {
     </View>
   );
 }
-```
+
 
 ## `createSheets` client
 
@@ -118,6 +111,7 @@ function SheetContent({ dismiss }: SheetInjectedProps) {
 type SheetsClient = {
   store: SheetsStore;
   present: (element: React.ReactElement, options?: SheetOptions) => string;
+  open: (id: string) => void;
   dismiss: (id?: string) => void;
   dismissAll: () => void;
 };
@@ -131,22 +125,24 @@ type SheetInjectedProps = {
 
 - `present` returns a sheet key.
 - `options.id` lets you target a logical sheet instance.
+- `options` also accepts `snapPoints`, `initialIndex`, `appearanceIOS`, `appearanceAndroid`, and `containerStyle` to configure the native sheet.
 - `dismiss(id?)` closes by key/id, or top-most if omitted.
 - `dismissAll()` closes all active sheets.
-- each rendered element receives an injected optional `dismiss?: () => void` prop.
+- `open(id)` marks a declarative `<Sheet id="...">` node as open so it reuses the registered sheet instead of presenting a new element.
 
-## `BottomSheet` props
+## `Sheet` props
 
-- `isOpen`: whether the sheet should be open.
-- `setIsOpen(next)`: called when native requests a visibility change.
-- `snapPoints?: number[]`: snap heights (dp). Android uses first 2 only.
-- `initialIndex?: number`: initial snap point index.
+- `id`: unique identifier so the tree and store can target it.
+- `snapPoints?: number[]`: snap heights (dp). Android uses the first two entries only.
+- `initialIndex?: number`: initial snap point index before the sheet is shown.
 - `canDismiss?: boolean`: allow swipe/back dismissal (default `true`).
 - `onDismissPrevented?: () => void`: called when dismissal is blocked.
-- `onStateChange?: (event) => void`: emits `{ type: "OPEN" }` and `{ type: "HIDDEN" }`.
-- `containerStyle?: ViewStyle`
-- `appearanceIOS?: { grabberVisible?: boolean; backgroundColor?: string; cornerRadius?: number }`
-- `appearanceAndroid?: { dimAmount?: number; backgroundColor?: string; cornerRadius?: number }`
+- `onStateChange?: (event: SheetChangeEvent) => void`: emits `{ type: "OPEN" }` and `{ type: "HIDDEN" }`.
+- `containerStyle?: ViewStyle`.
+- `appearanceIOS?: { grabberVisible?: boolean; backgroundColor?: string; cornerRadius?: number }`.
+- `appearanceAndroid?: { dimAmount?: number; backgroundColor?: string; cornerRadius?: number }`.
+- `setIsOpen?: (isOpen: boolean) => void`: notified when the native sheet requests a change; typically passed through from the store-driven client so it can close gracefully.
+- `onDismissed?: () => void`: invoked when the native view finishes dismissing.
 
 ## Notes
 
