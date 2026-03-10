@@ -1,6 +1,5 @@
 import * as React from "react";
 import { ViewStyle, View } from "react-native";
-import { useSafeAreaInsets } from "@rn-tools/core";
 
 type NativeLaneProps = {
   children?: React.ReactNode;
@@ -9,19 +8,17 @@ type NativeLaneProps = {
 
 export const NativeTopLane = React.memo(function NativeTopLane({
   children,
-  height = 280,
+  height = 0,
 }: NativeLaneProps) {
-  const { top } = useSafeAreaInsets();
-
   const style: ViewStyle = React.useMemo(() => {
     return {
       position: "absolute",
-      top: top,
+      top: 0,
       left: 0,
       right: 0,
       height: height,
     };
-  }, [height, top]);
+  }, [height]);
 
   return (
     <View style={style} pointerEvents="box-none">
@@ -32,19 +29,17 @@ export const NativeTopLane = React.memo(function NativeTopLane({
 
 export const NativeBottomLane = React.memo(function NativeBottomLane({
   children,
-  height = 280,
+  height = 0,
 }: NativeLaneProps) {
-  const { bottom } = useSafeAreaInsets();
-
   const style: ViewStyle = React.useMemo(() => {
     return {
       position: "absolute",
-      bottom: bottom,
+      bottom: 0,
       left: 0,
       right: 0,
       height: height,
     };
-  }, [height, bottom]);
+  }, [height]);
 
   return (
     <View pointerEvents="box-none" style={style}>

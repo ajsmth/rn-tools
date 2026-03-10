@@ -12,7 +12,8 @@
   },
   "android": {
     "modules": [
-      "expo.modules.rntoolscore.RNToolsCoreModule"
+      "expo.modules.rntoolscore.RNToolsCoreModule",
+      "expo.modules.rntoolscore.RNToolsOverlayModule"
     ]
   }
 }

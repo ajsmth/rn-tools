@@ -40,7 +40,7 @@ private fun getRootWindowInsetsCompatM(rootView: View): EdgeInsets? {
   return EdgeInsets(
     top = insets.systemWindowInsetTop.toFloat(),
     right = insets.systemWindowInsetRight.toFloat(),
-    // Use the min to avoid including the keyboard while still honoring nav bars.
+    // Avoid reporting IME height as safe-area bottom inset.
     bottom = min(insets.systemWindowInsetBottom, insets.stableInsetBottom).toFloat(),
     left = insets.systemWindowInsetLeft.toFloat()
   )
@@ -72,10 +72,10 @@ fun getSafeAreaInsets(view: View): EdgeInsets? {
 
   val rootView = view.rootView
   val windowInsets = getRootWindowInsetsCompat(rootView) ?: return null
-
   val windowWidth = rootView.width.toFloat()
   val windowHeight = rootView.height.toFloat()
   val visibleRect = Rect()
+
   view.getGlobalVisibleRect(visibleRect)
 
   return EdgeInsets(

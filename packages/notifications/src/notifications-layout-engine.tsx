@@ -41,15 +41,14 @@ export function createLayoutEngine(position: "top" | "bottom") {
 
       const previous = prevLayout[entry.id];
       const fromY =
-        entry.status === STATUSES.OPENING && previous == null
-          ? normalizeZero(
-              y + (position === "bottom" ? measuredHeight : -measuredHeight),
-            )
-          : undefined;
+        previous?.fromY ??
+        normalizeZero(
+          y + (position === "bottom" ? measuredHeight : -measuredHeight),
+        );
 
       layout[entry.id] = {
         toY: y,
-        ...(fromY == null ? {} : { fromY }),
+        fromY,
       };
       cursor += measuredHeight;
     }

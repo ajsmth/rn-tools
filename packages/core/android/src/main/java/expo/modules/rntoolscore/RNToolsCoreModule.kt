@@ -108,11 +108,15 @@ class RNToolsCoreModule : Module() {
   }
 
   private fun insetsToMap(insets: EdgeInsets): Map<String, Float> {
+    val density = appContext.reactContext?.resources?.displayMetrics?.density
+      ?: appContext.currentActivity?.resources?.displayMetrics?.density
+      ?: 1f
+
     return mapOf(
-      "top" to insets.top,
-      "right" to insets.right,
-      "bottom" to insets.bottom,
-      "left" to insets.left
+      "top" to insets.top / density,
+      "right" to insets.right / density,
+      "bottom" to insets.bottom / density,
+      "left" to insets.left / density
     )
   }
 }
