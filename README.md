@@ -5,4 +5,5 @@ A set of libraries to help you build React Native apps.
 ## Navigation
 
 - [@rn-tools/navigation](packages/navigation/readme.md)
+- [@rn-tools/notifications](packages/notifications/README.md)
 - [@rn-tools/sheets](packages/sheets/README.md)

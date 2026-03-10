@@ -1,7 +1,6 @@
 import { createTree } from "@rn-tools/core";
-import { createStack } from "../stack/stack-client";
+import { createStack, Stack } from "../stack";
 import { act, render, screen } from "@testing-library/react-native";
-import { Stack } from "../stack/stack";
 import { Text, View } from "react-native";
 import { createTabs } from "./tabs-client";
 import { Tabs } from "./tabs";

@@ -20,6 +20,24 @@ function getLane(position: "top" | "bottom") {
 }
 
 describe("createNotifications()", () => {
+  test("present returns a generated id", () => {
+    const tree = createTree();
+    const notifications = createNotifications(tree);
+
+    const id = notifications.present(<Text>Hey</Text>);
+
+    expect(id).toBe("notification-0");
+  });
+
+  test("present returns the provided id", () => {
+    const tree = createTree();
+    const notifications = createNotifications(tree);
+
+    const id = notifications.present(<Text>Hey</Text>, { id: "saved" });
+
+    expect(id).toBe("saved");
+  });
+
   test("rendering notifications in lanes", () => {
     const tree = createTree();
     const notifications = createNotifications(tree);

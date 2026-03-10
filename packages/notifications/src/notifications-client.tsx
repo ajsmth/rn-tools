@@ -32,6 +32,7 @@ export function createNotifications(tree = createTree()) {
 
     store.add(id, element, { position, durationMs, ...props });
     store.transition(id, EVENTS.OPEN);
+    return id;
   }
 
   function dismiss(id?: string) {

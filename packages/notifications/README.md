@@ -1,136 +1,105 @@
 # @rn-tools/notifications
 
-Native notification overlays for React Native apps.
+Native notification overlays for React Native + Expo apps.
 
-## Installation
+## Setup
+
+Install the package, create a shared client once, then wrap your app with the generated provider:
 
 ```bash
 yarn expo install @rn-tools/notifications
 ```
 
-## Quick Start
-
 ```tsx
-import * as React from "react";
-import { Button, Text, View } from "react-native";
-import {
-  createNotifications,
-  NotificationsProvider,
-  type NotificationInjectedProps,
-} from "@rn-tools/notifications";
+import { createNotifications } from "@rn-tools/notifications";
 
 const notifications = createNotifications();
 
-export default function App() {
-  return (
-    <NotificationsProvider notifications={notifications}>
-      <View style={{ flex: 1, justifyContent: "center", padding: 24 }}>
-        <Button
-          title="Notify"
-          onPress={() =>
-            notifications.show(
-              <NotificationCard message="Saved successfully" />,
-              { id: "saved", position: "top", durationMs: 3000 },
-            )
-          }
-        />
-      </View>
-    </NotificationsProvider>
-  );
-}
-
-function NotificationCard({
-  message,
-  dismiss,
-}: { message: string } & NotificationInjectedProps) {
-  return (
-    <View style={{ padding: 12, backgroundColor: "#111827", borderRadius: 12 }}>
-      <Text style={{ color: "white" }}>{message}</Text>
-      <Button title="Dismiss" onPress={dismiss} />
-    </View>
-  );
+export function App({ children }) {
+  return <notifications.Provider>{children}</notifications.Provider>;
 }
 ```
 
-## API
+## Present Notifications
 
-### `createNotifications`
-
-```ts
-const notifications = createNotifications(renderTreeStore?);
-```
-
-Creates a `NotificationsClient`.
-
-### `NotificationsProvider`
+Use the shared client anywhere in your app to present overlay content in the top or bottom lane:
 
 ```tsx
-<NotificationsProvider notifications={notifications}>
-  {children}
-</NotificationsProvider>
+import { Button, Text, View } from "react-native";
+
+<Button
+  title="Show notification"
+  onPress={() => {
+    notifications.present(
+      <View
+        style={{
+          padding: 12,
+          borderRadius: 12,
+          backgroundColor: "#111827",
+        }}
+      >
+        <Text style={{ color: "white" }}>Saved successfully</Text>
+      </View>,
+      {
+        id: "saved",
+        position: "top",
+        durationMs: 3000,
+      },
+    );
+  }}
+/>
 ```
 
-Mounts the native notification host and lane containers.
+Call `notifications.dismiss()` to close the active notification, `notifications.dismiss("saved")` to target a specific one, or `notifications.dismissAll()` to clear everything.
 
-## `NotificationsClient`
+`present()` returns the notification id, so you can keep the generated key when you need to dismiss it later.
+
+## Bottom Lane Notifications
+
+Use `position: "bottom"` when the notification should slide up from the bottom edge:
+
+```tsx
+notifications.present(<UndoToast />, {
+  id: "undo-delete",
+  position: "bottom",
+  durationMs: null,
+  onPress: () => undoDelete(),
+});
+```
+
+Persistent notifications use `durationMs: null`. Pressing a notification closes it before running `onPress`.
+
+## Client API
 
 ```ts
 type NotificationsClient = {
-  show: (element: React.ReactElement, options?: NotificationOptions) => string;
-  dismiss: (target?: NotificationDismissTarget) => void;
+  present: (element: React.ReactElement, options?: NotificationOptions) => string;
+  dismiss: (id?: string) => void;
   dismissAll: () => void;
-  remove: (id: string) => void;
+  Provider: React.ComponentType<{ children: React.ReactNode }>;
 };
 ```
 
-```ts
-type NotificationInjectedProps = {
-  dismiss?: () => void;
-};
-```
+`present` accepts the rendered element plus `options.id`, `position`, `durationMs`, and `onPress`, and returns the notification id.
 
-### `show(element, options?)`
+## Notification options
 
-Presents a notification and returns its key.
-
-`NotificationOptions`:
-- `id?`: stable id to replace/reuse an existing notification key.
-- `position?`: `"top"` (default) or `"bottom"`.
-- `durationMs?`: auto-dismiss duration in ms. Defaults to `3000`. Set to `null` for a persistent notification.
-- each rendered element receives an injected optional `dismiss?: () => void` prop.
-
-### `dismiss(target?)`
-
-Dismisses by:
-- key/id string
-- lane: `"top"` or `"bottom"` (latest non-closing in that lane)
-- omitted target: latest non-closing top-lane notification
-
-### `dismissAll()`
-
-Dismisses all active notifications.
-
-## Hooks
-
-### `useNotifications()`
-
-Returns the current `NotificationsClient` from context.
-
-### `useNotificationEntry()`
-
-Returns controls scoped to the currently rendered notification entry:
-
-```ts
-const { entryKey, dismiss, dismissAll } = useNotificationEntry();
-```
-
-Use this as a fallback when prop injection is not convenient.
+- `id?: string`: stable identifier to dismiss a specific notification later.
+- `position?: "top" | "bottom"`: lane to render into. Defaults to `"top"`.
+- `durationMs?: number | null`: auto-dismiss delay in ms. Defaults to `3000`. Use `null` to keep it visible.
+- `onPress?: () => void`: invoked after the notification is tapped and dismissed.
 
 ## Using with `@rn-tools/navigation`
 
-`@rn-tools/navigation` mounts notifications internally. If you already use `Navigation`, call:
+`@rn-tools/navigation` mounts notifications internally. If you already use `Navigation`, call the same client methods through the navigation instance:
 
 ```ts
 navigation.notifications.present(element, options?);
-navigation.notifications.dismiss(target?);
+navigation.notifications.dismiss(id?);
+navigation.notifications.dismissAll();
 ```
+
+## Notes
+
+- Notifications render in native top and bottom overlay lanes.
+- If `dismiss()` is called without an id, it closes the currently active notification.
