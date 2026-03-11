@@ -4,8 +4,10 @@ import {
   TreeProvider,
   createTransitionStore,
   createTree,
+  useSafeAreaInsets,
 } from "@rn-tools/core";
 import * as React from "react";
+import { ViewStyle, useWindowDimensions } from "react-native";
 import { NotificationsSlot } from "./notifications-slot";
 import { NOTIFICATION_NODE } from "./notification-constants";
 import { NativeTopLane, NativeBottomLane } from "./notifications-native-view";
@@ -16,8 +18,6 @@ type NotificationOptions = {
   durationMs?: number | null;
   onPress?: () => void;
 };
-
-const LANE_HEIGHT = 280;
 
 export function createNotifications(tree = createTree()) {
   let counter = 0;
@@ -57,15 +57,64 @@ export function createNotifications(tree = createTree()) {
   }: {
     children: React.ReactNode;
   }) {
+    const { top, bottom } = useSafeAreaInsets();
+    const { height: windowHeight } = useWindowDimensions();
+
+    const [topMeasuredHeight, setTopMeasuredHeight] = React.useState(0);
+    const [bottomMeasuredHeight, setBottomMeasuredHeight] = React.useState(0);
+
+    const bottomOffset = Math.max(
+      0,
+      windowHeight - bottom - bottomMeasuredHeight,
+    );
+
+    const topStyles: ViewStyle = React.useMemo(() => {
+      return {
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: top,
+        height: topMeasuredHeight,
+      };
+    }, [topMeasuredHeight, top]);
+
+    const bottomStyles: ViewStyle = React.useMemo(() => {
+      return {
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: bottomOffset,
+        height: bottomMeasuredHeight,
+      };
+    }, [bottomOffset, bottomMeasuredHeight]);
+
     return (
       <TreeProvider tree={tree}>
-        <Overlay>
-          <NativeTopLane height={LANE_HEIGHT}>
-            <NotificationsSlot position="top" store={store} />
+        <Overlay
+          contentHeight={topMeasuredHeight}
+          offsetTop={top}
+          style={topStyles}
+        >
+          <NativeTopLane height={topMeasuredHeight}>
+            <NotificationsSlot
+              position="top"
+              store={store}
+              onContentHeightChange={setTopMeasuredHeight}
+            />
           </NativeTopLane>
+        </Overlay>
 
-          <NativeBottomLane height={LANE_HEIGHT}>
-            <NotificationsSlot position="bottom" store={store} />
+        <Overlay
+          contentHeight={bottomMeasuredHeight}
+          offsetTop={bottomOffset}
+          style={bottomStyles}
+        >
+          <NativeBottomLane height={bottomMeasuredHeight}>
+            <NotificationsSlot
+              position="bottom"
+              store={store}
+              onContentHeightChange={setBottomMeasuredHeight}
+            />
           </NativeBottomLane>
         </Overlay>
         {children}

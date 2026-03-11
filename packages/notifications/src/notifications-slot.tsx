@@ -18,12 +18,14 @@ import { createLayoutEngine } from "./notifications-layout-engine";
 type NotificationsSlotProps = {
   store: TransitionStore;
   position: "top" | "bottom";
+  onContentHeightChange?: (height: number) => void;
 };
 
 export const NotificationsSlot = React.memo(function NotificationsSlot(
   props: NotificationsSlotProps,
 ) {
   const { store, position } = props;
+  const { onContentHeightChange } = props;
 
   const entries = store
     .useEntries()
@@ -33,9 +35,16 @@ export const NotificationsSlot = React.memo(function NotificationsSlot(
 
   const handleItemLayout = React.useCallback((id: string, height: number) => {
     setHeights((prev) => {
+      const previousHeight = prev[id] ?? 0;
+      const nextHeight = Math.max(previousHeight, height);
+
+      if (nextHeight === previousHeight) {
+        return prev;
+      }
+
       return {
         ...prev,
-        [id]: height,
+        [id]: nextHeight,
       };
     });
   }, []);
@@ -52,6 +61,31 @@ export const NotificationsSlot = React.memo(function NotificationsSlot(
       heights,
     });
   }, [entries, heights]);
+
+  React.useEffect(() => {
+    if (!onContentHeightChange) {
+      return;
+    }
+
+    // TODO - udpate this to just measure heights? Limit how much this rerenders
+    const nextHeight = entries.reduce((maxHeight, entry) => {
+      const measuredHeight = heights[entry.id];
+      const node = layout[entry.id];
+
+      if (measuredHeight == null || node == null) {
+        return maxHeight;
+      }
+
+      const start = Math.max(
+        Math.abs(node.toY),
+        Math.abs(node.fromY ?? node.toY),
+      );
+
+      return Math.max(maxHeight, start + measuredHeight);
+    }, 0);
+
+    onContentHeightChange(nextHeight);
+  }, [entries, heights, layout, onContentHeightChange]);
 
   return (
     <>

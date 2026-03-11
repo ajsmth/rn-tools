@@ -8,6 +8,8 @@ public final class RNToolsOverlayView: ExpoView {
     private var overlayWindow: RNToolsOverlayPassthroughWindow?
     private var overlayTouchHandler: UIGestureRecognizer?
     private var observers: [NSObjectProtocol] = []
+    private var contentHeight: CGFloat?
+    private var offsetTop: CGFloat = 0
 
     private lazy var overlayViewController: UIViewController = {
         let viewController = UIViewController()
@@ -72,6 +74,20 @@ public final class RNToolsOverlayView: ExpoView {
         return overlayContentView.subviews
     }
 
+    func setContentHeight(_ contentHeight: Double?) {
+        if let contentHeight, contentHeight > 0 {
+            self.contentHeight = CGFloat(contentHeight)
+        } else {
+            self.contentHeight = nil
+        }
+        updateOverlayFrame()
+    }
+
+    func setOffsetTop(_ offsetTop: Double?) {
+        self.offsetTop = CGFloat(offsetTop ?? 0)
+        updateOverlayFrame()
+    }
+
     private func showOverlay() {
         guard overlayWindow == nil else { return }
 
@@ -96,6 +112,7 @@ public final class RNToolsOverlayView: ExpoView {
 
         overlayWindow = window
         installWindowObservers()
+        updateOverlayFrame()
     }
 
     private func hideOverlay() {
@@ -119,6 +136,7 @@ public final class RNToolsOverlayView: ExpoView {
                 queue: .main
             ) { [weak self] _ in
                 self?.overlayWindow?.floatAboveEverything()
+                self?.updateOverlayFrame()
             },
             center.addObserver(
                 forName: UIWindow.didBecomeKeyNotification,
@@ -126,8 +144,43 @@ public final class RNToolsOverlayView: ExpoView {
                 queue: .main
             ) { [weak self] _ in
                 self?.overlayWindow?.floatAboveEverything()
+                self?.updateOverlayFrame()
+            },
+            center.addObserver(
+                forName: UIDevice.orientationDidChangeNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                self?.updateOverlayFrame()
             },
         ]
+    }
+
+    private func updateOverlayFrame() {
+        guard let window = overlayWindow else { return }
+
+        let windowBounds = resolvedWindowBounds(for: window)
+        let frame = CGRect(
+            x: 0,
+            y: contentHeight != nil ? offsetTop : 0,
+            width: windowBounds.width,
+            height: contentHeight ?? windowBounds.height
+        )
+
+        if window.frame != frame {
+            window.frame = frame
+        }
+
+        overlayViewController.view.frame = window.bounds
+        overlayRootView.frame = window.bounds
+        overlayContentView.frame = overlayRootView.bounds
+    }
+
+    private func resolvedWindowBounds(for window: UIWindow) -> CGRect {
+        if let sceneBounds = window.windowScene?.coordinateSpace.bounds {
+            return sceneBounds
+        }
+        return UIScreen.main.bounds
     }
 }
 
